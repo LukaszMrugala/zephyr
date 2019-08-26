@@ -96,3 +96,7 @@ container - an instance of a docker image
 ## Links & Other Information:
 * CI Docker repo: https://gitlab.devtools.intel.com/cvondra/zephyr-ci.docker.git
 
+## Bin List of Todo/Features etc
+
+caching / rev proxy - setup nginx to buffer sdks & other large blobs?
+
