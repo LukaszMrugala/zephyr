@@ -28,6 +28,12 @@ node() {
 		}
 	}
 
+	stage('sanity-posix64') {
+		gitlabCommitStatus(name: 'sanity-posix64') {
+			sh "scripts/sanitycheck -p native_posix64"
+		}
+	}
+	
 	stage('build-hello_world') {
 		gitlabCommitStatus(name: 'build-hello_world') {
 			sh "cd $ZEPHYR_BASE/samples/hello_world; mkdir -p build; cd build; cmake -DBOARD=native_posix ..; make;"
