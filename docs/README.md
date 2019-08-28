@@ -7,28 +7,27 @@ Goals for this file:
 1. Training & Mindshare for DevOps
 1. Landing page for CI customers & co-travellers who want to research & resolve issues on their own
   
-## Zephyr CI Links
+## Zephyr CI Instances
+### Production:	https://zerobot2.ostc.intel.com
+### Staging: 	https://zerobot-stg.ostc.intel.com
+login for both is zephyr:zephyr. Proper ACL is in-process.
 
-"The Zephyr CI implementation @ JF"
-<todo svg diag>
+## CI pipeline status @ Gitlab
+### Production: 	https://gitlab.devtools.intel.com/zephyrproject-rtos/zephyr/pipelines
+### Staging:	https://gitlab.devtools.intel.com/cvondra/zephyr-test/pipelines
 
+## Jobs
+### https://zerobot2.ostc.intel.com/job/zephyr-ci_master_sdk-0.10.3/
+Sanitycheck on master, sdk 0.10.3
 
-** Instances**
+### https://zerobot2.ostc.intel.com/job/zephyr-ci/
+Sanitycheck on v1.14-branch-intel, sdk 0.10.1
 
-Production:	https://zerobot2.ostc.intel.com, login is zephyr:zephyr, ACL in-process.
-Staging: 	https://zerobot-stg.ostc.intel.com,	"	"	"	"
-
-** CI pipeline status @ Gitlab **
-
-Production: 	https://gitlab.devtools.intel.com/zephyrproject-rtos/zephyr/pipelines
-Staging:	https://gitlab.devtools.intel.com/cvondra/zephyr-test/pipelines
-
-** Jobs **
-
-Sanitycheck on selected archs for both v1.14-branch-intel (sdk rev 0.10.1) & master (sdk rev 0.10.3).
-Pipelines are triggered automatically on commits.
+### Pipelines are triggered automatically on commits.
 
 ## Architecture
+
+todo: svg block diag
 
 ### Why a container? 
 * Need to be nimble WRT to SDK & build-env changes, learning from past mistakes
@@ -48,28 +47,28 @@ Jenkins is used for the CI master. When the docker is built the following tasks 
 1. Credential & known_hosts setup
 1. User-friendly gitlab auth setup via the web UI
 
+### More Reading & Resources
+https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/implementing-embedded-continuous-integration-with-jenkins-and-docker-part-1
 
 ### Container Details
 
 We have two flavors of docker that are currently used
 
-**zephyrci.docker**
-
+#### zephyrci.docker
 This is the official zephyr docker w/ Jenkins added & configured for "turn-key" deployment as a Zephyr CI master.
 
-**zephyr sdk**
-
+#### zephyr sdk
 The official Zephyr Project SDK docker, built & run as required. Methodolgy is TBD- split between dockerswarm & Jenkins slaves.
 
 Only the zephyrci.docker is required to deploy a CI instance- the SDK docker is only required for offloading jobs to slaves.
 
-**Container is stateless (mostly)**
+#### Container is stateless (mostly)
 
 * The container is designed to be stateless with all internal storage being disposable.
 * Logs are maintained as long as the container exists. Is filesystem object so will (likely) survive reboots, power-outages, etc.
 * Credentials are being considered for inclusion in a volume, to elimate the user-intervention required w/ gitlab.
 
-**Reporting & Visualization**
+### Reporting & Visualization
 
 * Design intent is for ALL output to exit the container as git status or action, as defined in Jenkins jobs
 * Jenkins UI is exposed & jobs can easily be monitored
@@ -106,7 +105,7 @@ todo: expand on all that...
 The Jenkins instance within the container needs to be able to authenticate with our git service, gitlab.
 Checkouts currently run over ssh with API status over https REST.
 
-**Current auth setup process:**
+#### Current auth setup process:
 1. Container imports host-key for devtools.intel.com at start-up
 1. Container runs ssh-keygen for jenkins user at start & echos pub-key to console, for use in Gitlab SSH key web UI
 1. Gitlab API key is entered manually into Jenkins web UI at start
@@ -115,17 +114,27 @@ Checkouts currently run over ssh with API status over https REST.
 todo: move these to common page & include in all top-level docs
 ## Terminology
 
-CI - Continuous Integration
-docker - a container image, a recipie. Can also refer to the docker service, see containerd. 
-container - an instance of a docker image
+#### CI
+Continuous Integration
+#### docker
+a container image, a recipie. Can also refer to the docker service, see containerd. 
+#### container
+an instance of a docker image, running or not
 
 ## Links & Other Information:
-* CI Docker repo: https://gitlab.devtools.intel.com/cvondra/zephyr-ci.docker.git
+### CI Docker repo: https://gitlab.devtools.intel.com/cvondra/zephyr-ci.docker.git
 
 ## Bin List of Todo/Features etc
 
 caching / rev proxy - setup nginx to buffer sdks & other large blobs?
 
-## Cool Tricks ##
-curl --header "PRIVATE-TOKEN: 5Cx4eUNau6uYLjf_TUjP" --request "DELETE" "https://gitlab.devtools.intel.com/api/v4/projects/26025/pipelines/nnnnnnn"
+## Pastebin for commands & other cool-tricks, intended for DevOps & CI mindshare
+Will organize these... someday.
+
+### Inject a Jenkins job xml, via java CLI
+java -jar $JENKINS_CLI -s http://127.0.0.1:8080/ -auth admin:$ADMINPASSWD create-job<job.xml
+
+### Delete a pipeline from Gitlab's CI/CD page
+curl --header "PRIVATE-TOKEN: your-api-token" --request "DELETE" "https://gitlab.devtools.intel.com/api/v4/projects/xxxxx/pipelines/nnnnn"
+This is currently the only reliable method to remove CI/CD pipelines from Gitlab
 
