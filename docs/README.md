@@ -3,11 +3,32 @@
 This file is the offical documentation for Intel's internal CI on Zephyr Project 
 
 Goals for this file:
-1. Singular resource for all CI processes
+1. Single-point reference for all CI processes
 1. Training & Mindshare for DevOps
 1. Landing page for CI customers & co-travellers who want to research & resolve issues on their own
   
-## Overview
+## Zephyr CI Links
+
+"The Zephyr CI implementation @ JF"
+<todo svg diag>
+
+
+** Instances**
+
+Production:	https://zerobot2.ostc.intel.com, login is zephyr:zephyr, ACL in-process.
+Staging: 	https://zerobot-stg.ostc.intel.com,	"	"	"	"
+
+** CI pipeline status @ Gitlab **
+
+Production: 	https://gitlab.devtools.intel.com/zephyrproject-rtos/zephyr/pipelines
+Staging:	https://gitlab.devtools.intel.com/cvondra/zephyr-test/pipelines
+
+** Jobs **
+
+Sanitycheck on selected archs for both v1.14-branch-intel (sdk rev 0.10.1) & master (sdk rev 0.10.3).
+Pipelines are triggered automatically on commits.
+
+## Architecture
 
 ### Why a container? 
 * Need to be nimble WRT to SDK & build-env changes, learning from past mistakes
@@ -18,9 +39,7 @@ Goals for this file:
 * Single-point managagment of all updates, no scaling penalty
 * Simplified networking & service management
 
-### Architecture
-
-**Container, in general**
+### What happens when the container is built/started?
 Jenkins is used for the CI master. When the docker is built the following tasks are run:
 1. Ubuntu base installation & core updates
 1. Zephyr SDK & dependency download, update & install
@@ -29,27 +48,34 @@ Jenkins is used for the CI master. When the docker is built the following tasks 
 1. Credential & known_hosts setup
 1. User-friendly gitlab auth setup via the web UI
 
-Note: We have two flavors of docker that are currently used
+
+### Container Details
+
+We have two flavors of docker that are currently used
 
 **zephyrci.docker**
+
 This is the official zephyr docker w/ Jenkins added & configured for "turn-key" deployment as a Zephyr CI master.
 
 **zephyr sdk**
+
 The official Zephyr Project SDK docker, built & run as required. Methodolgy is TBD- split between dockerswarm & Jenkins slaves.
 
 Only the zephyrci.docker is required to deploy a CI instance- the SDK docker is only required for offloading jobs to slaves.
 
-**State**
+**Container is stateless (mostly)**
+
 * The container is designed to be stateless with all internal storage being disposable.
 * Logs are maintained as long as the container exists. Is filesystem object so will (likely) survive reboots, power-outages, etc.
 * Credentials are being considered for inclusion in a volume, to elimate the user-intervention required w/ gitlab.
 
 **Reporting & Visualization**
+
 * Design intent is for ALL output to exit the container as git status or action, as defined in Jenkins jobs
 * Jenkins UI is exposed & jobs can easily be monitored
 * Many reporting & visualization plugins are available for Jenkins
 
-### Components
+### Infrastructure Components
 
 A deployed Zephyr CI solution consists of several core components:
 
@@ -99,4 +125,7 @@ container - an instance of a docker image
 ## Bin List of Todo/Features etc
 
 caching / rev proxy - setup nginx to buffer sdks & other large blobs?
+
+## Cool Tricks ##
+curl --header "PRIVATE-TOKEN: 5Cx4eUNau6uYLjf_TUjP" --request "DELETE" "https://gitlab.devtools.intel.com/api/v4/projects/26025/pipelines/nnnnnnn"
 
