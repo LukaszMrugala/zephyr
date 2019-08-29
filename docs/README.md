@@ -123,6 +123,7 @@ an instance of a docker image, running or not
 
 ## Links & Other Information:
 ### CI Docker repo: https://gitlab.devtools.intel.com/cvondra/zephyr-ci.docker.git
+### ZephyrProject CaaS (Docker) Registry (internal): https://amr.caas.intel.com/zephyrproject
 
 ## Bin List of Todo/Features etc
 
