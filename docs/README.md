@@ -94,7 +94,7 @@ todo: brief on each
 1. Start container
 1. Update all plugins
 1. Provision SSH keys
-1. Provision gitlab api key & name it "gitlab"
+1. Provision gitlab api key & name it "gitlab", see: https://github.com/jenkinsci/gitlab-plugin/wiki/Setup-Example
 1. Enable default CI job
 
 todo: expand on all that...
