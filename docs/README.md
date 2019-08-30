@@ -1,12 +1,16 @@
 # Zephyr CI Documentation Hub
 
-This file is the offical documentation for Intel's internal CI on Zephyr Project 
-
-Goals for this file:
+**Goals for this file**
 1. Single-point reference for all CI processes
 1. Training & Mindshare for DevOps
 1. Landing page for CI customers & co-travellers who want to research & resolve issues on their own
-  
+
+## Zephyr CI Functions 
+
+1. Monitor selected branches for merge/pull requests (aka MR/PR) and automatically trigger sanitycheck jobs
+1. Integrate CI infrastructure with gitlab CI/CD functions to automate PR process, as much as is reasonable
+1. Provide flexible & scalable infrastructure for running of other functions, eg: rebasing, MISRA-C, coververity & fault-injection
+
 ## Zephyr CI Instances
 ### Production:	https://zerobot2.ostc.intel.com
 ### Staging: 	https://zerobot-stg.ostc.intel.com
