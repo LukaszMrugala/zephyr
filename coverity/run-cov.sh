@@ -3,13 +3,27 @@
 # run this script in a zephyr tree. It will generate a file named coverity.tgz
 # that you will need to upload to coverity server.
 
+if [ "$#" -ne 3 ]
+then
+        echo "Please pass the value for all the environment variables as arguments.
+        1st Argument:  Path to Coverity Bin Installation Example: $HOME/cov-analysis-linux64-2019.03/bin
+        2nd argument:  Path to Coverity Build Directory. Create a directory like $HOME/cov-build before passing this argument
+        3rd Argument:  Path to the Most Recent Version of Zephyr SDK install directory"
+        exit 1
+fi
 
-COV_BIN="path to coverity bin"
-#Example: $HOME/cov-analysis-linux64-2019.03/bin
+echo "Environment looks good"
 
-COV_BUILD_DIR="reference to directory where you want coverity build output"
-#Example: $HOME/cov-build
+rm -rf zephyrproject
+west init zephyrproject
+cd zephyrproject
+west update
+west upgrade
+cd zephyr
 
+COV_BIN=$1
+
+COV_BUILD_DIR=$2
 COV_INT=${COV_BUILD_DIR}/cov-int
 SAN_OPT=" -b -N "
 COV_CONF=${COV_BIN}/cov-configure
@@ -20,9 +34,10 @@ rm -rf ${COV_INT}
 export USE_CCACHE=0
 
 source zephyr-env.sh
-export ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.10.3
+export ZEPHYR_SDK_INSTALL_DIR=$3
 export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
-export PATH=$PATH:"path to coverity bin"
+export PATH=$PATH:$1
+
 
 # Build for native_posix/x86_64 with host compiler
 
