@@ -9,16 +9,32 @@ Coverity Toolkit can be download from here : https://scan.coverity.com/download
 ## Coverity Build
 Run Sanity check for all the tests on all the architectures using the script "run-cov.sh" from inside the zephyr tree to kick off the Coverity Build. The emitted files will be compressed in a tar file to be used for Coverity Analysis.
 
+###### Command to execute Coverity Script : run-cov.sh.
+
+``` ./run-cov.sh "Path to Coverity Bin Directory" "Path to Coverity Build Directory" "Path to Most Recent Version of Zephyr SDK Install Directory" ```
+
+Example : ``` ./run-cov.sh $HOME/cov-analysis-linux64-2019.03/bin $HOME/cov-build /opt/zephyr-sdk-0.10.3 ```
+
+
 ### Things to Remember:
-a)	Update the Zephyr SDK to the Most Recent Version. Check if a newer SDK version is released at https://www.zephyrproject.org/developers/#downloads and then follow the instructions to setup the development environment setup for Zephyr here: Getting started guide at https://www.zephyrproject.org/developers/#downloads
+•	Update the Zephyr SDK to the Most Recent Version. Check if a newer SDK version is released at https://www.zephyrproject.org/developers/#downloads and then follow the instructions to setup the development environment setup for Zephyr here: Getting started guide at https://www.zephyrproject.org/developers/#downloads
 
-b)	Check if your environment variables are set for ZEPHYR_SDK_INSTALL_DIR, ZEPHYR_TOOLCHAIN_VARIANT and the path of bin directory in the installed Coverity toolkit is to your system path. Also ZEPHYR_BASE should be set in your environment using “source zepyr-env.sh” from inside the zephyr tree.
+•	Check if you are passing you are passing all the arguments while running run-cov.sh. 
 
-c)	Do ```west update``` and ```west upgrade``` and have the most updated Zephyr code (Git pull) from https://github.com/zephyrproject-rtos/zephyr before kicking off the build process. 
+1st Argument:  Path to Coverity Bin Installation Example: $HOME/cov-analysis-linux64-2019.03/bin
 
-d)	The build process takes about 1-2 days to complete.
+2nd argument:  Path to Coverity Build Directory. Create a directory like $HOME/cov-build before passing this argument.
 
-e)	Try to use the clean Zephyr code each time for build process.
+3rd Argument:  Path to the Most Recent Version of Zephyr SDK install directory
+
+The environment variables needed for running Coverity Build are passed as arguments to Script run-cov.sh.
+
+•	Do ```west update``` and ```west upgrade``` and have the most updated Zephyr code (Git pull) from https://github.com/zephyrproject-rtos/zephyr before kicking off the build process. 
+
+•	The build process takes about 1-2 days to complete.
+
+•	Every time run-cov.sh script is run, a clean Zephyr code is initiated each time for build process. The Script ensures to remove the existing Zephyr Code in $PWD.
+
 
 ## Coverity Analysis
 Upload the Coverity build to https://scan.coverity.com. The build will be analyzed on Coverity Server in about 1 hour and all the Coverity issues found during the analysis phase can be found in Coverity Connect Portal in the “Outstanding issues”.  View Defects tab on https://scan.coverity.com/projects/zephyr?tab=overview will redirect to Coverity Connect Portal. 
