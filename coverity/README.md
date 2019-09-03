@@ -19,7 +19,7 @@ Example : ``` ./run-cov.sh $HOME/cov-analysis-linux64-2019.03/bin $HOME/cov-buil
 ### Things to Remember:
 •	Update the Zephyr SDK to the Most Recent Version. Check if a newer SDK version is released at https://www.zephyrproject.org/developers/#downloads and then follow the instructions to setup the development environment setup for Zephyr here: Getting started guide at https://www.zephyrproject.org/developers/#downloads
 
-•	Check if you are passing you are passing all the arguments while running run-cov.sh. 
+•	Check if you are passing all the arguments while running run-cov.sh. 
 
 1st Argument:  Path to Coverity Bin Installation Example: $HOME/cov-analysis-linux64-2019.03/bin
 
