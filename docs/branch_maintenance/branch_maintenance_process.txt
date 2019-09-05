@@ -1,126 +1,94 @@
-﻿v1.14 LTS Branch Maintenance Process[a][b][c]
-====================================
+﻿
+Please note that this doc may move outside of the CI docs and may not be the latest greatest. Will remove this version once final resting place has been determined.
 
+Branch Maintenance Process
+==========================
 
 The Zephyr Project is hosted on GitHub at: 
 https://github.com/zephyrproject-rtos/zephyr 
 
-
 The above repo is where all Open Source Community development happens.
-
 
 The Intel Zephyr team maintains an INTERNAL GitLab repo at:
 https://gitlab.devtools.intel.com/zephyrproject-rtos/zephyr
 
-
 This internal repo is a full mirror of the external (upstream) repo on GitHub, with the addition of Intel specific branches that are for INTERNAL use ONLY. i.e. They are not to be exposed to the community for various reasons until ready to be "upstreamed." 
 
-
 The internal mirrored tree is refreshed approximately every 30 minutes from the upstream GitHub repo. This does not, obviously, affect internal Intel specific branches. We manage those directly in GitLab.
-
 
 Terminology
 ===========
 PR = pull request 
-MR = merge request, common in gitlab documentation and is equivilent to PR
-
+MR = merge request, common in gitlab documentation and is equivalent to PR
 
 Intel Branches
 ===========
 
-
 There are two ways for Intel code to be integrated into the internal GitLab repo.
 
-
-- Submitted upstream to the appropriate branch (i.e. v1.14-branch) in GitHub repo, and then merged back to the internal-only v1.14-branch-intel branch in GitLab by DevOPS C/I process. This "local" merge not in place yet, but will be in the near future[d][e][f][g]. Developer will not need to do anything special to get code submitted upstream into the internal branches.
-
+- Submitted upstream to the appropriate branch (i.e. v1.14-branch) in GitHub repo, and then merged back to the internal-only v1.14-branch-intel branch in GitLab by DevOPS C/I process. This "local" merge not in place yet, but will be in the near future. Developer will not need to do anything special to get code submitted upstream into the internal branches.
 
 - By submitting a Pull Request (PR) to the GitLab project on a development branch. 
 
 
-
-
 The PR method is the current focus of this document.
-
 
 General Process
 ===============
 
-
 To submit code to the internal GitLab repo, you must have an account on GitLab and request developer access to the Zephyr repo. You may request to the project within GitLab.
 
-
 Once you have access, you will need to push your code someplace suitable in GitLab. This can be a development branch in the Zephyr tree, your own repo, a team development repo, etc.
-
 
 Then you can proceed to make a merge request by going here: 
 https://gitlab.devtools.intel.com/zephyrproject-rtos/zephyr/merge_requests
 
-
 This is also accessible via the sidebar menu in GitLab.
-
 
 Once on the merge request page, you simply click "New Merge Request" and follow the prompts to select the source branch and the target.
 
-
 As you go through, fill in the appropriate labels, etc., and select reviewers. 
 
-
 After your code has been reviewed, any required changes made, and approved, a maintainer will merge it accordingly.
-
 
 More documentation, with useful details and screenshots for creating merge requests:
 https://docs.gitlab.com/ee/gitlab-basics/add-merge-request.html
 
 
-
-
 DevOPS/CI Process
 =================
 
-
 ## PR Process
-
 
 When a PR is submitted, Gitlab is configured to immediately trigger a CI job on the source branch to ensure that it "builds" and is suitable for merging.
 
-
 As of WW36 ‘19, the PR CI job consists of the following tasks:
-1. Report “Pending” job status to gitlab@devtools.intel.com
-2. Initialize a clean build environment 
-3. Checkout the source branch
-4. Run west -l /source_branch to pull-in all dependencies
-5. Execute sanitycheck against ALL architectures and platforms.
-6. Report job result to gitlab@devtools.intel.com
+Report “Pending” job status to gitlab@devtools.intel.com
+Initialize a clean build environment 
+Checkout the source branch
+Run west -l /source_branch to pull-in all dependencies
+Execute sanitycheck against ALL architectures and platforms.
+Report job result to gitlab@devtools.intel.com
 Other steps may be added upon request.
-
 
 The CI jobs takes approx 30 minutes and status can be monitored from the PR page in gitlab.  
 
-
 When the CI job completes, gitlab will display status next to the PR title- a green check for pass or red X for failures. Depending on your notification preferences in gitlab, you may also receive an email with the status.  
 
-
 ### If the CI job passes
-The PR moves to code-review.  After code review happens, and merge approval is given and CI will again automatically trigger a “merge accepted” CI job. After this final check, the maintainer will merge the code to the target branch. That will, in turn, trigger a build against the target branch to ensure nothing unexpected happened. [h][i]
-
-
+The PR moves to code-review.  After code review happens, and merge approval is given and CI will again automatically trigger a “merge accepted” CI job. After this final check, the maintainer will merge the code to the target branch. That will, in turn, trigger a build against the target branch to ensure nothing unexpected happened. 
 
 
 ### If the CI job fails
 All CI job output is stored on the Jenkins CI master & is accessible to all of Intel. The PR submitter is expected to monitor the status of the CI job and address any sanitycheck failures by examining the Jenkins build logs:
-        V1.14-branch-intel:
+	V1.14-branch-intel:
 https://zerobot-stg.ostc.intel.com/job/zephyrci_v1.14-branch-intel 
-        (Full CI is only on staging for the rest of WW36)
-
+	(Full CI is only on staging for the rest of WW36)
 
 To trigger additional CI runs on the same merge request, add the following comment to your MR notes (no quotes):
 “zephyrci please retry a build”
 
-
 Eventually the merge process for upstream v1.14-branch and v1.14-branch-intel will also be automated by DevOPS. 
-
-
 
 
 DevOPS Team
@@ -131,42 +99,7 @@ Grover, Aastha <aastha.grover@intel.com>
 Graydon, Tracy <tracy.graydon@intel.com>
 
 
-
-
-Zephyr M[j][k][l]aintainers[m]
-===============
-Nashif, Anas <anas.nashif@intel.com>
+V1.14 LTS Release Engineer 
+===========================
 Wu, Wentong <wentong.wu@intel.com>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-[a]Where will this reside?  gitlab docs or can we put this on the wiki...or a link to it from the wiki?
-[b]It will def go into the CI docs as soon as any edits are made. We can link to it, if that floats with you.
-[c]Yes please!  I want wiki to guide people...just a link to it is fine. Avoid any duplication.
-[d]+tracy.graydon@intel.com What is the ETA on this?
-[e]Honestly not sure. We are working on getting the PR process into place. I would wager that we will start on the merge thing pretty quick after that. I'll defer to +chris.vondrachek@intel.com for a better guesstimate.
-[f]Likely in the next week. MR is almost working (https://zerobot-stg.ostc.intel.com/job/zephyrci_v1.14-branch-intel/30/).
-[g]Thanks, Chris.
-[h]+tracy.graydon@intel.com  Are the maintainers notified when the approval is given, or is someone watching this?
-_Assigned to Tracy Graydon_
-[i]That's a good question. I meant to dig into that. I will look at this today. There is a way to get notifications through GitLab. Maintainers, or anyone, for that matter, can turn that on. However, some people may be checking things and prefer not to get spammed. I would like to not force that on people. Probably a way to do this specific to a given PR, too. i.e. Not spam everyone.
-
-
-+anas.nashif@intel.com thoughts on whether we just spam or give people a choice? What do we do on GitHub?
-[j]Should we add someone from Comms?
-[k]As a maintainer? Or as just contact info for Comms team?
-[l]Maybe I misunderstood.  Do only Maintainers have merge rights?  If so, I would think someone from Comms should be on that list.  Anas's call.
-[m]Anyone else we should list here? Other contact info we may want to include?
