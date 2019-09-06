@@ -1,7 +1,7 @@
 # Zephyr CI Documentation Hub
 
 **Goals for this file**
-1. Single-point reference for all CI processes
+1. Index into other DevOps & CI Documentation
 1. Training & Mindshare for DevOps
 1. Landing page for CI customers & co-travellers who want to research & resolve issues on their own
 
@@ -17,12 +17,13 @@
 login for both is zephyr:zephyr. Proper ACL is in-process.
 
 ## CI pipeline status @ Gitlab
-### Production: 	https://gitlab.devtools.intel.com/zephyrproject-rtos/zephyr/pipelines
+### Production: https://gitlab.devtools.intel.com/zephyrproject-rtos/zephyr/pipelines
 ### Staging:	https://gitlab.devtools.intel.com/cvondra/zephyr-test/pipelines
 
-## Jobs
+## Current CI Jobs
 ### https://zerobot2.ostc.intel.com/job/zephyr-ci_master_sdk-0.10.3/
-Sanitycheck on master, sdk 0.10.3
+Implements CI on our main internal branch, v1.14-branch-intel.
+Monitors for pull/merge requests and automatically triggers sanitycheck runs.
 
 ### https://zerobot2.ostc.intel.com/job/zephyr-ci/
 Sanitycheck on v1.14-branch-intel, sdk 0.10.1
@@ -126,9 +127,10 @@ a container image, a recipie. Can also refer to the docker service, see containe
 an instance of a docker image, running or not
 
 ## Links & Other Information:
-### CI Docker repo: https://gitlab.devtools.intel.com/cvondra/zephyr-ci.docker.git
+### Zephyr Project SDK Docker: https://github.com/zephyrproject-rtos/docker-image
 ### ZephyrProject CaaS (Docker) Registry (internal): https://amr.caas.intel.com/zephyrproject
 ### Gitlab-Jenkins Integration: https://docs.gitlab.com/ee/integration/jenkins.html 
+### Gitlab Merge Request Pipeline: https://docs.gitlab.com/ee/ci/merge_request_pipelines/
 
 ## Bin List of Todo/Features etc
 
@@ -139,6 +141,7 @@ Will organize these... someday.
 
 ### Inject a Jenkins job xml, via java CLI
 java -jar $JENKINS_CLI -s http://127.0.0.1:8080/ -auth admin:$ADMINPASSWD create-job<job.xml
+
 
 ### Delete a pipeline from Gitlab's CI/CD page
 curl --header "PRIVATE-TOKEN: your-api-token" --request "DELETE" "https://gitlab.devtools.intel.com/api/v4/projects/xxxxx/pipelines/nnnnn"
