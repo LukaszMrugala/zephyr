@@ -69,7 +69,8 @@ function build_cross() {
 		# kernel tests.
 		sanitycheck -b -N -a ${ARCH} --all -e kernel --save-tests tests_002.txt
 		# Here we create the final test manifest
-		cat tests_0*.txt | sort | uniq > tests.txt
+		head -n 1 tests_002.txt > tests.txt
+		tail -q -n +2 tests_0*.txt | sort | uniq >> tests.txt
 		rm -f tests_0*.txt
 
 		${COV_CONF} --comptype gcc --compiler ${COMPILER} --template
