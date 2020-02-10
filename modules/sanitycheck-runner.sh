@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Distributed sanitycheck runner script for zephyrproject @ Intel CI
+#   Targets any -intel branch & intended to run under any properly configured
+#   Zephyr build environment, container or native.
+
+# Functions:
+#  * Takes batch split options as params, allowing load to be spread across multiple nodes
+#  * Runs default test-cases, retrying two times on failures
+#  * Uses ninja build option
+#  * Disables CCACHE as it's known to cause build state errors in automation
+#  * Generates junit xml output for reporting & visualization
+#  * Enables coverage-reporting
+
+# Assumptions:
+#		Build environment is properly configured w/ python requirements for branch
+# Usage:
+#		cd <path to zephyr-tree> #aka ZEPHYR_BASE
+#		./sanitycheck_runner.sh <total number of nodes> <this node number>
+# Output:
+#		Sanitycheck output files are written to $ZEPHYR_BASE/run{1,2,3...}
+#		Junit xml output is written to $ZEPHYR_BASE/junit
+# Returns:
+#		0 if all sanitycheck default cases succeed after 3 tries
+#       any other result indicates at least one failure exists in the final retry
+#####################################################################################
+echo "ooooooooooooooooooooooooooooooooooooooooo"
+echo "  Zephyr Sanitycheck Runner starting..."
+echo "ooooooooooooooooooooooooooooooooooooooooo"
+echo "Running in ZEPHYR_BASE=$ZEPHYR_BASE on $(hostname -f)"
+
+#disable ccache, it's known to cause build issues with zephyr in an automation
+export CCACHE_DISABLE=1
+export USE_CCACHE=0
+
+#if running in container, source these configs
+if [ -f "/container_env" ]; then
+	source /proxy.sh 		#location of imported proxy config in container env
+	source /container_env	#container specific overrides, if any
+fi
+
+# clean-up from previous runs
+echo "Cleaning output directories..."
+rm -rf $ZEPHYR_BASE/run1
+rm -rf $ZEPHYR_BASE/run2
+rm -rf $ZEPHYR_BASE/run3
+rm -rf $ZEPHYR_BASE/junit
+
+mkdir -p junit
+
+# echo critical env values
+###############################################################################
+echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
+echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
+echo BATCH_TOTAL=$1
+echo BATCH_NUMBER=$2
+echo http_proxy=$http_proxy
+echo https_proxy=$https_proxy
+echo no_proxy=$no_proxy
+
+# Sanitycheck configuration & command-line generation
+# All default options EXCEPT -N for ninja build
+export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N"
+export SC_CMD1="$SC_CMD_BASE -B $2/$1 -O $ZEPHYR_BASE/run1 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
+export SC_CMD2="$SC_CMD_BASE -f -O $ZEPHYR_BASE/run2 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
+export SC_CMD3="$SC_CMD_BASE -f -O $ZEPHYR_BASE/run3 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
+# note that we overwrite the junit output on purpose as only results for the last run are relevant
+
+echo "Sanitycheck command-lines:"
+echo "run1: $SC_CMD1"
+echo "run2: $SC_CMD2"
+echo "run3: $SC_CMD3"
+
+echo "Starting sanitycheck run w/ retries"
+$SC_CMD1 || sleep 10; $SC_CMD2 ||  sleep 10; $SC_CMD3
+SC_RESULT=$?
+
+echo Done. SC_RESULT=$SC_RESULT.
+echo See $ZEPHYR_BASE/runXX and $ZEPHYR_BASE/junit for output.
+
+exit $SC_RESULT
