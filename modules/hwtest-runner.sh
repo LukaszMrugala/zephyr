@@ -58,16 +58,15 @@ echo no_proxy=$no_proxy
 # Sanitycheck configuration & command-line generation
 # All default options EXCEPT -N for ninja build
 export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N"
-export SC_CMD1="$SC_CMD_BASE $1 -O $ZEPHYR_BASE/run1 --detailed-report $ZEPHYR_BASE/junit/junit.xml"
+export SC_CMD1="$SC_CMD_BASE -p $1 -O $ZEPHYR_BASE/run1 --device-testing --device-serial /dev/ttyACM0 --detailed-report $ZEPHYR_BASE/junit/junit-$1.xml"
 
-echo "Sanitycheck command-lines:"
-echo "run1: $SC_CMD1"
+echo "Sanitycheck command-line:"
+echo "    $SC_CMD1"
 
-echo "Starting sanitycheck run w/ retries"
+echo "Starting sanitycheck hwtest"
 $SC_CMD1 
 SC_RESULT=$?
 
 echo Done. SC_RESULT=$SC_RESULT.
-echo See $ZEPHYR_BASE/runXX and $ZEPHYR_BASE/junit for output.
 
 exit $SC_RESULT

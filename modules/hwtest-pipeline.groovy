@@ -38,17 +38,16 @@ def abort_build(jobName) {
 //  clone + west on master node, stashes wrkspc & then spins-off santitycheck
 //  run across mulitple agent containers. This is intended to speed-up the CI results
 //  for developer UX.
-def start(srcRepo,srcBranch,jobName,buildNodeLabel,sanitycheckPlatforms) {
+def start(srcRepo,srcBranch,testLocation,sanitycheckPlatforms) {
 	node('master') {
 		echo sh(returnStdout: true, script: 'env') //dump env
 		skipDefaultCheckout() //we do our own parameterized checkout, below
 		deleteDir() //clean workspace
+		def jobName = "hwtest-${testLocation}"
 		try {
-			stage('setup') {
+			stage('git-west-stash') {
 				updateGitlabCommitStatus name: "$jobName", state: "running"
 				unstash 'ci'
-			}
-			stage('git') {
 				timeout(time: 5, unit: 'MINUTES') {
 					echo "srcRepo: ${srcRepo}"
 					echo "srcBranch: ${srcBranch}"
@@ -60,8 +59,6 @@ def start(srcRepo,srcBranch,jobName,buildNodeLabel,sanitycheckPlatforms) {
 						]
 					}
 				}
-			}
-			stage('west') {
 				dir('zephyrproject') {
 					//wrap in a retry + timeout block since these are external repo hits
 					//todo: git-cache
@@ -71,66 +68,71 @@ def start(srcRepo,srcBranch,jobName,buildNodeLabel,sanitycheckPlatforms) {
 						}
 					}
 				}
-			}
-			stage('stash') {
 				sh "du -sch;"
 				stash name: 'context'
-			}
+			}//stage
 		}//try
 		catch(err) {
 			abort_build(jobName)
 		}
 	}//master node end
 
-	echo "Transferring context to test-head"
-	node("hwtest-head-sh") {
-		deleteDir()
-		unstash "ci"
-		unstash "context"
-	}
-	node("${buildNodeLabel}") {
-		echo "Preparing for sanitycheck run on HW test agent ${buildNodeLabel}"
-		deleteDir()
-		stage("sanitycheck-run") {
-			dir("/testhead/workspace/${JOB_NAME}/zephyrproject/zephyr") {
+	echo "Begin node expansion on target platforms: ${sanitycheckPlatforms}"
+	def nodejobs = [:]
+	for (int i = 0; i < sanitycheckPlatforms.size(); i++)
+	{
+		def sanitycheckPlatform = sanitycheckPlatforms[i]
+		def stageName = "hwtest-${testLocation}-${sanitycheckPlatform}"
+		nodejobs[stageName] = { ->
+			node("hwtest-${testLocation}-${sanitycheckPlatform}") {
 				failed=false
-				//call our runner shell script
-				//withEnv block is temporary... debugging env vars not sticking from -runner.sh
-				try {
-					withEnv([	"ZEPHYR_BASE=/testhead/workspace/${JOB_NAME}/zephyrproject/zephyr",
-								"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
-								"ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-0.10.3"]) {
-						retry(3) {
-							timeout(time:  120, unit: 'MINUTES') {
-								sh "/testhead/workspace/${JOB_NAME}/ci/modules/hwtest-runner.sh ${sanitycheckPlatforms}"
+
+				stage("${stageName}") {
+					unstash 'context'
+					unstash 'ci'
+					//call our runner shell script from zephyr tree
+					dir('zephyrproject/zephyr') {
+						//withEnv block is temporary... debugging env vars not sticking from -runner.sh
+						try {
+							withEnv([	"ZEPHYR_BASE=${WORKSPACE}/zephyrproject/zephyr",
+										"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
+										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.10.3"]) {
+								sh "${WORKSPACE}/ci/modules/hwtest-runner.sh ${sanitycheckPlatform}"
 							}
 						}
-					}
-				}
-				catch (err) {
-					failed=true
-					echo "SANITYCHECK_FAILED"
-					catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { sh "false"}
-				}
-				finally {
-					if(!failed) {
-						echo "SANITYCHECK_SUCCESS"
-						catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
-					}
-				}
-				//stash junit output for transfer back to master
-				dir ('junit') {
-					stash name: "junit", includes: '*.xml'
-				}
-			}//dir
-		}//stage
-	}//node
+						catch (err) {
+							failed=true
+							echo "SANITYCHECK_FAILED"
+							catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { sh "false"}
+						}
+						finally {
+							if(!failed) {
+								echo "SANITYCHECK_SUCCESS"
+								catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
+							}
+						}
+						//stash junit output for transfer back to master
+						sh "pwd"
+						dir ('junit') {
+							stash name: "junit-${testLocation}-${sanitycheckPlatform}", includes: '*.xml'
+						}//dir
+					}//dir
+				}//stage
+			}//node
+		}//nodejobs
+	}//for platforms
+	parallel nodejobs
 
 	//back at the master, report final status back to gitlab
 	node('master') {
-		//expand array of nodes & unstash results
+		def jobName = "hwtest-${testLocation}"
+		//expand array of platforms & unstash results from each test
 		dir('junit') {
-			unstash "junit"
+            for (int j = 0; j < sanitycheckPlatforms.size(); j++)
+            {
+				def plat = sanitycheckPlatforms[j]
+                unstash "junit-${testLocation}-${plat}"
+			}
 		}
 		step([$class: 'JUnitResultArchiver', testResults: '**/junit/*.xml', healthScaleFactor: 1.0])
 			publishHTML (target: [
