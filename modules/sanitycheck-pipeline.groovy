@@ -36,9 +36,9 @@ def abort_build(jobName) {
 
 //start() - entrypoint from the top-level job call.
 //  clone + west on master node, stashes wrkspc & then spins-off santitycheck
-//  run across mulitple agent containers. This is intended to speed-up the CI results
+//  run across mulitple agents/containers. This is intended to speed-up the CI results
 //  for developer UX.
-def start(srcRepo,srcBranch,jobName,buildNodeLabel,sanitycheckThreads,sanitycheckParallel) {
+def start(srcRepo,srcBranch,jobName,buildAgentType,buildLocation) {
 	node('master') {
 		echo sh(returnStdout: true, script: 'env') //dump env
 		skipDefaultCheckout() //we do our own parameterized checkout, below
@@ -82,15 +82,17 @@ def start(srcRepo,srcBranch,jobName,buildNodeLabel,sanitycheckThreads,sanitychec
 		}
 	}//master node end
 
-	//parallel expansion around sanitycheck_batch_opts[]
-	echo "Preparing for distributed sanitycheck across ${sanitycheckParallel} nodes"
+	//parallel expansion around available nodes
+	echo "Preparing for distributed sanitycheck across all available ${buildAgentType}-${buildLocation}-64gb nodes"
 	def nodejobs = [:]
-	for (int i = 0; i < sanitycheckParallel; i++) 
+	//hardcoded for prototyping
+	//todo: continue dev around Jenkins nodesByLabel() method
+	for (int i = 0; i < 2; i++) //SEE ALSO HARDCODED 2 IN RUNNER SCRIPT PARAMS & MASTER UNSTASH
 	{
 		def stageName = "sanitycheck-batch${i}"
 		def batchNumber = i + 1
 		nodejobs[stageName] = { ->
-		node("${buildNodeLabel}") {
+		node("${buildAgentType}-${buildLocation}-64gb") {
 			deleteDir()
 			unstash "ci"
 			unstash "context"
@@ -102,14 +104,8 @@ def start(srcRepo,srcBranch,jobName,buildNodeLabel,sanitycheckThreads,sanitychec
 						try {
 							withEnv([	"ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
 										"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
-										"ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-0.10.3"])
-							{
-								retry(3) {
-									//attempt to work-around known-issue with qemu child processes hanging & blocking sanitycheck
-									timeout(time:  30, unit: 'MINUTES') {
-										sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh ${sanitycheckParallel} ${batchNumber}"
-									}
-								}
+										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.10.3"]) {
+								sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh 2 ${batchNumber}"
 							}
 						}
 						catch (err) {
@@ -125,7 +121,7 @@ def start(srcRepo,srcBranch,jobName,buildNodeLabel,sanitycheckThreads,sanitychec
 						}
 						//stash junit output for transfer back to master
 						dir ('junit') {
-							stash name: "${stageName}-junit", includes: '*.xml'
+							stash name: "junit-${batchNumber}", includes: '*.xml'
 						}
 					}//dir
 				}//stage
@@ -138,10 +134,10 @@ def start(srcRepo,srcBranch,jobName,buildNodeLabel,sanitycheckThreads,sanitychec
 	node('master') {
 		//expand array of nodes & unstash results
 		dir('junit') {
-			for (int j = 0; j < sanitycheckParallel; j++) 
+			for (int j = 0; j < 2; j++) 
 			{
-				def stashName = "sanitycheck-batch${j}-junit"
-				unstash "${stashName}"
+				def batchNumber = j + 1
+				unstash "junit-${batchNumber}"
 			}
 		}
 		step([$class: 'JUnitResultArchiver', testResults: '**/junit/*.xml', healthScaleFactor: 1.0])
@@ -153,7 +149,6 @@ def start(srcRepo,srcBranch,jobName,buildNodeLabel,sanitycheckThreads,sanitychec
 			reportFiles: 'index.html',
 			reportName: "Sanitycheck Junit Report"
 		])
-
 		updateGitlabCommitStatus name: "$jobName", state: "success"
 	}
 }//start
