@@ -1,5 +1,6 @@
 //sanitycheck-pipeline.groovy
-//	This is a Zephyr sanitycheck execution Jenkins pipeline supporting distributed execution
+//	This is a Zephyr sanitycheck execution Jenkins pipeline supporting distributed execution.
+//  Execution is distributed across all agents with label matching the agent type & location parameters.
 //	Functions of this module:
 //		1. Clone source-branch
 //		2. Run west init & update
@@ -9,18 +10,15 @@
 //		8. Report overall CI status back to gitlab
 //
 //bugs/todo:
-//	* replace hardcoding of hw-agents, threads & batch-split with call to agent-registry.getConfig call
 //  * break-out gitlab bits into it's own interface, make generic
 
 //Pipeline variables
 //	srcRepo - url to src repo, ssh:// urls recommended
 //		** Zephyr Dev-Ops automation account must have Gitlab 'Developer' role for CI to function **
 //	srcBranch - branch name, must exist
-//	jobName - short name for job to report to gitlab, eg: merge-production.
-//	buildNodeLabel - Jenkins agent label to match for this build, eg: zephyr_swarm
-//	sanitycheckThreads - Number of threads for sanitycheck execution, for tuning node load
-//		** buildNodeLabel & sanitycheckThreads options don't fit here & will be replaced by a call to our agent regsitry service, soon.
-//  sanitycheckParallel - Number of nodes to spread sanitycheck execution across, should be <= # of build agents of least execution time
+//	jobName - short name for job to report to gitlab, eg: "merge-production".
+//  agentType - specifies which type of agent to build, currently we support 'vm' or 'nuc'
+//  buildLocation - specifies where to execute the build, currently we support 'jf' or 'sh'
 
 //for @Field String
 import groovy.transform.Field
@@ -35,20 +33,25 @@ def abort_build(jobName) {
 }
 
 //start() - entrypoint from the top-level job call.
-//  clone + west on master node, stashes wrkspc & then spins-off santitycheck
-//  run across mulitple agents/containers. This is intended to speed-up the CI results
-//  for developer UX.
-def start(srcRepo,srcBranch,jobName,buildAgentType,buildLocation) {
+//  clone + west on master node & stash build context + ci repo
+//  distributes stashes to all avail agents matching ($agentType-$buildLocation) label
+//  sanitycheck-runner.sh is called on each agent, with -B split options to divide & conquer the execution
+//  after execution is complete, each agent stashes aritfacts (currently just junit.xml) & transfers back to master
+//  Jenkins master then unstashes all artifacts & creates a junit composite for all tests
+def start(srcRepo,srcBranch,jobName,agentType,buildLocation) {
+	//job-wide globals
+	def targetAgentLabel = "${agentType}-${buildLocation}"
+	def availAgents = nodesByLabel "${targetAgentLabel}"
+	int numAvailAgents = availAgents.size()
+
 	node('master') {
 		echo sh(returnStdout: true, script: 'env') //dump env
 		skipDefaultCheckout() //we do our own parameterized checkout, below
 		deleteDir() //clean workspace
 		try {
-			stage('setup') {
+			stage('git-west-stash') {
 				updateGitlabCommitStatus name: "$jobName", state: "running"
 				unstash 'ci'
-			}
-			stage('git') {
 				timeout(time: 5, unit: 'MINUTES') {
 					echo "srcRepo: ${srcRepo}"
 					echo "srcBranch: ${srcBranch}"
@@ -60,8 +63,6 @@ def start(srcRepo,srcBranch,jobName,buildAgentType,buildLocation) {
 						]
 					}
 				}
-			}
-			stage('west') {
 				dir('zephyrproject') {
 					//wrap in a retry + timeout block since these are external repo hits
 					//todo: git-cache
@@ -71,8 +72,6 @@ def start(srcRepo,srcBranch,jobName,buildAgentType,buildLocation) {
 						}
 					}
 				}
-			}
-			stage('stash') {
 				sh "du -sch;"
 				stash name: 'context'
 			}
@@ -83,16 +82,14 @@ def start(srcRepo,srcBranch,jobName,buildAgentType,buildLocation) {
 	}//master node end
 
 	//parallel expansion around available nodes
-	echo "Preparing for distributed sanitycheck across all available ${buildAgentType}-${buildLocation}-64gb nodes"
+	echo "Preparing for distributed sanitycheck across all available nodes matching label: ${targetAgentLabel}"
 	def nodejobs = [:]
-	//hardcoded for prototyping
-	//todo: continue dev around Jenkins nodesByLabel() method
-	for (int i = 0; i < 2; i++) //SEE ALSO HARDCODED 2 IN RUNNER SCRIPT PARAMS & MASTER UNSTASH
+	for (int i = 0; i < numAvailAgents; i++)
 	{
-		def stageName = "sanitycheck-batch${i}"
 		def batchNumber = i + 1
+		def stageName = "sanitycheck-${batchNumber}/${numAvailAgents}"
 		nodejobs[stageName] = { ->
-		node("${buildAgentType}-${buildLocation}-64gb") {
+		node("${targetAgentLabel}") {
 			deleteDir()
 			unstash "ci"
 			unstash "context"
@@ -105,7 +102,7 @@ def start(srcRepo,srcBranch,jobName,buildAgentType,buildLocation) {
 							withEnv([	"ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
 										"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
 										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.10.3"]) {
-								sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh 2 ${batchNumber}"
+								sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh ${numAvailAgents} ${batchNumber}"
 							}
 						}
 						catch (err) {
@@ -134,7 +131,7 @@ def start(srcRepo,srcBranch,jobName,buildAgentType,buildLocation) {
 	node('master') {
 		//expand array of nodes & unstash results
 		dir('junit') {
-			for (int j = 0; j < 2; j++) 
+			for (int j = 0; j < numAvailAgents; j++) 
 			{
 				def batchNumber = j + 1
 				unstash "junit-${batchNumber}"
