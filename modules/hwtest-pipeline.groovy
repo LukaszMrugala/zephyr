@@ -98,7 +98,7 @@ def start(srcRepo,srcBranch,sdkVersion,testLocation,sanitycheckPlatforms) {
 						try {
 							withEnv([	"ZEPHYR_BASE=${WORKSPACE}/zephyrproject/zephyr",
 										"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
-										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-${sdkVersion}"]) {
+										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${sdkVersion}"]) {
 								sh "${WORKSPACE}/ci/modules/hwtest-runner.sh ${sanitycheckPlatform}"
 							}
 						}
