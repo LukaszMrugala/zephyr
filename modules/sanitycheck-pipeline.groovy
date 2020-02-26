@@ -16,6 +16,7 @@
 //	srcRepo - url to src repo, ssh:// urls recommended
 //		** Zephyr Dev-Ops automation account must have Gitlab 'Developer' role for CI to function **
 //	srcBranch - branch name, must exist
+//  sdkVersion - Zephyr SDK version string, eg: '0.10.3'
 //	jobName - short name for job to report to gitlab, eg: "merge-production".
 //  agentType - specifies which type of agent to build, currently we support 'vm' or 'nuc'
 //  buildLocation - specifies where to execute the build, currently we support 'jf' or 'sh'
@@ -38,7 +39,7 @@ def abort_build(jobName) {
 //  sanitycheck-runner.sh is called on each agent, with -B split options to divide & conquer the execution
 //  after execution is complete, each agent stashes aritfacts (currently just junit.xml) & transfers back to master
 //  Jenkins master then unstashes all artifacts & creates a junit composite for all tests
-def start(srcRepo,srcBranch,jobName,agentType,buildLocation) {
+def start(srcRepo,srcBranch,sdkVersion,jobName,agentType,buildLocation) {
 	//job-wide globals
 	def targetAgentLabel = "${agentType}-${buildLocation}"
 	def availAgents = nodesByLabel "${targetAgentLabel}"
@@ -55,6 +56,7 @@ def start(srcRepo,srcBranch,jobName,agentType,buildLocation) {
 				timeout(time: 5, unit: 'MINUTES') {
 					echo "srcRepo: ${srcRepo}"
 					echo "srcBranch: ${srcBranch}"
+					echo "sdkVersion: ${sdkVersion}"
 					dir('zephyrproject/zephyr') {
 						checkout changelog: true, poll: false, scm: [
 							$class: 'GitSCM',
@@ -101,7 +103,7 @@ def start(srcRepo,srcBranch,jobName,agentType,buildLocation) {
 						try {
 							withEnv([	"ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
 										"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
-										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.10.3"]) {
+										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${sdkVersion}"]) {
 								sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh ${numAvailAgents} ${batchNumber}"
 							}
 						}

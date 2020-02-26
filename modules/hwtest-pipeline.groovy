@@ -18,6 +18,7 @@
 //	srcRepo - url to src repo, ssh:// urls recommended
 //		** Zephyr Dev-Ops automation account must have Gitlab 'Developer' role for CI to function **
 //	srcBranch - branch name, must exist
+//  sdkVersion - Zephyr SDK version string, eg: '0.10.3'
 //	jobName - short name for job to report to gitlab, eg: merge-validation
 //	buildNodeLabel - Jenkins agent label to match for this build, eg: zephyr_swarm
 //  sanitycheckPlatforms - Sanitycheck option for platform specification, if any
@@ -38,7 +39,7 @@ def abort_build(jobName) {
 //  clone + west on master node, stashes wrkspc & then spins-off santitycheck
 //  run across mulitple agent containers. This is intended to speed-up the CI results
 //  for developer UX.
-def start(srcRepo,srcBranch,testLocation,sanitycheckPlatforms) {
+def start(srcRepo,srcBranch,sdkVersion,testLocation,sanitycheckPlatforms) {
 	node('master') {
 		echo sh(returnStdout: true, script: 'env') //dump env
 		skipDefaultCheckout() //we do our own parameterized checkout, below
@@ -51,6 +52,7 @@ def start(srcRepo,srcBranch,testLocation,sanitycheckPlatforms) {
 				timeout(time: 5, unit: 'MINUTES') {
 					echo "srcRepo: ${srcRepo}"
 					echo "srcBranch: ${srcBranch}"
+					echo "sdkVersion: ${sdkVersion}"
 					dir('zephyrproject/zephyr') {
 						checkout changelog: true, poll: false, scm: [
 							$class: 'GitSCM',
@@ -96,7 +98,7 @@ def start(srcRepo,srcBranch,testLocation,sanitycheckPlatforms) {
 						try {
 							withEnv([	"ZEPHYR_BASE=${WORKSPACE}/zephyrproject/zephyr",
 										"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
-										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.10.3"]) {
+										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-${sdkVersion}"]) {
 								sh "${WORKSPACE}/ci/modules/hwtest-runner.sh ${sanitycheckPlatform}"
 							}
 						}
