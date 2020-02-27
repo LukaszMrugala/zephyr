@@ -133,12 +133,12 @@ def start(srcRepo,srcBranch,sdkVersion,jobName,agentType,buildLocation) {
 	node('master') {
 		//expand array of nodes & unstash results
 		dir('junit') {
-			for (int j = 0; j < numAvailAgents; j++) 
-			{
+			for (int j = 0; j < numAvailAgents; j++) {
 				def batchNumber = j + 1
 				unstash "junit-${batchNumber}"
 			}
 		}
+	  try {
 		step([$class: 'JUnitResultArchiver', testResults: '**/junit/*.xml', healthScaleFactor: 1.0])
 			publishHTML (target: [
 			allowMissing: true,
@@ -148,7 +148,19 @@ def start(srcRepo,srcBranch,sdkVersion,jobName,agentType,buildLocation) {
 			reportFiles: 'index.html',
 			reportName: "Sanitycheck Junit Report"
 		])
-		updateGitlabCommitStatus name: "$jobName", state: "success"
+	  }
+	  catch (err) {
+		  catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
+      }
+      finally {
+		  catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
+      }
+
+		//use currentBuild.result from remotes to set final gitlab status
+		if(currentBuild.currentResult== "SUCCESS")
+			updateGitlabCommitStatus name: "$jobName", state: "success"
+		else 
+			updateGitlabCommitStatus name: "$jobName", state: "failed"
 	}
 }//start
 return this
