@@ -33,7 +33,7 @@ node('master') {
 	//  some poorly implemented plugins from latching onto our ci repo for 
 	//  polling later in the job
 	//
-	sh "git clone --depth 1 --single-branch --branch branch-detect ${ciRepoURL} ci"        
+	sh "git clone --depth 1 --single-branch --branch master ${ciRepoURL} ci"
 	//stash ci repo for use by other agents
 	stash name: 'ci'
 	//load modules from ci.git
