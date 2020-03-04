@@ -40,7 +40,7 @@ if [ -f "/container_env" ]; then
 fi
 
 #configure variable python path
-export PYTHONPATH=/usr/local_$ZEPHYR_BRANCH_BASE/lib/python3.8/site-packages
+export PYTHONPATH=$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib -name python3.* -print0)/site-packages
 export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
 
 # clean-up from previous runs
