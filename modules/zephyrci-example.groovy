@@ -1,66 +1,52 @@
-//Zephyr Dev-Ops Example CI Implementation
+//Zephyr CI
+//Internal Branches 
 // This file defines configuration & infrastruture entry-points for Intel's
 // internal Jenkins-Gitlab CI processes. This is the top-level configuration
-// file that defines branches supported and build/test-infrastructure.
-// This groovy script is intended to be executed from a Jenkins master as a
-// "Pipeline script" job, triggered from a gitlab/hub webhook with source repo
-// & branch-name as parameters.
+// file that defines branches supported, targets build/test-infrastructure and
+// performs initial checkout of srcBranch.
+
+// This code is designed to be executed from a Jenkins master as a "Pipeline script" 
+// job, triggered from a gitlab/hub webhook with source repo & branch-name params.
 //
-// You must configure this script to suit your branches & infrastructure.
+// You must configure this script to suit your branches & infrastructure!
 //
-// Configuration Instructions:
+// Instructions:
 //
 // Step 1: Define the CI repo URL
 def ciRepoURL = "ssh://git@gitlab.devtools.intel.com:29418/zephyrproject-rtos/ci.git"
 
-// Step 2: Define a unique job name to display in the CI pipeline:
-def jobName = "staging-sanitycheck-test"
+// Step 2: Define a unique job name to display in the CI pipeline, suggest $JOB_NAME to pickup Jenkins string:
+def jobName = "${JOB_NAME}"
 
-// Step 3: Define the branches & SDKs this job (& infrastructure!) supports
-//   Defined as:
-//		<map-key>: ["<branch_name>","<sdk version>","<uncommon_ancestor sha>"],
-//
-//	uncommon_ancestor is found by checking-out feature branch (eg v1.14-branch-intel)
-//		and doing visual search with git log --graph -OR- by running: 
-//			git log --reverse --boundary --format=%h HEAD ^origin/master | head -1
-//		then selecting the next commit (todo: some git-fu here)
-//
-//	You must validate that this method works for your repo & target branches! This is 
-//		a hastily implemented but simple method that's suitable for the tested repo.
-//
-def branchConfigs = [ 
-	"v1.14-branch-intel": ["0.10.3","247330d62a4b89fcf3900a160fbb195be78a55a9"],
-	"master": ["0.11.3","0"]
-//  master branch entry must be present & in last position, sha is a dont-care
-//  
-]
+// Step 3: In branch-detect.groovy, see instructions for configuring your branches & SD mappings
 
-// Step 4: Target infrastructure for this job, where the job will execute:
-def agentType = 'nuc_64gb'	//prefix of target Jenkins node label
-							//should be in format, <type>_<subtype>. 
-							//current support:
-							//  'vm_ssp' - SSP Ops VMs
-							//  'nuc_64gb' - NUC w/ 64GB RAM
-							
-def buildLocation = 'jf' 	//suffix of target Jenkins node label,
-							//indicates physical location of the 
-							//build agent
-							//current support:
-							//	'jf' - Jones-Farm/Oregon, USA
-							//  'sh' - Shanghai, China
+//buildConfig map global- receives detected branchBase, SDK version, etc
+def buildConfig= [:]
 
 // begin pipeline on the CI master...
 node('master') {
 	skipDefaultCheckout()
 	deleteDir()
 
-	//clone ci repo & stash for use by downstream build agents
+	//clone *CI* repo & stash for use by build agents
 	//  we're intentionally not using Jenkins internal git methods to keep 
 	//  some poorly implemented plugins from latching onto our ci repo for 
 	//  polling later in the job
 	//
-	sh "git clone --depth 1 --single-branch --branch master ${ciRepoURL} ci"        
+	sh "git clone --depth 1 --single-branch --branch branch-detect ${ciRepoURL} ci"        
+	//stash ci repo for use by other agents
 	stash name: 'ci'
+	//load modules from ci.git
+	def hwtest = load "${WORKSPACE}/ci/modules/hwtest-pipeline.groovy"
+	def sanitycheck = load "${WORKSPACE}/ci/modules/hwtest-pipeline.groovy"
+	def detect_branch = load "${WORKSPACE}/ci/modules/branch-detect.groovy"
+
+	//Parameter processing
+	// This pipeline is designed to be triggered via webhook with params
+	// for source repo & source branch. These parameters can be overridden
+	// in the Jenkins web UI using the "Build with Parameters" option.
+	// In this section, we start with default params from Jenkins & then 
+	// override with webhook-injected parameters, if they exist. 
 
 	//default to override values from Jenkins Job "Build with Parameters" dialog 
 	def srcRepo="${overrideSourceRepo}"
@@ -75,7 +61,7 @@ node('master') {
 	}
 
 	//at this point, we have everything we need to checkout the source...
-	stage('git-checkout') {
+	stage('git') {
 		updateGitlabCommitStatus name: "$jobName", state: "running"
 		echo "stage: git-checkout, params:"
 		echo "   srcRepo=${srcRepo}"
@@ -88,40 +74,53 @@ node('master') {
 					branches: [[name: "${srcBranch}"]],
 					userRemoteConfigs: [[url: "${srcRepo}"]]
 				]
+				//now we have a branch, but we don't know which build env to use
+				buildConfig=detect_branch.start()
+				echo "buildConfig: ${buildConfig}"
+				//safety-valve to prevent unsupported branches from crashing downstream agents. Here we fail nicely.
+				if( (buildConfig['branchBase']!="master") && (buildConfig['branchBase']!="v1.14-branch-intel") ) {
+					echo "Unexpected branchBase. ABORTING"
+					sh "false"
+				}
 			}
 		}
 	}
-
-	//now we look for the uncommon ancestor commit to identify branch lineage & select the correct build environment
-	stage('flavor detection') {
-		//iterate over our SDK config map, looking for a common-ancestor+1 in the feature branches... else is master
-		found=false
-		for (key in branchConfigs.keySet()) {
-			//check to see if we're at the end of the list
-			if (key=="master")
-				break
-
-			//for all other branches, we check for the ancestor sha
-			try {
-				sh "git -C $WORKSPACE/zephyrproject/zephyr merge-base --is-ancestor ${branchConfigs[key][1]} HEAD"
-				echo "sha ${branchConfigs[key][1]} FOUND, looks like branch ${key}."
-				found=true
-			}
-			catch (err) {
-				echo "${branchConfigs[key][1]} (branch ${key}) not found in srcBranch."
-				found=false
+	//run west init & update then stash build context for distribution to build/test agents
+	stage('west')
+	{
+		dir('zephyrproject') {
+			//wrap in a retry + timeout block since these are external repos & may timeout (todo: git-cache)
+			retry(5) {
+				timeout(time:  10, unit: 'MINUTES') {
+					sh "rm -rf .west && ~/.local/bin/west init -l zephyr && ~/.local/bin/west update"
+				}
 			}
 		}
-		if(found==false)
-			echo "Did not find any ancestors for the configured set of branches ${branchConfigs.keySet()}. Making the dangerous assumption that srcBranch can built with master env..."
-
-	//WIP... need to set build env on these results...
-
-		//always pass this silly stage
-		catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
-
+		tgtJob="hwtest-jf-v1.14-branch-intel"
+		sh "rm -rf ${WORKSPACE}/../${tgtJob} && mkdir -p ${WORKSPACE}/../${tgtJob} && cp -a zephyrproject ci ${WORKSPACE}/../${tgtJob}"
+		tgtJob="sanitycheck-jf-v1.14-branch-intel"
+		sh "rm -rf ${WORKSPACE}/../${tgtJob} && mkdir -p ${WORKSPACE}/../${tgtJob} && cp -a zephyrproject ci ${WORKSPACE}/../${tgtJob}"
+		//todo: array & iterate ... also make this less dangerous to jobs that may be running asap: fixme:
 	}
-	//disable while testing
-	//def zephyr_ci = load "$WORKSPACE/ci/modules/sanitycheck-pipeline.groovy"
-	//zephyr_ci.start(srcRepo,srcBranch,sdkVersion,jobName,agentType,buildLocation) 
-}
+
+	//now run set of Zephyr CI Jenkins jobs...
+	stage("call jobs") {
+		echo "buildConfig: ${buildConfig}"
+
+		if(buildConfig['branchBase']=="v1.14-branch-intel") {
+			//run sanitycheck
+			build job: 'sanitycheck-jf-v1.14-branch-intel', parameters: [
+				string(name: 'branchBase', value: "${buildConfig['branchBase']}"), 
+				string(name: 'sdkVersion', value: "${buildConfig['sdkVersion']}"),
+				string(name: 'buildLocation', value: "jf"),
+				string(name: 'agentType', value: "nuc_64gb")
+			]
+			//run hardware-test
+			build job: 'hwtest-jf-v1.14-branch-intel', parameters: [
+				string(name: 'branchBase', value: "${buildConfig['branchBase']}"), 
+				string(name: 'sdkVersion', value: "${buildConfig['sdkVersion']}"),
+				string(name: 'testLocation', value: "jf")
+			]
+		}
+	}
+}//node

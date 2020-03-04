@@ -2,22 +2,17 @@
 //	This is a Zephyr sanitycheck execution Jenkins pipeline supporting distributed execution.
 //  Execution is distributed across all agents with label matching the agent type & location parameters.
 //	Functions of this module:
-//		1. Clone source-branch
-//		2. Run west init & update
-//		3. Create a build-context stash & distribute to build agents
-//		4. Execute sanitycheck-runner in a parallel across agents
-//		5. Collect junit files from each agent & report failures in Jenkins build
-//		8. Report overall CI status back to gitlab
+//		1. Unstash previously prepared zephyr build context
+//		2. Execute sanitycheck-runner in a parallel across agents
+//		3. Collect junit files from each agent & report failures in Jenkins build
+//		4. Report task status back to gitlab
 //
 //bugs/todo:
 //  * break-out gitlab bits into it's own interface, make generic
 
 //Pipeline variables
-//	srcRepo - url to src repo, ssh:// urls recommended
-//		** Zephyr Dev-Ops automation account must have Gitlab 'Developer' role for CI to function **
-//	srcBranch - branch name, must exist
+//	baseBranch - 'master', 'v1.14-branch-intel', etc
 //  sdkVersion - Zephyr SDK version string, eg: '0.10.3'
-//	jobName - short name for job to report to gitlab, eg: "merge-production".
 //  agentType - specifies which type of agent to build, currently we support 'vm' or 'nuc'
 //  buildLocation - specifies where to execute the build, currently we support 'jf' or 'sh'
 
@@ -28,60 +23,21 @@ import groovy.transform.Field
 //  to the zephyrci-XXXXX pipeline if we are bailing-out so that gitlab does
 //  not show the pipeline as pending for the rest of time.
 def abort_build(jobName) {
-	updateGitlabCommitStatus name: "$jobName", state: "failed"
+	updateGitlabCommitStatus name: "$JOB_NAME", state: "failed"
 	currentBuild.result = 'ABORTED'
 	error("Cannot continue, job aborted. Email SSP Zephyr DevOps with link to this page.")
 }
 
 //start() - entrypoint from the top-level job call.
-//  clone + west on master node & stash build context + ci repo
 //  distributes stashes to all avail agents matching ($agentType-$buildLocation) label
 //  sanitycheck-runner.sh is called on each agent, with -B split options to divide & conquer the execution
 //  after execution is complete, each agent stashes aritfacts (currently just junit.xml) & transfers back to master
 //  Jenkins master then unstashes all artifacts & creates a junit composite for all tests
-def start(srcRepo,srcBranch,sdkVersion,jobName,agentType,buildLocation) {
+def run(branchBase,sdkVersion,agentType,buildLocation) {
 	//job-wide globals
 	def targetAgentLabel = "${agentType}-${buildLocation}"
 	def availAgents = nodesByLabel "${targetAgentLabel}"
 	int numAvailAgents = availAgents.size()
-
-	node('master') {
-		echo sh(returnStdout: true, script: 'env') //dump env
-		skipDefaultCheckout() //we do our own parameterized checkout, below
-		deleteDir() //clean workspace
-		try {
-			stage('git-west-stash') {
-				updateGitlabCommitStatus name: "$jobName", state: "running"
-				unstash 'ci'
-				timeout(time: 5, unit: 'MINUTES') {
-					echo "srcRepo: ${srcRepo}"
-					echo "srcBranch: ${srcBranch}"
-					echo "sdkVersion: ${sdkVersion}"
-					dir('zephyrproject/zephyr') {
-						checkout changelog: true, poll: false, scm: [
-							$class: 'GitSCM',
-							branches: [[name: "${srcBranch}"]],
-							userRemoteConfigs: [[url: "${srcRepo}"]]
-						]
-					}
-				}
-				dir('zephyrproject') {
-					//wrap in a retry + timeout block since these are external repo hits
-					//todo: git-cache
-					retry(5) {
-						timeout(time:  5, unit: 'MINUTES') {
-							sh "rm -rf .west && ~/.local/bin/west init -l zephyr && ~/.local/bin/west update" 
-						}
-					}
-				}
-				sh "du -sch;"
-				stash name: 'context'
-			}
-		}//try
-		catch(err) {
-			abort_build(jobName)
-		}
-	}//master node end
 
 	//parallel expansion around available nodes
 	echo "Preparing for distributed sanitycheck across all available nodes matching label: ${targetAgentLabel}"
@@ -92,8 +48,8 @@ def start(srcRepo,srcBranch,sdkVersion,jobName,agentType,buildLocation) {
 		def stageName = "sanitycheck-${batchNumber}/${numAvailAgents}"
 		nodejobs[stageName] = { ->
 		node("${targetAgentLabel}") {
+			updateGitlabCommitStatus name: "$JOB_NAME-$stageName", state: "running"
 			deleteDir()
-			unstash "ci"
 			unstash "context"
 				stage("${stageName}") {
 					dir('zephyrproject/zephyr') {
@@ -103,18 +59,22 @@ def start(srcRepo,srcBranch,sdkVersion,jobName,agentType,buildLocation) {
 						try {
 							withEnv([	"ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
 										"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
-										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${sdkVersion}"]) {
+										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${sdkVersion}",
+										"ZEPHYR_BRANCH_BASE=${branchBase}",
+										"PYTHONPATH=/usr/local_${branchBase}/lib/python3.8/site-packages"]) {
 								sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh ${numAvailAgents} ${batchNumber}"
 							}
 						}
 						catch (err) {
 							failed=true
 							echo "SANITYCHECK_FAILED"
+							updateGitlabCommitStatus name: "$JOB_NAME-$stageName", state: "failed"
 							catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { sh "false"}
 						}
 						finally {
 							if(!failed) {
 								echo "SANITYCHECK_SUCCESS"
+								updateGitlabCommitStatus name: "$JOB_NAME-$stageName", state: "success"
 								catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
 							}
 						}
@@ -129,38 +89,33 @@ def start(srcRepo,srcBranch,sdkVersion,jobName,agentType,buildLocation) {
 	}//for
 	parallel nodejobs
 
+//this block should probably move up one level...
+
 	//back at the master, report final status back to gitlab
 	node('master') {
-		//expand array of nodes & unstash results
-		dir('junit') {
-			for (int j = 0; j < numAvailAgents; j++) {
-				def batchNumber = j + 1
-				unstash "junit-${batchNumber}"
+		stage('junit report')
+		{
+			//expand array of nodes & unstash results
+			dir('junit') {
+				for (int j = 0; j < numAvailAgents; j++) {
+					def batchNumber = j + 1
+					unstash "junit-${batchNumber}"
+				}
+			}
+			//publish junit results
+			catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+				step([$class: 'JUnitResultArchiver', testResults: '**/junit/*.xml', healthScaleFactor: 1.0])
+					publishHTML (target: [
+					allowMissing: true,
+					alwaysLinkToLastBuild: false,
+					keepAll: false,
+					reportDir: '',
+					reportFiles: 'index.html',
+					reportName: "Sanitycheck Junit Report"
+				])
+				sh "true"
 			}
 		}
-	  try {
-		step([$class: 'JUnitResultArchiver', testResults: '**/junit/*.xml', healthScaleFactor: 1.0])
-			publishHTML (target: [
-			allowMissing: true,
-			alwaysLinkToLastBuild: false,
-			keepAll: false,
-			reportDir: '',
-			reportFiles: 'index.html',
-			reportName: "Sanitycheck Junit Report"
-		])
-	  }
-	  catch (err) {
-		  catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
-      }
-      finally {
-		  catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
-      }
-
-		//use currentBuild.result from remotes to set final gitlab status
-		if(currentBuild.currentResult== "SUCCESS")
-			updateGitlabCommitStatus name: "$jobName", state: "success"
-		else 
-			updateGitlabCommitStatus name: "$jobName", state: "failed"
 	}
 }//start
 return this

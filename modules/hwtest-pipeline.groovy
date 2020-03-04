@@ -4,24 +4,39 @@
 //
 //	This is a Zephyr sanitycheck execution Jenkins pipeline dedicated to HW testing
 //	Functions of this module:
-//		1. Clone source-branch
-//		2. Run west init & update
-//		3. Create a build-context stash & distribute to build agent
-//		4. Execute hwtest-runner
-//		5. Collect junit files & report failures to Jenkins master
-//		8. Report overall CI status back to gitlab
+//		1. Distribute previously assembled build-context across all build agents
+//		2. Execute hwtest-runner
+//		3. Collect junit files & report failures to Jenkins master
+//		4. Report task status back to gitlab
 //
-//bugs/todo:
+//
+// How to use:
+//  This module should be run as pipeline script in a parent Jenkins job, with the following parameters set:
+//  	baseBranch - 'v1.14-branch-intel','master'...
+//  	sdkVersion - Zephyr SDK version string, eg: '0.10.3'
+//		testLocation - Which infrastructure? Current options are 'sh' and 'jf'
+//		agentType - Jenkins agent label type to match for this build, eg: 'vm' or 'nuc_64gb'
+//  	sanitycheckPlatforms - Sanitycheck option for platform specification, if any
+//
+//  Example Pipeline script call:
+//
+//		import groovy.transform.Field
+//		//hwtest config & entrypoint
+//		node('master') {
+//		    //select sanitycheck platforms to run on this job
+//		    @Field String[] sanitycheckPlatforms = ['nucleo_f103rb','frdm_k64f']
+//
+//		    //load hwtest pipeline from ci.git & call with parameters
+//		    def hwtest = load "${WORKSPACE}/ci/modules/hwtest-pipeline.groovy"
+//
+//		    stash name: "context"
+//		    hwtest.run(baseBranch,sdkVersion,testLocation,agentType,sanitycheckPlatforms)
+//		}
+//
+//  Dev-Ops Hint: This job & its siblings are created automatically, see ansible playbooks.
+//
+// Bugs/todo:
 //  * break-out gitlab bits into it's own interface, make generic
-
-//Pipeline variables
-//	srcRepo - url to src repo, ssh:// urls recommended
-//		** Zephyr Dev-Ops automation account must have Gitlab 'Developer' role for CI to function **
-//	srcBranch - branch name, must exist
-//  sdkVersion - Zephyr SDK version string, eg: '0.10.3'
-//	jobName - short name for job to report to gitlab, eg: merge-validation
-//	buildNodeLabel - Jenkins agent label to match for this build, eg: zephyr_swarm
-//  sanitycheckPlatforms - Sanitycheck option for platform specification, if any
 
 //for @Field String
 import groovy.transform.Field
@@ -36,49 +51,15 @@ def abort_build(jobName) {
 }
 
 //start() - entrypoint from the top-level job call.
-//  clone + west on master node, stashes wrkspc & then spins-off santitycheck
-//  run across mulitple agent containers. This is intended to speed-up the CI results
-//  for developer UX.
-def start(srcRepo,srcBranch,sdkVersion,testLocation,sanitycheckPlatforms) {
-	node('master') {
-		echo sh(returnStdout: true, script: 'env') //dump env
-		skipDefaultCheckout() //we do our own parameterized checkout, below
-		deleteDir() //clean workspace
-		def jobName = "hwtest-${testLocation}"
-		try {
-			stage('git-west-stash') {
-				updateGitlabCommitStatus name: "$jobName", state: "running"
-				unstash 'ci'
-				timeout(time: 5, unit: 'MINUTES') {
-					echo "srcRepo: ${srcRepo}"
-					echo "srcBranch: ${srcBranch}"
-					echo "sdkVersion: ${sdkVersion}"
-					dir('zephyrproject/zephyr') {
-						checkout changelog: true, poll: false, scm: [
-							$class: 'GitSCM',
-							branches: [[name: "${srcBranch}"]],
-							userRemoteConfigs: [[url: "${srcRepo}"]]
-						]
-					}
-				}
-				dir('zephyrproject') {
-					//wrap in a retry + timeout block since these are external repo hits
-					//todo: git-cache
-					retry(5) {
-						timeout(time:  5, unit: 'MINUTES') {
-							sh "rm -rf .west && ~/.local/bin/west init -l zephyr && ~/.local/bin/west update" 
-						}
-					}
-				}
-				sh "du -sch;"
-				stash name: 'context'
-			}//stage
-		}//try
-		catch(err) {
-			abort_build(jobName)
-		}
-	}//master node end
+//  distributes stashes to all avail agents matching ($agentType-$testLocation) label
+//  hwtest-runner.sh is called on each agent matching node label
+//  after execution is complete, each agent stashes aritfacts (currently just junit.xml) & transfers back to master
+def run(branchBase,sdkVersion,testLocation,agentType,sanitycheckPlatforms) {
+	//job-wide globals
+	def targetAgentLabel = "${agentType}-${testLocation}"
+	def availAgents = nodesByLabel "${targetAgentLabel}"
 
+	//parallel expansion around target platforms
 	echo "Begin node expansion on target platforms: ${sanitycheckPlatforms}"
 	def nodejobs = [:]
 	for (int i = 0; i < sanitycheckPlatforms.size(); i++)
@@ -88,17 +69,16 @@ def start(srcRepo,srcBranch,sdkVersion,testLocation,sanitycheckPlatforms) {
 		nodejobs[stageName] = { ->
 			node("hwtest-${testLocation}-${sanitycheckPlatform}") {
 				failed=false
-
 				stage("${stageName}") {
 					unstash 'context'
-					unstash 'ci'
 					//call our runner shell script from zephyr tree
 					dir('zephyrproject/zephyr') {
-						//withEnv block is temporary... debugging env vars not sticking from -runner.sh
 						try {
+							//this env block is temporary. debugging env vars not sticking from runner script
 							withEnv([	"ZEPHYR_BASE=${WORKSPACE}/zephyrproject/zephyr",
 										"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
-										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${sdkVersion}"]) {
+										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${sdkVersion}",
+										"ZEPHYR_BRANCH_BASE=${branchBase}"]) {
 								sh "${WORKSPACE}/ci/modules/hwtest-runner.sh ${sanitycheckPlatform}"
 							}
 						}
@@ -126,14 +106,15 @@ def start(srcRepo,srcBranch,sdkVersion,testLocation,sanitycheckPlatforms) {
 	parallel nodejobs
 
 	//back at the master, report final status back to gitlab
+	//todo: this code should be moved-up one level... have two implementations in two places right now
 	node('master') {
 		def jobName = "hwtest-${testLocation}"
 		//expand array of platforms & unstash results from each test
 		dir('junit') {
-            for (int j = 0; j < sanitycheckPlatforms.size(); j++)
-            {
+			for (int j = 0; j < sanitycheckPlatforms.size(); j++)
+			{
 				def plat = sanitycheckPlatforms[j]
-                unstash "junit-${testLocation}-${plat}"
+				unstash "junit-${testLocation}-${plat}"
 			}
 		}
 		step([$class: 'JUnitResultArchiver', testResults: '**/junit/*.xml', healthScaleFactor: 1.0])
@@ -145,7 +126,11 @@ def start(srcRepo,srcBranch,sdkVersion,testLocation,sanitycheckPlatforms) {
 			reportFiles: 'index.html',
 			reportName: "Sanitycheck Junit Report"
 		])
-		updateGitlabCommitStatus name: "$jobName", state: "success"
+        //ignore failures in junit publisher- this stage should always pass
+        catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
 	}
 }//start
 return this
+
+
+

@@ -25,7 +25,7 @@
 #       any other result indicates at least one failure exists
 #####################################################################################
 echo "ooooooooooooooooooooooooooooooooooooooooo"
-echo "  Zephyr Sanitycheck Runner starting..."
+echo "  Zephyr HW Test Runner starting..."
 echo "ooooooooooooooooooooooooooooooooooooooooo"
 echo "Running in ZEPHYR_BASE=$ZEPHYR_BASE on $(hostname -f)"
 
@@ -39,6 +39,10 @@ if [ -f "/container_env" ]; then
 	source /container_env	#container specific overrides, if any
 fi
 
+#configure variable python path
+export PYTHONPATH=/usr/local_$ZEPHYR_BRANCH_BASE/lib/python3.8/site-packages
+export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
+
 # clean-up from previous runs
 echo "Cleaning output directories..."
 rm -rf $ZEPHYR_BASE/run1
@@ -50,6 +54,10 @@ mkdir -p junit
 ###############################################################################
 echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
 echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
+echo ZEPHYR_BRANCH_BASE=$ZEPHYR_BRANCH_BASE
+echo PYTHONPATH=$PYTHONPATH
+echo PATH=$PATH
+echo cmake="path:$(which cmake), version: $(cmake --version)"
 echo PLATFORM_OPTS=$1
 echo http_proxy=$http_proxy
 echo https_proxy=$https_proxy
