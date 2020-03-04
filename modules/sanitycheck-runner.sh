@@ -42,6 +42,11 @@ if [ -f "/container_env" ]; then
 	source /container_env	#container specific overrides, if any
 fi
 
+
+#configure variable python path
+export PYTHONPATH=/usr/local_$ZEPHYR_BRANCH_BASE/lib/python3.8/site-packages
+export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
+
 # clean-up from previous runs
 echo "Cleaning output directories..."
 rm -rf $ZEPHYR_BASE/run1
@@ -55,6 +60,9 @@ mkdir -p junit
 ###############################################################################
 echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
 echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
+echo PYTHONPATH=$PYTHONPATH
+echo PATH=$PATH
+echo cmake="path:$(which cmake), version: $(cmake --version)"
 echo BATCH_TOTAL=$1
 echo BATCH_NUMBER=$2
 echo PLATFORM_OPTS=$3
@@ -64,7 +72,7 @@ echo no_proxy=$no_proxy
 
 # Sanitycheck configuration & command-line generation
 # All default options EXCEPT -N for ninja build
-export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N"
+export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N -pnative_posix"
 export SC_CMD1="$SC_CMD_BASE -B $2/$1 $3 -O $ZEPHYR_BASE/run1 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
 export SC_CMD2="$SC_CMD_BASE -f $3 -O $ZEPHYR_BASE/run2 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
 export SC_CMD3="$SC_CMD_BASE -f $3 -O $ZEPHYR_BASE/run3 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
