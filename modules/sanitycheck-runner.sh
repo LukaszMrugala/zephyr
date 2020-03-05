@@ -71,16 +71,32 @@ echo no_proxy=$no_proxy
 
 # Sanitycheck configuration & command-line generation
 # All default options EXCEPT -N for ninja build
+export TESTCASES="./testcases"
 export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N"
-export SC_CMD1="$SC_CMD_BASE -B $2/$1 $3 -O $ZEPHYR_BASE/run1 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
+export SC_CMD_SAVE_TESTS="$SC_CMD_BASE -B $2/$1 --save-tests $TESTCASES"
+export SC_CMD1="$SC_CMD_BASE -B $2/$1 $3 -O $ZEPHYR_BASE/run1 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml --load-tests $TESTCASES"
 export SC_CMD2="$SC_CMD_BASE -f $3 -O $ZEPHYR_BASE/run2 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
 export SC_CMD3="$SC_CMD_BASE -f $3 -O $ZEPHYR_BASE/run3 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
 # note that we overwrite the junit output on purpose as only results for the last run are relevant
-
 echo "Sanitycheck command-lines:"
+echo "save: $SC_CMD_SAVE_TESTS"
 echo "run1: $SC_CMD1"
 echo "run2: $SC_CMD2"
 echo "run3: $SC_CMD3"
+
+# extract default testcases
+$SC_CMD_SAVE_TESTS
+# if testcase failure allowFail file for this branch exists, apply it to testcase file
+if [ -f "../../ci/allowlist/sanitycheck-$ZEPHYR_BRANCH_BASE.allowFail" ]; then
+	#get SC_ALLOWED_TO_FAIL array for this branch
+	source "../../ci/allowlist/sanitycheck-$ZEPHYR_BRANCH_BASE.allowFail"
+	#iterate through list of fail-able testcases, erasing line from $TESTCASES if found
+	for tc in "${SC_ALLOWED_TO_FAIL[@]}"; do
+		#use sed to whack any lines that have exact matches
+		echo "Removing testcase: $tc"
+		sed -i "\#$tc#d" $TESTCASES
+	done
+fi
 
 echo "Starting sanitycheck run w/ retries"
 $SC_CMD1 || sleep 10; $SC_CMD2 ||  sleep 10; $SC_CMD3

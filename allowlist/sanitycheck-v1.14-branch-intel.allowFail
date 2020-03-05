@@ -1,0 +1,9 @@
+# Sanitycheck test-cases that are allowed to fail without triggering CI run failure
+#   This is a simple bash array which is sourced into the -runner.sh & then used to
+#   delete testcases before starting a run
+SC_ALLOWED_TO_FAIL=(
+	"tests/kernel/sched/schedule_api,kernel.sched,mps2_an385,arm"
+	"tests/kernel/sched/schedule_api,kernel.sched.multiq,mps2_an385,arm"
+	"tests/shell,shell,qemu_x86_64,x86_64"
+)
+
