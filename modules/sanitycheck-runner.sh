@@ -59,6 +59,7 @@ mkdir -p junit
 ###############################################################################
 echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
 echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
+echo ZEPHYR_BRANCH_BASE=$ZEPHYR_BRANCH_BASE
 echo PYTHONPATH=$PYTHONPATH
 echo PATH=$PATH
 echo cmake="path:$(which cmake), version: $(cmake --version)"
@@ -74,9 +75,12 @@ echo no_proxy=$no_proxy
 export TESTCASES="./testcases"
 export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N"
 export SC_CMD_SAVE_TESTS="$SC_CMD_BASE -B $2/$1 --save-tests $TESTCASES"
-export SC_CMD1="$SC_CMD_BASE -B $2/$1 $3 -O $ZEPHYR_BASE/run1 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml --load-tests $TESTCASES"
-export SC_CMD2="$SC_CMD_BASE -f $3 -O $ZEPHYR_BASE/run2 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
-export SC_CMD3="$SC_CMD_BASE -f $3 -O $ZEPHYR_BASE/run3 --detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
+if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch-intel" ]; then
+	REPORT_OPT="--detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
+fi
+export SC_CMD1="$SC_CMD_BASE -B $2/$1 $3 -O $ZEPHYR_BASE/run1 $REPORT_OPT --load-tests $TESTCASES"
+export SC_CMD2="$SC_CMD_BASE -f $3 -O $ZEPHYR_BASE/run2 $REPORT_OPT"
+export SC_CMD3="$SC_CMD_BASE -f $3 -O $ZEPHYR_BASE/run3 $REPORT_OPT"
 # note that we overwrite the junit output on purpose as only results for the last run are relevant
 echo "Sanitycheck command-lines:"
 echo "save: $SC_CMD_SAVE_TESTS"
