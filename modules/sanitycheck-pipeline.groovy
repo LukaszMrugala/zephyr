@@ -60,8 +60,7 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 							withEnv([	"ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
 										"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
 										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${sdkVersion}",
-										"ZEPHYR_BRANCH_BASE=${branchBase}",
-										"PYTHONPATH=/usr/local_${branchBase}/lib/python3.8/site-packages"]) {
+										"ZEPHYR_BRANCH_BASE=${branchBase}"]) {
 								sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh ${numAvailAgents} ${batchNumber}"
 							}
 						}
