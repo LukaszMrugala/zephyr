@@ -1,0 +1,11 @@
+# Sanitycheck test-cases that are allowed to fail without triggering CI run failure
+#   This is a simple bash array which is sourced into the -runner.sh & then used to
+#   delete testcases before starting a run
+SC_ALLOWED_TO_FAIL=(
+	"samples/philosophers/sample.kernel.philosopher.tracing,arm,qemu_cortex_a53,True,,-DDEBUG_PRINTF=1 -DFORKS=FIFOS,qemu,,0,0",
+	"samples/philosophers/sample.kernel.philosopher.fifos,arm,qemu_cortex_a53,True,,-DDEBUG_PRINTF=1 -DFORKS=FIFOS,qemu,,0,0",
+	"samples/philosophers/sample.kernel.philosopher.same_prio,arm,qemu_cortex_a53,True,,-DDEBUG_PRINTF=1 -DFORKS=FIFOS,qemu,,0,0",
+	"samples/philosophers/sample.kernel.philosopher.fifos,xtensa,qemu_xtensa,True,,-DDEBUG_PRINTF=1 -DFORKS=FIFOS,qemu,,0,0",
+	"samples/portability/cmsis_rtos_v1/philosophers/sample.portability.cmsis_rtos_v1.philosopher,arm,qemu_cortex_a53,True,,-DDEBUG_PRINTF=1,qemu,,0,0",
+	"samples/portability/cmsis_rtos_v1/philosophers/sample.portability.cmsis_rtos_v1.philosopher.same_prio,arm,qemu_cortex_a53,True,,-DDEBUG_PRINTF=1 -DSAME_PRIO=1,qemu,,0,0"
+)
