@@ -2,10 +2,25 @@
 #   This is a simple bash array which is sourced into the -runner.sh & then used to
 #   delete testcases before starting a run
 SC_ALLOWED_TO_FAIL=(
-	"samples/philosophers/sample.kernel.philosopher.tracing,arm,qemu_cortex_a53,True,,-DDEBUG_PRINTF=1 -DFORKS=FIFOS,qemu,,0,0",
-	"samples/philosophers/sample.kernel.philosopher.fifos,arm,qemu_cortex_a53,True,,-DDEBUG_PRINTF=1 -DFORKS=FIFOS,qemu,,0,0",
-	"samples/philosophers/sample.kernel.philosopher.same_prio,arm,qemu_cortex_a53,True,,-DDEBUG_PRINTF=1 -DFORKS=FIFOS,qemu,,0,0",
-	"samples/philosophers/sample.kernel.philosopher.fifos,xtensa,qemu_xtensa,True,,-DDEBUG_PRINTF=1 -DFORKS=FIFOS,qemu,,0,0",
-	"samples/portability/cmsis_rtos_v1/philosophers/sample.portability.cmsis_rtos_v1.philosopher,arm,qemu_cortex_a53,True,,-DDEBUG_PRINTF=1,qemu,,0,0",
-	"samples/portability/cmsis_rtos_v1/philosophers/sample.portability.cmsis_rtos_v1.philosopher.same_prio,arm,qemu_cortex_a53,True,,-DDEBUG_PRINTF=1 -DSAME_PRIO=1,qemu,,0,0"
+	"sample.portability.cmsis_rtos_v1.philosopher.same_prio,arm,qemu_cortex_a53"
+	"sample.portability.cmsis_rtos_v1.philosopher.semaphores,arm,qemu_cortex_a53"
+	"sample.kernel.philosopher.fifos,xtensa,qemu_xtensa"
+	"sample.kernel.philosopher.lifos,xtensa,qemu_xtensa"
+	"sample.kernel.philosopher.semaphores,xtensa,qemu_xtensa"
+	"sample.kernel.philosopher.tracing,xtensa,qemu_xtensa"
+	"sample.kernel.philosopher.stacks,xtensa,qemu_xtensa"
+	"sample.kernel.philosopher.static,xtensa,qemu_xtensa"
+	"sample.kernel.philosopher.fifos,arm,qemu_cortex_a53"
+	"sample.kernel.philosopher.lifos,arm,qemu_cortex_a53"
+	"sample.kernel.philosopher,arm,qemu_cortex_a53"
+	"sample.kernel.philosopher.tracing,arm,qemu_cortex_a53"
+	"sample.kernel.philosopher.coop_only,arm,qemu_cortex_a53"
+	"sample.kernel.philosopher.semaphores,arm,qemu_cortex_a53"
+	"sample.kernel.philosopher.preempt_only,arm,qemu_cortex_a53"
+	"sample.kernel.philosopher.stacks,arm,qemu_cortex_a53"
+	"sample.kernel.philosopher.preempt_only,posix,native_posix"
+	"sample.portability.cmsis_rtos_v1.philosopher.same_prio,posix,native_posix"
+	"sample.kernel.philosopher.fifos,posix,native_posix"
+	"sample.display.sdl,posix,native_posix_64"
+	"kernel.timer.monotonic,arm,mps2_an385"
 )
