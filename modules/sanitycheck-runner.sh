@@ -74,18 +74,20 @@ echo no_proxy=$no_proxy
 # All default options EXCEPT -N for ninja build
 export TESTCASES="./testcases"
 export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N --inline-logs"
-export SC_CMD_SAVE_TESTS="$SC_CMD_BASE -B $2/$1 --save-tests $TESTCASES"
+export SC_CMD_SAVE_TESTS="$SC_CMD_BASE -B $2/$1 $3 --save-tests $TESTCASES"
+
+#handle branch differences in sanitycheck junit output
 if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch-intel" ]; then
-	REPORT_OPT="--detailed-report $ZEPHYR_BASE/junit/node$2-junit.xml"
+	export SC_CMD1="$SC_CMD_BASE -B $2/$1 -O $ZEPHYR_BASE/run1 --detailed-report $ZEPHYR_BASE/junit/node$2-junit1.xml --load-tests $TESTCASES"
+	export SC_CMD2="$SC_CMD_BASE -f -O $ZEPHYR_BASE/run2       --detailed-report $ZEPHYR_BASE/junit/node$2-junit2.xml"
+	export SC_CMD3="$SC_CMD_BASE -f -O $ZEPHYR_BASE/run3       --detailed-report $ZEPHYR_BASE/junit/node$2-junit3.xml"
 else if [ "$ZEPHYR_BRANCH_BASE" == "master" ]; then
-		REPORT_OPT="-o $ZEPHYR_BASE/junit"
+		export SC_CMD1="$SC_CMD_BASE -B $2/$1 --load-tests $TESTCASES"
+		export SC_CMD2="$SC_CMD_BASE -f"
+		export SC_CMD3="$SC_CMD_BASE -f"
 	fi
 fi
 
-export SC_CMD1="$SC_CMD_BASE -B $2/$1 $3 -O $ZEPHYR_BASE/run1 $REPORT_OPT --load-tests $TESTCASES"
-export SC_CMD2="$SC_CMD_BASE -f $3 -O $ZEPHYR_BASE/run2 $REPORT_OPT"
-export SC_CMD3="$SC_CMD_BASE -f $3 -O $ZEPHYR_BASE/run3 $REPORT_OPT"
-# note that we overwrite the junit output on purpose as only results for the last run are relevant
 echo "Sanitycheck command-lines:"
 echo "save: $SC_CMD_SAVE_TESTS"
 echo "run1: $SC_CMD1"
@@ -101,7 +103,7 @@ if [ -f "../../ci/allowlist/sanitycheck-$ZEPHYR_BRANCH_BASE.allowFail" ]; then
 	#iterate through list of fail-able testcases, erasing line from $TESTCASES if found
 	for tc in "${SC_ALLOWED_TO_FAIL[@]}"; do
 		#use sed to whack any lines that have exact matches
-		echo "Removing testcase: $tc"
+		echo "Skipping testcase: $tc"
 		sed -i "\#$tc#d" $TESTCASES
 	done
 fi
@@ -110,7 +112,11 @@ echo "Starting sanitycheck run w/ retries"
 $SC_CMD1 || sleep 10; $SC_CMD2 ||  sleep 10; $SC_CMD3
 SC_RESULT=$?
 
+#echo "Running junit-condenser..."
+#cd junit
+#python $WORKSPACE/ci/modules/sanitycheck-junit-condenser.py
+#cd -
+
 echo Done. SC_RESULT=$SC_RESULT.
-echo See $ZEPHYR_BASE/runXX and $ZEPHYR_BASE/junit for output.
 
 exit $SC_RESULT

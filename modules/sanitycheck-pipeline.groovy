@@ -78,8 +78,8 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 							}
 						}
 						//stash junit output for transfer back to master
-						dir ('junit') {
-							stash name: "junit-${batchNumber}", includes: '*.xml'
+						dir ('sanity-out') {
+							stash allowEmpty: true, name: "junit-${batchNumber}", includes: '*.xml'
 						}
 					}//dir
 				}//stage
@@ -103,15 +103,16 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 			}
 			//publish junit results
 			catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-				step([$class: 'JUnitResultArchiver', testResults: '**/junit/*.xml', healthScaleFactor: 1.0])
-					publishHTML (target: [
-					allowMissing: true,
-					alwaysLinkToLastBuild: false,
-					keepAll: false,
-					reportDir: '',
-					reportFiles: 'index.html',
-					reportName: "Sanitycheck Junit Report"
-				])
+	            step([$class: 'JUnitResultArchiver', testResults: '**/junit/*.xml', healthScaleFactor: 1.0])
+    	            publishHTML (target: [
+	                allowMissing: true,
+	                alwaysLinkToLastBuild: false,
+	                keepAll: false,
+	                reportDir: '',
+	                reportFiles: 'index.html',
+	                reportName: "Sanitycheck Junit Report"
+	            ])
+				//xunit thresholds: [passed(failureNewThreshold: '0', failureThreshold: '0', unstableNewThreshold: '0', unstableThreshold: '0')], tools: [JUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: '**/junit/*.xml', skipNoTestFiles: true, stopProcessingIfError: true)]
 				sh "true"
 			}
 		}
