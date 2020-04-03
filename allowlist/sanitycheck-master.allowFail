@@ -26,6 +26,7 @@ SC_ALLOWED_TO_FAIL=(
 	"sample.portability.cmsis_rtos_v1.philosopher.same_prio,posix,native_posix"
 	"sample.portability.cmsis_rtos_v1.philosopher,posix,native_posix"
 	"sample.kernel.philosopher.fifos,posix,native_posix"
+	"sample.kernel.philosopher.lifos,posix,native_posix"
 	"sample.display.sdl,posix,native_posix_64"
 	"kernel.timer.monotonic,arm,mps2_an385"
 )
