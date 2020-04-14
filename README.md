@@ -3,7 +3,7 @@ This is the production repo to contain Zephyr DevOPS CI integrations, configs, a
 # Zephyr @ Intel CI Documentation 
 
 # Zephyr CI Overview Gold-Deck
-[Zephyr Gold Deck Powerpoint](https://intel-my.sharepoint.com/:p:/p/christopher_g_turner/EfZ2TF9ElydPjpGBEAKiUkwBiFt5LFBZPI2aGO_HZnP7Wg?e=Bxeeho)
+[Zephyr Gold Deck Powerpoint](https://intel-my.sharepoint.com/:p:/p/christopher_g_turner/EfZ2TF9ElydPjpGBEAKiUkwBiFt5LFBZPI2aGO_HZnP7Wg?e=Bxeeho) - Goal is to mantain and update once a quarter. Contains overview of current work and future plans
 
 # CI Terminology
 * **Jenkins** - A popular open-source CI/CD tool. Zephyr DevOps operates several Jenkins master instances at zerobot2, zerobot-stg & zephyr-ci.
