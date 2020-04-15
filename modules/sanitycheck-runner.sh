@@ -53,8 +53,6 @@ rm -rf $ZEPHYR_BASE/run2
 rm -rf $ZEPHYR_BASE/run3
 rm -rf $ZEPHYR_BASE/junit
 
-mkdir -p junit
-
 # echo critical env values
 ###############################################################################
 echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
@@ -78,9 +76,9 @@ export SC_CMD_SAVE_TESTS="$SC_CMD_BASE -B $2/$1 $3 --save-tests $TESTCASES"
 
 #handle branch differences in sanitycheck junit output
 if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch-intel" ]; then
-	export SC_CMD1="$SC_CMD_BASE -O $ZEPHYR_BASE/run1 --detailed-report $ZEPHYR_BASE/junit/node$2-junit1.xml --load-tests $TESTCASES"
-	export SC_CMD2="$SC_CMD_BASE -f -O $ZEPHYR_BASE/run2       --detailed-report $ZEPHYR_BASE/junit/node$2-junit2.xml"
-	export SC_CMD3="$SC_CMD_BASE -f -O $ZEPHYR_BASE/run3       --detailed-report $ZEPHYR_BASE/junit/node$2-junit3.xml"
+	export SC_CMD1="$SC_CMD_BASE -B $2/$1 --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit1.xml --load-tests $TESTCASES"
+	export SC_CMD2="$SC_CMD_BASE -f       --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit2.xml"
+	export SC_CMD3="$SC_CMD_BASE -f       --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit3.xml"
 else if [ "$ZEPHYR_BRANCH_BASE" == "master" ]; then
 		export SC_CMD1="$SC_CMD_BASE --load-tests $TESTCASES"
 		export SC_CMD2="$SC_CMD_BASE -f"
