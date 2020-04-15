@@ -14,9 +14,9 @@
 #		Build environment is properly configured w/ python requirements for branch
 # Usage:
 #		cd <path to zephyr-tree> #aka ZEPHYR_BASE
-#		./hwtest_runner.sh <sanitycheck -p options>
+#		./hwtest_runner.sh <sanitycheck <platform> <availNodes> <nodeNumber> <tty>
 #			Example:
-#				./sanitycheck_runner.sh -pnative_posix
+#				./sanitycheck_runner.sh frdm_k64f 2 1 ttyACM0
 # Output:
 #		Sanitycheck output files are written to $ZEPHYR_BASE/run1
 #		Junit xml output is written to $ZEPHYR_BASE/junit
@@ -62,17 +62,19 @@ echo PLATFORM_OPTS=$1
 echo http_proxy=$http_proxy
 echo https_proxy=$https_proxy
 echo no_proxy=$no_proxy
+echo HOSTNAME=$(hostname)
+echo DEVICE TTY=$4
 
 # Sanitycheck configuration & command-line generation
 # All default options EXCEPT -N for ninja build
 export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N"
-export SC_CMD1="$SC_CMD_BASE -p $1 -O $ZEPHYR_BASE/run1 --device-testing --device-serial /dev/ttyACM0 --detailed-report $ZEPHYR_BASE/junit/junit-$1.xml"
+export SC_CMD1="$SC_CMD_BASE -p $1 -B $3/$2 --device-testing --device-serial /dev/$4"
 
 echo "Sanitycheck command-line:"
 echo "    $SC_CMD1"
 
 echo "Starting sanitycheck hwtest"
-$SC_CMD1 
+$SC_CMD1
 SC_RESULT=$?
 
 echo Done. SC_RESULT=$SC_RESULT.

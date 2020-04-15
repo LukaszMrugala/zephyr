@@ -94,16 +94,17 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 	node('master') {
 		stage('junit report')
 		{
-			//expand array of nodes & unstash results
-			dir('junit') {
-				for (int j = 0; j < numAvailAgents; j++) {
-					def batchNumber = j + 1
+			//expand array of nodes & unstash results into directories
+			for (int j = 0; j < numAvailAgents; j++) {
+				def batchNumber = j + 1
+				dir("junit-${batchNumber}") {
 					unstash "junit-${batchNumber}"
 				}
 			}
+
 			//publish junit results
 			catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-	            step([$class: 'JUnitResultArchiver', testResults: '**/junit/*.xml', healthScaleFactor: 1.0])
+	            step([$class: 'JUnitResultArchiver', testResults: '**/junit*/*.xml', healthScaleFactor: 1.0])
     	            publishHTML (target: [
 	                allowMissing: true,
 	                alwaysLinkToLastBuild: false,
@@ -112,7 +113,7 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 	                reportFiles: 'index.html',
 	                reportName: "Sanitycheck Junit Report"
 	            ])
-				//xunit thresholds: [passed(failureNewThreshold: '0', failureThreshold: '0', unstableNewThreshold: '0', unstableThreshold: '0')], tools: [JUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: '**/junit/*.xml', skipNoTestFiles: true, stopProcessingIfError: true)]
+//				xunit thresholds: [passed(failureNewThreshold: '0', failureThreshold: '0', unstableNewThreshold: '0', unstableThreshold: '0')], tools: [JUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: '**/junit*/*.xml', skipNoTestFiles: true, stopProcessingIfError: true)]
 				sh "true"
 			}
 		}
