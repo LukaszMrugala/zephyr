@@ -16,6 +16,7 @@ import getpass
 import requests
 import github.GithubException
 import traceback
+import extract_msg
 
 # Fetching the environmental variables set for GitHub Personal Access Token
 token = os.environ.get("GITHUB_TOKEN")
@@ -69,6 +70,26 @@ with open(os.environ.get("REPORT_PATH")) as csv_file:
     mycsv = csv.reader(csv_file, delimiter=",")
     mycsvl = list(mycsv)
 
+email_path=os.environ.get("EMAIL_PATH")
+f = r'email_path'
+print(f)
+msg = extract_msg.Message(f)
+msg_message = msg.body
+
+dictionary ={}
+list_of=re.split("[*]{3}",msg_message)
+for i in list_of:
+    pattern = r'^\sCID.*[}]'
+    second = re.search(pattern,i,re.MULTILINE | re.DOTALL)
+    if second:
+        pattern1 = r'^\WCID\s[\d]+'
+        pattern2 = r'.*[:].*[}]'
+        third = re.search(pattern1,i,re.MULTILINE | re.DOTALL)
+        fourth = re.search(pattern2,i,re.MULTILINE | re.DOTALL)
+        key = third.group(0)
+        value = "```"+fourth.group(0)+"```"
+        dictionary[key]=value
+
 # Compose a global search query to get a handler to paginated list of issues.
 # Create a final list by filtering all issues to just extract Coverity related issues
 # so that mapping them with the new coverity defects will be easier.
@@ -96,14 +117,25 @@ try:
 
         # not existing so create the github issue by calling make_github_issue()
         else:
-            title = "[Coverity CID :{r[0]}]{r[10]} in {r[11]}"
-            body = "Static code scan issues seen in File: {r[11]}" \
+             if cid in dictionary:
+                code=dictionary[cid]
+                body = "Static code scan issues seen in File: {r[11]}" \
+                   + "\n Category: {r[10]}\n Function: {r[12]}" \
+                   + "\n Component: {r[9]}\n CID: {r[0]}" \
+                   + "\n Please fix or provide comments to square " \
+                   +"Details:\n"+"```"+"code"+"```" \
+                   + "it off in coverity in the link: " \
+                   + "https://scan9.coverity.com/reports.htm#v32951/p12996"
+             else:
+                  body = "Static code scan issues seen in File: {r[11]}" \
                    + "\n Category: {r[10]}\n Function: {r[12]}" \
                    + "\n Component: {r[9]}\n CID: {r[0]}" \
                    + "\n Please fix or provide comments to square " \
                    + "it off in coverity in the link: " \
                    + "https://scan9.coverity.com/reports.htm#v32951/p12996"
-            make_github_issue(title.format(r = row),
+ 
+             title = "[Coverity CID :{r[0]}]{r[10]} in {r[11]}"
+             make_github_issue(title.format(r = row),
                               body.format(r = row),
                               ['bug', 'Coverity', 'area: '+ row[9]])
 
