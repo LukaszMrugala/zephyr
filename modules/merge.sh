@@ -280,7 +280,7 @@ echo "Disabled push as a safety measure until everything is in place. Push manua
 echo "########################################################################"
 
 #if ! git push origin HEAD:$MERGE_TO; then
-    echo "Merge/tag push failed for some reason. Manual intervention needed."
+#    echo "Merge/tag push failed for some reason. Manual intervention needed."
 #   exit 1
 #fi
 
