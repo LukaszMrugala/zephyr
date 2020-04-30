@@ -76,7 +76,7 @@ latest_tag()
 {
 # Find the most recent merge tag and get the commit id
 # This is hideous but it works for now.
-LATEST_TAG=`git log --tags --simplify-by-decoration --pretty="format:%ai %d" | sort -r | grep zephyr-v1.14.1-intel | sed '1!d' | awk -F "tag: " '{print $2}' | awk -F "," '{print $1}' | sed 's/)//'`
+LATEST_TAG=`git log --tags --simplify-by-decoration --pretty="format:%ai %d" | sort -r | grep "\-intel" | sed '1!d' | awk -F "tag: " '{print $2}' | awk -F "," '{print $1}' | sed 's/)//'`
 TAG_COMMIT=`git show $LATEST_TAG | grep commit | awk '{print $2}'`
 echo "LATEST TAG: $LATEST_TAG"
 echo "TAG COMMIT: $TAG_COMMIT" 
@@ -158,7 +158,7 @@ echo "HEAD: $head_rev"
 
 if [ $head_rev == $TAG_COMMIT ]; then
     #echo "There is nothing new on the $BRANCH branch. NOT TAGGING."
-    echo "Weekly_tagger_v1.14-branch-intel: no changes for this week. NO TAG FOR $WW" > $TAG_STATUS
+    echo "Weekly_tagger_v1.14-branch-intel: no changes for this week. NO TAG FOR $WW." > $TAG_STATUS
 else
     echo -e "There are changes on the v1.14-branch-intel branch. Tagging.\n"
     make_tag
