@@ -112,7 +112,7 @@ git tag -a -m "$TAG" $TAG
 
 function run_sanity()
 {
-    bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pqemu_x86" || error=true
+    bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1" || error=true
 }
 
 # Check for the SDK required
