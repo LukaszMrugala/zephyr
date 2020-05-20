@@ -48,7 +48,6 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 		def stageName = "sanitycheck-${batchNumber}/${numAvailAgents}"
 		nodejobs[stageName] = { ->
 		node("${targetAgentLabel}") {
-			updateGitlabCommitStatus name: "$JOB_NAME-$stageName", state: "running"
 			deleteDir()
 			unstash "context"
 				stage("${stageName}") {
@@ -67,13 +66,11 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 						catch (err) {
 							failed=true
 							echo "SANITYCHECK_FAILED"
-							updateGitlabCommitStatus name: "$JOB_NAME-$stageName", state: "failed"
 							catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { sh "false"}
 						}
 						finally {
 							if(failed==false) {
 								echo "SANITYCHECK_SUCCESS"
-								updateGitlabCommitStatus name: "$JOB_NAME-$stageName", state: "success"
 								catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
 							}
 						}
