@@ -71,7 +71,7 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 							catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { sh "false"}
 						}
 						finally {
-							if(!failed) {
+							if(failed==false) {
 								echo "SANITYCHECK_SUCCESS"
 								updateGitlabCommitStatus name: "$JOB_NAME-$stageName", state: "success"
 								catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
