@@ -52,26 +52,14 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 			unstash "context"
 				stage("${stageName}") {
 					dir('zephyrproject/zephyr') {
-						failed=false
 						//call our runner shell script
 						//withEnv block is temporary... debugging env vars not sticking from -runner.sh
-						try {
-							withEnv([	"ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
-										"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
-										"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${sdkVersion}",
-										"ZEPHYR_BRANCH_BASE=${branchBase}"]) {
+						catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') { 
+							withEnv(["ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
+									"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
+									"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${sdkVersion}",
+									"ZEPHYR_BRANCH_BASE=${branchBase}"]) {
 								sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh ${numAvailAgents} ${batchNumber}"
-							}
-						}
-						catch (err) {
-							failed=true
-							echo "SANITYCHECK_FAILED"
-							catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { sh "false"}
-						}
-						finally {
-							if(failed==false) {
-								echo "SANITYCHECK_SUCCESS"
-								catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { sh "true"}
 							}
 						}
 						//stash junit output for transfer back to master
@@ -85,12 +73,9 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 	}//for
 	parallel nodejobs
 
-//this block should probably move up one level...
-
-	//back at the master, report final status back to gitlab
+	//back at the master, expand junit archives from build nodes
 	node('master') {
-		stage('junit report')
-		{
+		stage('junit report') {
 			//expand array of nodes & unstash results into directories
 			for (int j = 0; j < numAvailAgents; j++) {
 				def batchNumber = j + 1
@@ -99,19 +84,19 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 				}
 			}
 
-			//publish junit results
-			catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-	            step([$class: 'JUnitResultArchiver', testResults: '**/junit*/*.xml', healthScaleFactor: 1.0])
-    	            publishHTML (target: [
-	                allowMissing: true,
-	                alwaysLinkToLastBuild: false,
-	                keepAll: false,
-	                reportDir: '',
-	                reportFiles: 'index.html',
-	                reportName: "Sanitycheck Junit Report"
-	            ])
+			//publish junit results.
+			//wrap in catchError block w/ buildResult=null to prevent failing entire build if there are no junit files
+			catchError(buildResult: null, stageResult: 'FAILURE') {
+				step([$class: 'JUnitResultArchiver', testResults: '**/junit*/*.xml', healthScaleFactor: 1.0])
+					publishHTML (target: [
+					allowMissing: true,
+					alwaysLinkToLastBuild: false,
+					keepAll: false,
+					reportDir: '',
+					reportFiles: 'index.html',
+					reportName: "Sanitycheck Junit Report"
+				])
 //				xunit thresholds: [passed(failureNewThreshold: '0', failureThreshold: '0', unstableNewThreshold: '0', unstableThreshold: '0')], tools: [JUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: '**/junit*/*.xml', skipNoTestFiles: true, stopProcessingIfError: true)]
-				sh "true"
 			}
 		}
 	}
