@@ -1,0 +1,70 @@
+Merge Tagging 
+=============
+
+Merges happen. When they do, we "bookmark" them by tagging. Tags provide a quick point of reference to specific commits. We use tags on the v1.14-branch-intel and master-intel branches to flag merges, and for the use of other BU's, like EHL.
+
+Our Tag Format
+--------------
+
+For automated merges from "upstream" branches to our internal *-intel branches, we use tags based off the VERSION file in the toplevel of the Zephyr repo.
+
+
+Examples
+--------
+
+VERSION on master-intel:
+
+VERSION_MAJOR = 2
+VERSION_MINOR = 3
+PATCHLEVEL = 0
+VERSION_TWEAK = 0
+EXTRAVERSION = rc1
+
+
+v1.14-branch-intel:
+
+VERSION_MAJOR = 1
+VERSION_MINOR = 14
+PATCHLEVEL = 2
+VERSION_TWEAK = 0
+EXTRAVERSION = intel-rc3
+
+
+Example Tags:
+ 
+zephyr-v2.3.0-rc1-ww21.3 (master-intel)
+zephyr-v1.14.2-intel-rc3-ww21.3.2  (v1.14-branch-intel)
+
+Please note the above tags are made up to match the VERSION file examples, and may not actually exist in the repo.
+
+Tags take the following format:
+
+<PREFIX>-v<VERSION_MAJOR>.<VERSION_MINOR>.<PATCHLEVEL>-<EXTRAVERSION>-ww<WW.WD.n>
+
+PREFIX is simply "zephyr." VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL, and EXTRAVERSION
+come directly from the VERSION file. Note that VERSION_TWEAK is currently unused.
+
+The workweek, workday, and any "point" number are generated at the time of tagging. The first tag on a given day will simply be the WW and WD number, with Sunday as weekday 0. i.e. 21.3 (ww = 21, wd = 3, Wednesday)
+
+A subsequent tag on the same day would collide with the existing tag, so we add a "point" revision, which allows us to increment wantonly. 
+
+i.e. ww21.3.1, ww21.3.2, ww21.3.3. 
+
+zephyr-v1.14.2-intel-rc3-ww21.3.1
+zephyr-v1.14.2-intel-rc3-ww21.3.2
+zephyr-v1.14.2-intel-rc3-ww21.3.3
+
+You can then tell at a glance all three tags happened on the same day. Importantly, you can also tell at a glance there were multiple merges that day, and not just one. If we moved a tag, or deleted and retagged, that would obfuscate the multiple merges. 
+
+
+Scripts
+-------
+
+The scripts used in the automated merge jobs take into account all of the above and generate the tags accordingly. We have opted not key our tagging off the VERSION file as a process decision to help ensure we don't wind up with one-offs, inconsistent methods across branches, etc. It's also far easier to maintain. 
+
+In the unlikely event that we would need to generate a tag in a different format for auto-merges, we would advocate to make appropriate changes to the VERSION file to adjust. It that is not a feasible approach we would adjust the format, process, and scripts as needed.
+
+Note that this process SPECIFICALLY applies to the automate merges from upstream for the v1.14-branch-intel and master-intel branches, as well as the weekly tagging job on v1.14-branch-intel for EHL needs. It will likely be extended to other internal branches down the road, and has no bearing on the external Zephyr project repo. It's for internal use only.
+
+
+
