@@ -75,8 +75,7 @@ VERSION="v"$MAJOR"."$MINOR"."$PATCH"-"$EXTRA
 latest_tag()
 {
 # Find the most recent merge tag and get the commit id
-# This is hideous but it works for now.
-LATEST_TAG=`git log --tags --simplify-by-decoration --pretty="format:%ai %d" | sort -r | grep "\-intel" | sed '1!d' | awk -F "tag: " '{print $2}' | awk -F "," '{print $1}' | sed 's/)//'`
+LATEST_TAG=`git describe --abbrev=0`
 TAG_COMMIT=`git show $LATEST_TAG | grep commit | awk '{print $2}'`
 echo "LATEST TAG: $LATEST_TAG"
 echo "TAG COMMIT: $TAG_COMMIT" 
