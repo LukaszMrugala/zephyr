@@ -3,11 +3,9 @@
 #   delete testcases before starting a run
 #
 SC_ALLOWED_TO_FAIL=(
-	"samples/gui/lvgl,sample.gui.lvgl"
 )
 
 
 # Notes:
 #
-# lvgl - testcases for all platforms are currently disabled, ci limitation
-## lvgl tests require external internet connectivity for a git clone operation which is not currently supported across all build agents
+# (none)

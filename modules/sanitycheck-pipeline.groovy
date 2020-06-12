@@ -58,7 +58,11 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 							withEnv(["ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
 									"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
 									"ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${sdkVersion}",
-									"ZEPHYR_BRANCH_BASE=${branchBase}"]) {
+									"ZEPHYR_BRANCH_BASE=${branchBase}",
+									"http_proxy=http://proxy-chain.intel.com:911",
+									"https_proxy=http://proxy-chain.intel.com:911",
+									"HTTP_PROXY=http://proxy-chain.intel.com:911",
+									"HTTPS_PROXY=http://proxy-chain.intel.com:911"]) {
 								sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh ${numAvailAgents} ${batchNumber}"
 							}
 						}
