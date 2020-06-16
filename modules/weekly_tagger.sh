@@ -9,7 +9,6 @@
 ######################################################################
 
 export ZEPHYR_BRANCH_BASE=v1.14-branch-intel
-export WORKDIR=/srv/build
 
 REPO_DIR="zephyr"
 BRANCH="v1.14-branch-intel"
@@ -26,17 +25,11 @@ fi
 
 function clone_repo()
 {
-# Nuke pre-existing repo, if any.
-if [ -d $REPO_DIR ]; then
-    echo "Nuking pre-existing zephyr repo."
-    rm -rf  $REPO_DIR
-    echo -e "Done\n"
-fi
 
 git clone $REPO_URL $REPO_DIR
 cd $REPO_DIR
 
-# Checkout the branches. Assumes that both branches exist.
+# Checkout the branch.
 echo "Checking out $BRANCH"
 if ! git checkout origin/$BRANCH -b $BRANCH; then
     echo "Can't find a $BRANCH branch!"
@@ -132,18 +125,6 @@ git tag -a -m "$TAG" $TAG
 git push origin $TAG
 }
 
-
-echo; echo
-echo "WORKDIR: $WORKDIR"
-echo "REPO_DIR: $REPO_DIR"
-
-# Set up WORKDIR, if it doesn't already exist
-if [ ! -d $WORKDIR ]; then
-    mkdir -p $WORKDIR
-    chmod 777 $WORKDIR
-fi
-
-cd $WORKDIR
 
 clone_repo
 read_version

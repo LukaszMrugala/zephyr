@@ -1,35 +1,73 @@
 #!/bin/bash
+set -e
 
 #
-#  Merge automation script for the v1.14-branch -> v1.14-branch-intel merge
-#  - Script attempts to merge the upstream v1.14-branch into the v1.14-branch-intel branch
+#  Merge automation script for the master-intel and v1.14-branch-intel merges.
+#  - Script attempts to merge the upstream branch into the *-intel branch
 #  - Merge conflicts cause exit and manual intervention is required to resolve.
-#  - Merge push and tag push is currently gated pending a couple of changes that will follow shortly.
-#  - Manual push of merge and tag is required after successful sanitycheck run.
 #  - If sanitycheck fails, manual intervetion is required.
 #
 ####################################################################################################
 
-export ZEPHYR_BRANCH_BASE=v1.14-branch-intel
-export SDK_VER=zephyr-sdk-0.10.3
+# v1.14 or master
+BRANCH="$1"
+# true or false
+GATE="$2"
+
+echo "GATE is: $GATE"
+
+if [ "$GATE" == "" ]; then
+    echo "Gate is null. Will push and tag."
+    GATE="false"
+elif [ "$GATE" == "true" ]; then
+    echo "Gate is true. Gating the push and tag."
+elif [ "$GATE" == "false" ]; then
+    echo "GATE is false. We will push and tag."
+else
+    echo "Gate value must be true, false, or null. I don't know what to do. Bye."
+    exit 1
+fi
+
+# Set up some things based on which branch we are on.
+if [ "$BRANCH" == "master" ]; then
+    echo "Branch is master."
+    export ZEPHYR_BRANCH_BASE="$BRANCH"
+    export SDK_VER=zephyr-sdk-0.11.3
+    MERGE_SOURCE="master"
+    MERGE_TO="master-intel"
+elif [ "$BRANCH" == "v1.14" ]; then
+    echo "Branch is v1.14"
+    export ZEPHYR_BRANCH_BASE="$BRANCH-branch-intel"
+    export SDK_VER=zephyr-sdk-0.10.3
+    MERGE_SOURCE="v1.14-branch"
+    MERGE_TO="v1.14-branch-intel"
+else
+    echo "You gave me a weird branch. Must be either "v1.14" or" master." Check your args."
+    echo "i.e. ./local_merge.sh v1.14 or ./local_merge.sh master"
+    exit 1
+fi
+
+echo "SOURCE: $MERGE_SOURCE"
+echo "MERGE_TO: $MERGE_TO"
+
 export ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/$SDK_VER
 export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
 export CCACHE_DISABLE=1
 export USE_CCACHE=0
-export WORKDIR=/srv/build
-export SCRIPT_PATH=$WORKSPACE/ci/scripts
+export SCRIPT_PATH=$WORKSPACE/ci/modules
 
 export PYTHONPATH="$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib -name python3.* -print)/site-packages:$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib64 -name python3.* -print)/site-packages"
 export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/lib/python3.6/site-packages/west:/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
 
 ZEPHYRPROJECT_DIR="zephyrproject"
 REPO_DIR="zephyr"
-export ZEPHYR_BASE=$WORKDIR/$ZEPHYRPROJECT_DIR/zephyr
+export ZEPHYR_BASE=$WORKSPACE/$ZEPHYRPROJECT_DIR/zephyr
 export SANITY_OUT=$ZEPHYR_BASE/sanity-out
+SC_STATUS_FILE=$SANITY_OUT/sc_status
 export PATH=$ZEPHYR_BASE/scripts:"$PATH"
 
-MERGE_SOURCE="v1.14-branch"
-MERGE_TO="v1.14-branch-intel"
+echo "ZEPHYR_BASE: $ZEPHYR_BASE"
+
 REPO_URL="ssh://git@gitlab.devtools.intel.com:29418/zephyrproject-rtos/$REPO_DIR"
 
 # echo critical env values
@@ -53,7 +91,7 @@ if ! git fetch --tags; then
 fi
 
 # Generate tag in format of: zephyr-VERSION_MAJOR.VERSION_MINOR.PATCHLEVEL-EXTRAVERSION-ww.wd.p
-# i.e. zephyr-v1.14.1-intel-rc3-ww11.3.2
+# i.e. zephyr-v1.14.1-intel-rc3-ww11.3.2 or zephyr-v2.3.0-rc1-ww22.3
 
 # Get the workweek and workday for the tag
 WD="ww"$(date +%V)"."$(date +%u)
@@ -72,8 +110,12 @@ while read -r line; do
         EXTRA=$value
     fi
 done < VERSION
-echo
-VERSION="v"$MAJOR"."$MINOR"."$PATCH"-"$EXTRA
+
+if [ "$EXTRA" == "" ]; then
+    VERSION="v"$MAJOR"."$MINOR"."$PATCH
+else
+    VERSION="v"$MAJOR"."$MINOR"."$PATCH"-"$EXTRA
+fi
 
 TAG=$REPO_DIR"-"$VERSION"-"$WD
 
@@ -112,7 +154,14 @@ git tag -a -m "$TAG" $TAG
 
 function run_sanity()
 {
-    bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1" || error=true
+if [ -f $SCRIPT_PATH/sanitycheck-runner.sh ]; then
+    bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1"
+    #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pqemu_x86"
+    #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pnative_posix" || error=true
+else
+    echo "Can't find the sanitycheck-runner.sh script. Quitting."
+    exit 1
+fi
 }
 
 # Check for the SDK required
@@ -124,47 +173,24 @@ else
     echo "SDK exists."
 fi
 
-# Set up WORKDIR, if it doesn't already exist
-if [ ! -d $WORKDIR ]; then
-    mkdir -p $WORKDIR
-    chmod 777 $WORKDIR
-fi
-
-cd $WORKDIR
-
-# If repo dir already exists, move it. For testing and comparison, handy to have
-# previous runs. Eventually we'll just nuke them.
-if [ -d $ZEPHYRPROJECT_DIR ]; then
-    STAMP=`date "+%Y%m%d_%T"`
-    echo "Found an existing zephyrproject dir. Moving it."
-    mv $ZEPHYRPROJECT_DIR $ZEPHYRPROJECT_DIR"_"$STAMP
-    echo "Moved $WORKDIR/$ZEPHYRPROJECT_DIR to $WORKDIR/$ZEPHYRPROJECT_DIR"_"$STAMP"
-fi
-
 # Create the zephyrproject directory
 mkdir $ZEPHYRPROJECT_DIR
 cd $ZEPHYRPROJECT_DIR
-git clone $REPO_URL $REPO_DIR
+echo "Cloning repo $REPO_URL"
+git clone $REPO_URL $REPO_DIR --branch "$MERGE_SOURCE"
 echo
 
 cd $REPO_DIR
 
-# Checkout the branches. Assumes that both branches exist.
-echo "Getting $MERGE_SOURCE"
-if ! git checkout origin/$MERGE_SOURCE -b $MERGE_SOURCE; then
-    echo "Can't find a $MERGE_SOURCE branch!"
+echo "Getting $MERGE_TO"
+if ! git checkout origin/$MERGE_TO -b $MERGE_TO; then
+    echo "Can't find a $MERGE_TO branch!"
     exit 1
-else
-    echo "Getting $MERGE_TO"
-    if ! git checkout origin/$MERGE_TO -b $MERGE_TO; then
-        echo "Can't find a $MERGE_TO branch!"
-        exit 1
-    fi
 fi
 
 head_before=$(git rev-parse HEAD)
 
-if ! git merge $MERGE_SOURCE $MERGE_TO -m "Merge $MERGE_SOURCE to $MERGE_TO"; then
+if ! git merge --no-ff $MERGE_SOURCE $MERGE_TO -m "Merge $MERGE_SOURCE to $MERGE_TO"; then
     echo "E: $MERGE_SOURCE: automatic merge failed -- manual intervention needed"
     exit 1
 fi
@@ -187,34 +213,50 @@ echo -e "Initializing West.\n"
 west init -l
 west update
 echo
-#pip3 install --user -r zephyr/scripts/requirements.txt
 
 source zephyr-env.sh
 run_sanity
 
-if ! python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT; then
-    echo "Failed to run the get_failed.py script. Giving up."
+python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT || error=true
+if [ "$error" == "true" ]; then
+    echo "Something went wrong attempting to parse test results. Manual intervention required."
     exit 1
 fi
 
+# If the status files doesn't exist, we failed out of get_failed.py somewhere. If we don't fail out correctly from get_failed.py, try to catch that.
+if [ -f "$SC_STATUS_FILE" ]; then
+    SC_STATUS=`sed -n '1p' $SC_STATUS_FILE`
+    echo "SC_STATUS: $SC_STATUS"
+    if [ "$SC_STATUS" == "FAILED" ]; then
+        echo "SanityCheck is FAILED. Manual intervention is required."
+        exit 1
+    else
+        echo "Proceeding to push and tag."
+    fi
+else
+    echo "Can't find the status file! Something went wrong. Manual intervention required."
+    exit 1
+fi
 echo
-echo "Temporarily Gated Merge for Safety During Deployment of Job. Do the Manual Thing."
-echo
 
+if [ "$GATE" == "true" ]; then
+    echo "You have selected to gate the push and merge, so we are done now. Follow up manually."
+    exit 
+elif [ "$GATE" == "false" ]; then
+    echo "We are not gated, so pushing the merge and tagging. (Not really, but testing the logic."
+#    if ! git push origin HEAD:$MERGE_TO; then
+#        echo "Merge/tag push failed for some reason. Manual intervention needed."
+#       exit 1
+#    fi
 
-#echo
-#echo "Pushing the merge."
-#if ! git push origin HEAD:$MERGE_TO; then
-#    echo "Merge/tag push failed for some reason. Manual intervention needed."
-#   exit 1
-#fi
+    echo "Tagging Branch: $MERGE_TO. (Also not really)"
+ 
+#    if ! make_tag; then
+#        echo "Something failed when tagging. Manual intervention required. Quitting!"
+#        exit 1
+#    fi
 
-#echo "Tagging Branch: $MERGE_TO"
-#
-#if ! make_tag; then
-#    echo "Something failed when tagging. Manual intervention required. Quitting!"
-#    exit 1
-#fi
+#    git push origin $TAG
+fi
 
-#git push origin $TAG
-
+echo "DONE!"
