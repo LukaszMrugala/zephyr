@@ -3,30 +3,45 @@ import os.path
 import sys
 import optparse
 import glob
+import git
 from lxml import etree
-from utils import split_thing, rejoin_thing
+from utils import split_thing, rejoin_thing, get_active_branch
 
-# Go to the sanity-out dir and see if there are xml files in format of node<x>-junit<y>.xml. i.e. node1-junit3.xml
-# This only checkes the toplevel of sanity-out directory, which works for v1.14-branch-intel.
-# If we are on master or master-intel, there will be multiple files and they will not likely land in the toplevel sanity-out dir.
-#    They will likely be under platform/arch subdirs. We'll deal with that later. For now, just looking for one node-whatever.xml files
-#    in the toplevel of zephyr/sanity-out.
-# Later we will recurse through platform subdirectories to get all the results files.
+# Goes to the sanity-out dir, gets the respective xml result files (based on which branch we are on) and looks for failed test cases.
+# Works for v1.14-branch-intel and master-intel branches.
+# Currently ONLY looks for failed tests that remain after the last sanitycheck run. It does not look for skipped tests, etc
+# It outputs the name of the test cases and the failure type.
+#
+#####################################################################################################################################
 
+def sc_status(fname, status):
+    with open(fname, 'w') as status_file:
+        status_file.write(status)
+    status_file.close()
 
-def find_results(sanity_out):
+def find_results(sanity_out, branch_name):
 
-    # Go to the sanity-out dir and get all the .xml files (does not go into subdirs)
+    # Go to the sanity-out dir and get all the right .xml files for the branch we are on
     os.chdir(sanity_out)
+
+    if branch_name == "v1.14-branch-intel":
+        xmlflavor = "node"
+    elif branch_name == "master-intel":
+        xmlflavor = "sanitycheck.xml"
+    else:
+       print("Not on an expected branch (v1.14-branch-intel or master-intel). Manual intervention required.")
+       sys.exit(1)
+
     BLOB = glob.glob("*.xml")
+    filelist = []
 
-    # Now look for "node", and ditch everything that does not match.
+    # Now look for right xml files, and keep only what we want.
     for thing in BLOB:
-        foo = thing.find("node")
-        if foo == -1:
-            BLOB.remove(thing)
+        if (thing.find(xmlflavor) != -1):
+            filelist.append(thing)
 
-    return BLOB
+    return filelist
+ 
 
 def get_failed(results, failed):
 
@@ -48,10 +63,11 @@ def get_failed(results, failed):
                     test_chunks = split_thing(subchild.get("name"), " ")
                     test_name = test_chunks[0]
                     fail_type = grandchild.get("type")
-                    dict_thing = {'classname': classname, 'test_name': test_name, 'fail_type': fail_type}
+                    dict_thing = {'classname': classname, 'test_name': test_name, 'Failed:': fail_type}
                     FAILED_TESTS.append(dict_thing)
 
     return FAILED_TESTS
+
 
 if __name__ == "__main__":
 
@@ -61,31 +77,45 @@ if __name__ == "__main__":
 
     if len(sys.argv) != 2:
         print("USAGE: {0} <path_to_test_results_xml>".format(__file__))
-        print("i.e. python3 get_failed.py /srv/build/zephyrproject/zephyr/sanity-out")
+        print("i.e. python3 get_failed.py /srv/build/zephyrproject/zephyr/sanity-out v1.14-branch-intel")
         sys.exit(1)
 
     SANITY_OUT = sys.argv[1]
-    if not os.path.exists(SANITY_OUT):
-        print(SANITY_OUT + " directory does not appear to exist!")
-        sys.exit(1)
+
+    # What branch are we on?
+    branch = get_active_branch(SANITY_OUT)
+    print("Branch:", branch)
 
     # Get the list of testresult files
-    result_blob = find_results(SANITY_OUT)
+    result_files = find_results(SANITY_OUT, branch)
 
-    # Now we rip through the list and print out the failed tests
+    print("Result Files:", result_files)
+    print()
+
+    # If there are no sanitycheck result files something went terribly sideways. Bail out.
+    if not result_files:
+        print ("Can't find any sanitycheck result files. Manual intervention required.")
+        sys.exit(1)
+
+    # Rip through the list and print out the failed tests
     failures = "FALSE"
-    for results in result_blob:
+    for results in result_files:
         failures = get_failed(results, failures)
 
     if failures:
-        print("FAILED TESTS:")
+       print("FAILED TESTS:")
 
-        for testcase in failures:
-            for thing in ['classname', 'test_name', 'fail_type']:
-                print(thing, testcase[thing], end =" ")
-            print()
-        sys.exit(1)
+       for testcase in failures:
+           for thing in ['classname', 'test_name', 'Failed:']:
+               print(thing, testcase[thing], end =" ")
+           print()
+       print()
+       print("Sanity Check is NOT CLEAN")
+       sc_status("sc_status", "FAILED\n")
+       sys.exit(1)
     else:
-        print("Sanity Check is CLEAN.")
-        sys.exit(0)
+       print()
+       print("Sanity Check is CLEAN.")
+       sc_status("sc_status", "CLEAN\n")
 
+    sys.exit(0)
