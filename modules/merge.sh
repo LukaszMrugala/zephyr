@@ -218,10 +218,6 @@ source zephyr-env.sh
 run_sanity
 
 python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT || error=true
-if [ "$error" == "true" ]; then
-    echo "Something went wrong attempting to parse test results. Manual intervention required."
-    exit 1
-fi
 
 # If the status files doesn't exist, we failed out of get_failed.py somewhere. If we don't fail out correctly from get_failed.py, try to catch that.
 if [ -f "$SC_STATUS_FILE" ]; then
