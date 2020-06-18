@@ -217,7 +217,21 @@ echo
 source zephyr-env.sh
 run_sanity
 
+echo
+echo "Back from sanitycheck-runner."
+
+echo "Current dir: $PWD"
+echo "WORKSPACE: $WORKSPACE"
+echo "SCRIPT_PATH: $SCRIPT_PATH"
+echo
+echo "SANITY_OUT: $SANITY_OUT"
+echo "Calling $SCRIPT_PATH/get_failed.py"
+
+set +e
+
 python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT 
+
+set -e
 
 # If the status files doesn't exist, we failed out of get_failed.py somewhere. If we don't fail out correctly from get_failed.py, try to catch that.
 if [ -f "$SC_STATUS_FILE" ]; then
