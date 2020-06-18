@@ -155,9 +155,9 @@ git tag -a -m "$TAG" $TAG
 function run_sanity()
 {
 if [ -f $SCRIPT_PATH/sanitycheck-runner.sh ]; then
-    #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1"
+    bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1"
     #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pqemu_x86"
-    bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pnative_posix"
+    #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pnative_posix"
 else
     echo "Can't find the sanitycheck-runner.sh script. Quitting."
     exit 1
@@ -217,7 +217,7 @@ echo
 source zephyr-env.sh
 run_sanity
 
-python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT || error=true
+python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT 
 
 # If the status files doesn't exist, we failed out of get_failed.py somewhere. If we don't fail out correctly from get_failed.py, try to catch that.
 if [ -f "$SC_STATUS_FILE" ]; then
@@ -239,13 +239,13 @@ if [ "$GATE" == "true" ]; then
     echo "You have selected to gate the push and merge, so we are done now. Follow up manually."
     exit 
 elif [ "$GATE" == "false" ]; then
-    echo "We are not gated, so pushing the merge and tagging. (Not really, but testing the logic."
+    echo "We are not gated, so pushing the merge and tagging. (Not really, gated for testing.)"
 #    if ! git push origin HEAD:$MERGE_TO; then
 #        echo "Merge/tag push failed for some reason. Manual intervention needed."
 #       exit 1
 #    fi
 
-    echo "Tagging Branch: $MERGE_TO. (Also not really)"
+    echo "Tagging Branch: $MERGE_TO. (Also not really.)"
  
 #    if ! make_tag; then
 #        echo "Something failed when tagging. Manual intervention required. Quitting!"
