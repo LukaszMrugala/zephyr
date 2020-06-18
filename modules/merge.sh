@@ -155,9 +155,9 @@ git tag -a -m "$TAG" $TAG
 function run_sanity()
 {
 if [ -f $SCRIPT_PATH/sanitycheck-runner.sh ]; then
-    bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1"
+    #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1"
     #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pqemu_x86"
-    #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pnative_posix"
+    bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pnative_posix"
 else
     echo "Can't find the sanitycheck-runner.sh script. Quitting."
     exit 1
