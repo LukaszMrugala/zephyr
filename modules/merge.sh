@@ -215,6 +215,7 @@ west update
 echo
 
 source zephyr-env.sh
+set +e
 run_sanity
 
 echo
@@ -227,7 +228,7 @@ echo
 echo "SANITY_OUT: $SANITY_OUT"
 echo "Calling $SCRIPT_PATH/get_failed.py"
 
-set +e
+#set +e
 
 python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT 
 
