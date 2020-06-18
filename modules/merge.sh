@@ -165,8 +165,7 @@ if [ -f $SCRIPT_PATH/sanitycheck-runner.sh ]; then
         echo "Tests is not empty"
         bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -p$TESTS"
     else
-        echo "Pretending to run them all"
-        #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1" 
+        bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1" 
     fi
 else
     echo "Can't find the sanitycheck-runner.sh script. Quitting."
