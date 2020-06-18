@@ -13,8 +13,13 @@ set -e
 BRANCH="$1"
 # true or false
 GATE="$2"
+# Runs subset of tests: qemu_x86, native_posix, etc.
+TESTS="$3"
+
 
 echo "GATE is: $GATE"
+echo "TESTS: $TESTS"
+
 
 if [ "$GATE" == "" ]; then
     echo "Gate is null. Will push and tag."
@@ -75,6 +80,7 @@ REPO_URL="ssh://git@gitlab.devtools.intel.com:29418/zephyrproject-rtos/$REPO_DIR
 echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
 echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
 echo ZEPHYR_BRANCH_BASE=$ZEPHYR_BRANCH_BASE
+echo ZEPHYRPROJECT_DIR=$ZEPHYRPROJECT_DIR
 echo PYTHONPATH=$PYTHONPATH
 echo PATH=$PATH
 echo cmake="path:$(which cmake), version: $(cmake --version)"
@@ -155,9 +161,13 @@ git tag -a -m "$TAG" $TAG
 function run_sanity()
 {
 if [ -f $SCRIPT_PATH/sanitycheck-runner.sh ]; then
-    #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1"
-    #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pqemu_x86"
-    bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -pnative_posix"
+    if [ "$TESTS" != "" ]; then
+        echo "Tests is not empty"
+        bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -p$TESTS"
+    else
+        echo "Pretending to run them all"
+        #bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1" 
+    fi
 else
     echo "Can't find the sanitycheck-runner.sh script. Quitting."
     exit 1
@@ -184,7 +194,7 @@ cd $REPO_DIR
 
 echo "Getting $MERGE_TO"
 if ! git checkout origin/$MERGE_TO -b $MERGE_TO; then
-    echo "Can't find a $MERGE_TO branch!"
+    echo "Couldn't check out $MERGE_TO branch! Dying on this hill"
     exit 1
 fi
 
@@ -216,7 +226,7 @@ echo
 
 source zephyr-env.sh
 set +e
-run_sanity
+run_sanity "$TESTS"
 
 echo
 echo "Back from sanitycheck-runner."
@@ -227,7 +237,7 @@ echo "SCRIPT_PATH: $SCRIPT_PATH"
 echo
 echo "SANITY_OUT: $SANITY_OUT"
 echo "Calling $SCRIPT_PATH/get_failed.py"
-
+sleep 20
 #set +e
 
 python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT 
