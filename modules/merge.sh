@@ -235,7 +235,7 @@ sleep 20
 echo "Calling $SCRIPT_PATH/get_failed.py"
 python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT 
 
-set -e   # Now put it back
+#set -e   # Now put it back
 
 # If the status files doesn't exist, we failed out of get_failed.py somewhere. If we don't fail out correctly from get_failed.py, try to catch that.
 if [ -f "$SC_STATUS_FILE" ]; then
