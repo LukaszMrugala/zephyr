@@ -16,10 +16,8 @@ GATE="$2"
 # Runs subset of tests: qemu_x86, native_posix, etc.
 TESTS="$3"
 
-
 echo "GATE is: $GATE"
 echo "TESTS: $TESTS"
-
 
 if [ "$GATE" == "" ]; then
     echo "Gate is null. Will push and tag."
@@ -71,8 +69,6 @@ export SANITY_OUT=$ZEPHYR_BASE/sanity-out
 SC_STATUS_FILE=$SANITY_OUT/sc_status
 export PATH=$ZEPHYR_BASE/scripts:"$PATH"
 
-echo "ZEPHYR_BASE: $ZEPHYR_BASE"
-
 REPO_URL="ssh://git@gitlab.devtools.intel.com:29418/zephyrproject-rtos/$REPO_DIR"
 
 # echo critical env values
@@ -80,6 +76,7 @@ REPO_URL="ssh://git@gitlab.devtools.intel.com:29418/zephyrproject-rtos/$REPO_DIR
 echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
 echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
 echo ZEPHYR_BRANCH_BASE=$ZEPHYR_BRANCH_BASE
+echo ZEPHYR_BASE=$ZEPHYR_BASE
 echo ZEPHYRPROJECT_DIR=$ZEPHYRPROJECT_DIR
 echo PYTHONPATH=$PYTHONPATH
 echo PATH=$PATH
@@ -224,24 +221,21 @@ west update
 echo
 
 source zephyr-env.sh
-set +e
+
+set +e   # Lest we have Jenkins catch errors we don't want to catch
+
 run_sanity "$TESTS"
 
 echo
 echo "Back from sanitycheck-runner."
 
-echo "Current dir: $PWD"
-echo "WORKSPACE: $WORKSPACE"
-echo "SCRIPT_PATH: $SCRIPT_PATH"
-echo
-echo "SANITY_OUT: $SANITY_OUT"
-echo "Calling $SCRIPT_PATH/get_failed.py"
+# Add a pause here to allow things to finish writing out and settle before trying to run the parser. 
 sleep 20
-#set +e
 
+echo "Calling $SCRIPT_PATH/get_failed.py"
 python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT 
 
-set -e
+set -e   # Now put it back
 
 # If the status files doesn't exist, we failed out of get_failed.py somewhere. If we don't fail out correctly from get_failed.py, try to catch that.
 if [ -f "$SC_STATUS_FILE" ]; then
@@ -264,19 +258,19 @@ if [ "$GATE" == "true" ]; then
     exit 
 elif [ "$GATE" == "false" ]; then
     echo "We are not gated, so pushing the merge and tagging. (Not really, gated for testing.)"
-#    if ! git push origin HEAD:$MERGE_TO; then
-#        echo "Merge/tag push failed for some reason. Manual intervention needed."
-#       exit 1
-#    fi
+    if ! git push origin HEAD:$MERGE_TO; then
+        echo "Merge/tag push failed for some reason. Manual intervention needed."
+       exit 1
+    fi
 
     echo "Tagging Branch: $MERGE_TO. (Also not really.)"
  
-#    if ! make_tag; then
-#        echo "Something failed when tagging. Manual intervention required. Quitting!"
-#        exit 1
-#    fi
+    if ! make_tag; then
+        echo "Something failed when tagging. Manual intervention required. Quitting!"
+        exit 1
+    fi
 
-#    git push origin $TAG
+    git push origin $TAG
 fi
 
 echo "DONE!"
