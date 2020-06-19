@@ -230,7 +230,7 @@ echo
 echo "Back from sanitycheck-runner."
 
 # Add a pause here to allow things to finish writing out and settle before trying to run the parser. 
-sleep 20
+sleep 10
 
 echo "Calling $SCRIPT_PATH/get_failed.py"
 python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT 
@@ -243,7 +243,7 @@ if [ -f "$SC_STATUS_FILE" ]; then
     echo "SC_STATUS: $SC_STATUS"
     if [ "$SC_STATUS" == "FAILED" ]; then
         echo "SanityCheck is FAILED. Manual intervention is required."
-        #exit 1
+        exit 1
     else
         echo "Proceeding to push and tag."
     fi
@@ -251,7 +251,7 @@ else
     echo "Can't find the status file! Something went wrong. Manual intervention required."
     exit 1
 fi
-#echo
+echo
 
 #if [ "$GATE" == "true" ]; then
 #    echo "You have selected to gate the push and merge, so we are done now. Follow up manually."
@@ -272,10 +272,3 @@ fi
 #
 #    git push origin $TAG
 #fi
-
-#if [ "$SC_STATUS" == "FAILED" ]; then
-#    echo "At the end: SanityCheck is FAILED. Manual intervention is required."
-#    exit 1
-#fi
-
-exit 1
