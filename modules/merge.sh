@@ -251,7 +251,7 @@ else
     echo "Can't find the status file! Something went wrong. Manual intervention required."
     exit 1
 fi
-echo
+#echo
 
 #if [ "$GATE" == "true" ]; then
 #    echo "You have selected to gate the push and merge, so we are done now. Follow up manually."
@@ -273,8 +273,8 @@ echo
 #    git push origin $TAG
 #fi
 
-if [ "$SC_STATUS" == "FAILED" ]; then
-    echo "At the end: SanityCheck is FAILED. Manual intervention is required."
-    exit 1
-fi
+#if [ "$SC_STATUS" == "FAILED" ]; then
+#    echo "At the end: SanityCheck is FAILED. Manual intervention is required."
+#    exit 1
+#fi
 
