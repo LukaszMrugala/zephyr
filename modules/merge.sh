@@ -257,13 +257,13 @@ if [ "$GATE" == "true" ]; then
     echo "You have selected to gate the push and merge, so we are done now. Follow up manually."
     exit 
 elif [ "$GATE" == "false" ]; then
-    echo "We are not gated, so pushing the merge and tagging. (Not really, gated for testing.)"
+    echo "We are not gated, so pushing the merge and tagging."
     if ! git push origin HEAD:$MERGE_TO; then
         echo "Merge/tag push failed for some reason. Manual intervention needed."
        exit 1
     fi
 
-    echo "Tagging Branch: $MERGE_TO. (Also not really.)"
+    echo "Tagging Branch: $MERGE_TO."
  
     if ! make_tag; then
         echo "Something failed when tagging. Manual intervention required. Quitting!"
@@ -273,4 +273,3 @@ elif [ "$GATE" == "false" ]; then
     git push origin $TAG
 fi
 
-echo "DONE!"
