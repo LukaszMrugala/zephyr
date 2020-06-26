@@ -79,6 +79,7 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 
 	//back at the master, expand junit archives from build nodes
 	node('master') {
+		deleteDir()
 		stage('junit report') {
 			//expand array of nodes & unstash results into directories
 			for (int j = 0; j < numAvailAgents; j++) {
