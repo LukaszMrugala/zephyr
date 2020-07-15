@@ -2,14 +2,20 @@
 set -e
 
 #
-#  Merge automation script for the master-intel and v1.14-branch-intel merges.
+#  Merge automation script for: 
+#   * master-intel
+#   * v1.14-branch-intel
+#   * testsuite-intel
 #  - Script attempts to merge the upstream branch into the *-intel branch
 #  - Merge conflicts cause exit and manual intervention is required to resolve.
 #  - If sanitycheck fails, manual intervetion is required.
+#  - No sanitycheck is run for testsuite, nor do we tag that branch.
 #
 ####################################################################################################
 
-# v1.14 or master
+# v1.14, master, or testsuite
+# i.e. local_merge.sh master true qemu_x86
+# Would merge master -> master-intel, gate the push and tag, and run sanitycheck for qemu_x86 only
 BRANCH="$1"
 # true or false
 GATE="$2"
@@ -17,15 +23,20 @@ GATE="$2"
 TESTS="$3"
 
 echo "GATE is: $GATE"
+echo "If TESTS is empty, running ALL."
 echo "TESTS: $TESTS"
+echo "NO sanitycheck for testsuite-intel."
+
+DO_SANITY=""
+DO_TAG=""
 
 if [ "$GATE" == "" ]; then
-    echo "Gate is null. Will push and tag."
+    echo "Gate is null. Will push."
     GATE="false"
 elif [ "$GATE" == "true" ]; then
-    echo "Gate is true. Gating the push and tag."
+    echo "Gate is true. Gating the push."
 elif [ "$GATE" == "false" ]; then
-    echo "GATE is false. We will push and tag."
+    echo "GATE is false. We will push."
 else
     echo "Gate value must be true, false, or null. I don't know what to do. Bye."
     exit 1
@@ -33,17 +44,28 @@ fi
 
 # Set up some things based on which branch we are on.
 if [ "$BRANCH" == "master" ]; then
-    echo "Branch is master."
+    echo "Branch is master-intel."
     export ZEPHYR_BRANCH_BASE="$BRANCH"
     export SDK_VER=zephyr-sdk-0.11.3
     MERGE_SOURCE="master"
     MERGE_TO="master-intel"
+    DO_SANITY="true"
+    DO_TAG="true"
 elif [ "$BRANCH" == "v1.14" ]; then
-    echo "Branch is v1.14"
+    echo "Branch is v1.14-branch-intel"
     export ZEPHYR_BRANCH_BASE="$BRANCH-branch-intel"
     export SDK_VER=zephyr-sdk-0.10.3
     MERGE_SOURCE="v1.14-branch"
     MERGE_TO="v1.14-branch-intel"
+    DO_SANITY="true"
+    DO_TAG="true"
+elif [ "$BRANCH" == "testsuite" ]; then
+    echo "Branch is testsuite-intel"
+    export ZEPHYR_BRANCH_BASE="$BRANCH-intel"
+    MERGE_SOURCE="master"
+    MERGE_TO="testsuite-intel"
+    DO_SANITY="false"
+    DO_TAG="false"
 else
     echo "You gave me a weird branch. Must be either "v1.14" or" master." Check your args."
     echo "i.e. ./local_merge.sh v1.14 or ./local_merge.sh master"
@@ -53,10 +75,6 @@ fi
 echo "SOURCE: $MERGE_SOURCE"
 echo "MERGE_TO: $MERGE_TO"
 
-export ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/$SDK_VER
-export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
-export CCACHE_DISABLE=1
-export USE_CCACHE=0
 export SCRIPT_PATH=$WORKSPACE/ci/modules
 
 export PYTHONPATH="$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib -name python3.* -print)/site-packages:$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib64 -name python3.* -print)/site-packages"
@@ -65,25 +83,9 @@ export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/lib/python3.6/site-packages/west:/usr
 ZEPHYRPROJECT_DIR="zephyrproject"
 REPO_DIR="zephyr"
 export ZEPHYR_BASE=$WORKSPACE/$ZEPHYRPROJECT_DIR/zephyr
-export SANITY_OUT=$ZEPHYR_BASE/sanity-out
-SC_STATUS_FILE=$SANITY_OUT/sc_status
-export PATH=$ZEPHYR_BASE/scripts:"$PATH"
 
+#REPO_URL="ssh://git@gitlab.devtools.intel.com:29418/tgraydon1/$REPO_DIR"
 REPO_URL="ssh://git@gitlab.devtools.intel.com:29418/zephyrproject-rtos/$REPO_DIR"
-
-# echo critical env values
-###############################################################################
-echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
-echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
-echo ZEPHYR_BRANCH_BASE=$ZEPHYR_BRANCH_BASE
-echo ZEPHYR_BASE=$ZEPHYR_BASE
-echo ZEPHYRPROJECT_DIR=$ZEPHYRPROJECT_DIR
-echo PYTHONPATH=$PYTHONPATH
-echo PATH=$PATH
-echo cmake="path:$(which cmake), version: $(cmake --version)"
-echo http_proxy=$http_proxy
-echo https_proxy=$https_proxy
-echo no_proxy=$no_proxy
 
 function make_tag()
 {
@@ -159,7 +161,6 @@ function run_sanity()
 {
 if [ -f $SCRIPT_PATH/sanitycheck-runner.sh ]; then
     if [ "$TESTS" != "" ]; then
-        echo "Tests is not empty"
         bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -p$TESTS"
     else
         bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1" 
@@ -170,14 +171,6 @@ else
 fi
 }
 
-# Check for the SDK required
-echo "Checking for installed SDK."
-if [ ! -d $ZEPHYR_SDK_INSTALL_DIR ]; then
-    echo -e "I cannot find the SDK at $ZEPHYR_SDK_INSTALL_DIR! Quitting!"
-    exit 1
-else
-    echo "SDK exists."
-fi
 
 # Create the zephyrproject directory
 mkdir $ZEPHYRPROJECT_DIR
@@ -215,60 +208,95 @@ else
 fi
 echo
 
-echo -e "Initializing West.\n"
-west init -l
-west update
-echo
+if [ "$DO_SANITY" == "true" ]; then
+   
+    export ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/$SDK_VER
+    export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+    export CCACHE_DISABLE=1
+    export USE_CCACHE=0
 
-source zephyr-env.sh
+    export SANITY_OUT=$ZEPHYR_BASE/sanity-out
+    SC_STATUS_FILE=$SANITY_OUT/sc_status
+    export PATH=$ZEPHYR_BASE/scripts:"$PATH"
 
-set +e   # Lest we have Jenkins catch errors we don't want to catch
+    # echo critical env values
+    ###############################################################################
+    echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
+    echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
+    echo ZEPHYR_BRANCH_BASE=$ZEPHYR_BRANCH_BASE
+    echo ZEPHYRPROJECT_DIR=$ZEPHYRPROJECT_DIR
+    echo "ZEPHYR_BASE: $ZEPHYR_BASE"
+    echo PYTHONPATH=$PYTHONPATH
+    echo PATH=$PATH
+    echo cmake="path:$(which cmake), version: $(cmake --version)"
+    echo http_proxy=$http_proxy
+    echo https_proxy=$https_proxy
+    echo no_proxy=$no_proxy
 
-run_sanity "$TESTS"
-
-echo
-echo "Back from sanitycheck-runner."
-
-# Add a pause here to allow things to finish writing out and settle before trying to run the parser. 
-sleep 10
-
-echo "Calling $SCRIPT_PATH/get_failed.py"
-python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT 
-
-set -e   # Now put it back
-
-# If the status files doesn't exist, we failed out of get_failed.py somewhere. If we don't fail out correctly from get_failed.py, try to catch that.
-if [ -f "$SC_STATUS_FILE" ]; then
-    SC_STATUS=`sed -n '1p' $SC_STATUS_FILE`
-    echo "SC_STATUS: $SC_STATUS"
-    if [ "$SC_STATUS" == "FAILED" ]; then
-        echo "SanityCheck is FAILED. Manual intervention is required."
+    # Check for the SDK required
+    echo "Checking for installed SDK."
+    if [ ! -d $ZEPHYR_SDK_INSTALL_DIR ]; then
+        echo -e "I cannot find the SDK at $ZEPHYR_SDK_INSTALL_DIR! Quitting!"
         exit 1
     else
-        echo "Proceeding to push and tag."
+        echo "SDK exists."
     fi
-else
-    echo "Can't find the status file! Something went wrong. Manual intervention required."
-    exit 1
+
+    echo -e "Initializing West.\n"
+    west init -l
+    west update
+    echo
+    pip3 install --user -r scripts/requirements.txt
+
+    source zephyr-env.sh
+    
+    set +e   # Don't catch sanitycheck-runner errors.
+
+    run_sanity "$TESTS"
+
+    echo
+    echo "Back from sanitycheck-runner."
+
+    # Pause to allow things to finish writing out and settle before trying to run the parser. 
+    sleep 10
+
+    echo "Calling $SCRIPT_PATH/get_failed.py"
+    python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT 
+
+    set -e   # Now put it back
+
+    # If the status files doesn't exist, we failed out of get_failed.py somewhere. If we don't fail out correctly from get_failed.py, try to catch that.
+    if [ -f "$SC_STATUS_FILE" ]; then
+        SC_STATUS=`sed -n '1p' $SC_STATUS_FILE`
+        echo "SC_STATUS: $SC_STATUS"
+        if [ "$SC_STATUS" == "FAILED" ]; then
+            echo "SanityCheck is FAILED. Manual intervention is required."
+            exit 1
+        fi
+    else
+        echo "Can't find the status file! Something went wrong. Manual intervention required."
+        exit 1
+    fi
 fi
-echo
 
 if [ "$GATE" == "true" ]; then
-    echo "You have selected to gate the push and merge, so we are done now. Follow up manually."
+    echo "You have selected to gate the merge push, so we are done. Follow up manually if necessary."
     exit 
 elif [ "$GATE" == "false" ]; then
-    echo "We are not gated, so pushing the merge and tagging."
+    echo "We are not gated, so pushing."
     if ! git push origin HEAD:$MERGE_TO; then
         echo "Merge/tag push failed for some reason. Manual intervention needed."
        exit 1
     fi
 
-    echo "Tagging Branch: $MERGE_TO."
+    if [ "$DO_TAG" == "true" ]; then
+        echo "Tagging Branch: $MERGE_TO"
  
-    if ! make_tag; then
-        echo "Something failed when tagging. Manual intervention required. Quitting!"
-        exit 1
-    fi
+        if ! make_tag; then
+            echo "Something failed when tagging. Manual intervention required. Quitting!"
+            exit 1
+        fi
 
-    git push origin $TAG
+        git push origin $TAG
+    fi
 fi
