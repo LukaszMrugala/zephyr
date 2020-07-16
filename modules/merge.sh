@@ -46,7 +46,7 @@ fi
 if [ "$BRANCH" == "master" ]; then
     echo "Branch is master-intel."
     export ZEPHYR_BRANCH_BASE="$BRANCH"
-    export SDK_VER=zephyr-sdk-0.11.3
+    export SDK_VER=zephyr-sdk-0.11.4
     MERGE_SOURCE="master"
     MERGE_TO="master-intel"
     DO_SANITY="true"
@@ -67,8 +67,8 @@ elif [ "$BRANCH" == "testsuite" ]; then
     DO_SANITY="false"
     DO_TAG="false"
 else
-    echo "You gave me a weird branch. Must be either "v1.14" or" master." Check your args."
-    echo "i.e. ./local_merge.sh v1.14 or ./local_merge.sh master"
+    echo "You gave me a weird branch. Must be v1.14, master, or testsuite. Check your args."
+    echo "i.e. ./merge.sh v1.14 or ./merge.sh master or ./merge.sh testsuite"
     exit 1
 fi
 
@@ -300,3 +300,5 @@ elif [ "$GATE" == "false" ]; then
         git push origin $TAG
     fi
 fi
+
+echo "DONE!"
