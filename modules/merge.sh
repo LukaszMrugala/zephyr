@@ -2,7 +2,7 @@
 set -e
 
 #
-#  Merge automation script for: 
+#  Merge automation script for:
 #   * master-intel
 #   * v1.14-branch-intel
 #   * testsuite-intel
@@ -11,24 +11,78 @@ set -e
 #  - If sanitycheck fails, manual intervetion is required.
 #  - No sanitycheck is run for testsuite, nor do we tag that branch.
 #
+#    GATE should ALWAYS block a tag and push.
+#
+#    BLIND = true will skip sanity check and just merge, tag if applicable, and push. This will allow a run that just does a plain merge
+#    without having to run sanity check first. This differs from FORCE in that FORCE will run sanitycheck, then push even if there's failures.
+#
+#    FORCE is used to ONLY bypass a bad sanitycheck in special cases where we want to always run sanity but
+#    don't want to block the push. For example a branch where we want to know what sanitycheck looks like but we
+#    always want to push the merge regardless. Special case situations.
+#
+#    TESTS will let you run a subset of sanitycheck. i.e. Just qemu_x86 or just native_posix or XYZ platform only.
+#
+#    Default is to run sanity, bail out on sanitycheck failures, and if sanity is good, push and tag (if applicable).
+#    Passing just the branch gets you the defaults.
+#
+#    TODO: proper usage/help
+#
 ####################################################################################################
 
-# v1.14, master, or testsuite
-# i.e. local_merge.sh master true qemu_x86
-# Would merge master -> master-intel, gate the push and tag, and run sanitycheck for qemu_x86 only
-BRANCH="$1"
-# true or false
-GATE="$2"
-# Runs subset of tests: qemu_x86, native_posix, etc.
-TESTS="$3"
 
-echo "GATE is: $GATE"
+# DEFAULTS
+BRANCH=""
+GATE="false"
+FORCE="false"
+TESTS=""
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -b | --branch)          shift
+                                BRANCH="$1"
+                                ;;
+        -g | --gate )           shift
+                                GATE="$1"
+                                ;;
+        -f | --force )          shift
+                                FORCE="$1"
+                                ;;
+        -t | --tests )          shift
+                                TESTS="$1"
+                                ;;
+        -m | --blind)           shift
+                                BLIND="$1"
+                                ;;
+        *)                      echo "You gave me a weird option of $1. Check your options."
+                                exit 1
+                                ;;
+    esac
+    shift
+done
+echo
+
+if [ "$BRANCH" == "" ]; then
+    echo "You must at least specify the branch.
+    i.e. ./local_merge.sh -b <branch>
+    ./local_merge.sh -b master
+     Use master for master-intel, v1.14 for v1.14-branch-intel, or testsuite for testsuite-intel."
+    exit 1
+fi
+
+echo "Branch: $BRANCH"
+echo "GATE: $GATE"
 echo "If TESTS is empty, running ALL."
 echo "TESTS: $TESTS"
-echo "NO sanitycheck for testsuite-intel."
+echo "FORCE: $FORCE"
+echo "BLIND: $BLIND"
+echo
 
-DO_SANITY=""
-DO_TAG=""
+if [ "$BLIND" != "true" ] && [ "$BLIND" != "false" ]; then
+    echo "BLIND is not true or false. You gave me: $BLIND. Setting to FALSE."
+    BLIND="false"
+fi
+
+DO_TAG=""   # We will use this to exclude tagging for certain branches, like testsuite-intel.
 
 if [ "$GATE" == "" ]; then
     echo "Gate is null. Will push."
@@ -42,30 +96,42 @@ else
     exit 1
 fi
 
+if [ "$FORCE" != "true" ] && [ "$FORCE" != "false" ]; then
+    echo "FORCE must be either true or false. You gave me $FORCE."
+    echo "Setting FORCE to FALSE for safety."
+    FORCE="false"
+fi
+   
+# Cannot GATE and FORCE at the same time. GATE will ALWAYS WIN.
+if [ "$GATE" == "true" ] && [ "$FORCE" == "true" ]; then
+    echo "GATE is true AND FORCE is true. You can't have it both ways, so we will GATE."
+    FORCE="false"
+fi
+echo
+
 # Set up some things based on which branch we are on.
 if [ "$BRANCH" == "master" ]; then
-    echo "Branch is master-intel."
-    export ZEPHYR_BRANCH_BASE="$BRANCH"
-    export SDK_VER=zephyr-sdk-0.11.4
+    echo "Branch: master-intel."
     MERGE_SOURCE="master"
     MERGE_TO="master-intel"
-    DO_SANITY="true"
+    export ZEPHYR_BRANCH_BASE="$BRANCH"
+    export SDK_VER=zephyr-sdk-0.11.4
     DO_TAG="true"
 elif [ "$BRANCH" == "v1.14" ]; then
-    echo "Branch is v1.14-branch-intel"
-    export ZEPHYR_BRANCH_BASE="$BRANCH-branch-intel"
-    export SDK_VER=zephyr-sdk-0.10.3
+    echo "Branch: v1.14-branch-intel"
     MERGE_SOURCE="v1.14-branch"
     MERGE_TO="v1.14-branch-intel"
-    DO_SANITY="true"
+    export ZEPHYR_BRANCH_BASE="$BRANCH-branch-intel"
+    export SDK_VER=zephyr-sdk-0.10.3
     DO_TAG="true"
 elif [ "$BRANCH" == "testsuite" ]; then
-    echo "Branch is testsuite-intel"
+    # This is always a blind merge.
+    BLIND="true"
+    echo "Branch: testsuite-intel"
     export ZEPHYR_BRANCH_BASE="$BRANCH-intel"
     MERGE_SOURCE="master"
     MERGE_TO="testsuite-intel"
-    DO_SANITY="false"
-    DO_TAG="false"
+    DO_TAG="false" # We don't take testsuite-intel
 else
     echo "You gave me a weird branch. Must be v1.14, master, or testsuite. Check your args."
     echo "i.e. ./merge.sh v1.14 or ./merge.sh master or ./merge.sh testsuite"
@@ -75,7 +141,8 @@ fi
 echo "SOURCE: $MERGE_SOURCE"
 echo "MERGE_TO: $MERGE_TO"
 
-export SCRIPT_PATH=$WORKSPACE/ci/modules
+#export SCRIPT_PATH=$WORKSPACE/ci/modules
+export SCRIPT_PATH=$WORKSPACE/ci/scripts/prod
 
 export PYTHONPATH="$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib -name python3.* -print)/site-packages:$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib64 -name python3.* -print)/site-packages"
 export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/lib/python3.6/site-packages/west:/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
@@ -84,12 +151,15 @@ ZEPHYRPROJECT_DIR="zephyrproject"
 REPO_DIR="zephyr"
 export ZEPHYR_BASE=$WORKSPACE/$ZEPHYRPROJECT_DIR/zephyr
 
+# For testing
 #REPO_URL="ssh://git@gitlab.devtools.intel.com:29418/tgraydon1/$REPO_DIR"
+
+# PRODUCTION
 REPO_URL="ssh://git@gitlab.devtools.intel.com:29418/zephyrproject-rtos/$REPO_DIR"
 
 function make_tag()
 {
-
+set +e
 if ! git fetch --tags; then
     echo "Wasn't able to fetch the tags. Manual intervention required."
     exit 1
@@ -128,7 +198,7 @@ TAG=$REPO_DIR"-"$VERSION"-"$WD
 FOUND=FALSE
 while true; do
     CHECK=`git show-ref --tags | egrep "refs/tags/$TAG"`
-    if [ "$CHECK" ] ; then
+    if [ "$CHECK" ]; then
         FOUND="TRUE"
     else
         FOUND="FALSE"
@@ -154,7 +224,8 @@ done
 
 echo "Tag: $TAG"
 git tag -a -m "$TAG" $TAG
-
+git push origin $TAG
+set -e
 }
 
 function run_sanity()
@@ -163,7 +234,7 @@ if [ -f $SCRIPT_PATH/sanitycheck-runner.sh ]; then
     if [ "$TESTS" != "" ]; then
         bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1 -p$TESTS"
     else
-        bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1" 
+        bash -c "$SCRIPT_PATH/sanitycheck-runner.sh 1 1"
     fi
 else
     echo "Can't find the sanitycheck-runner.sh script. Quitting."
@@ -171,14 +242,13 @@ else
 fi
 }
 
-
-# Create the zephyrproject directory
-mkdir $ZEPHYRPROJECT_DIR
+function do_merge()
+{
+set +e
 cd $ZEPHYRPROJECT_DIR
 echo "Cloning repo $REPO_URL"
 git clone $REPO_URL $REPO_DIR --branch "$MERGE_SOURCE"
 echo
-
 cd $REPO_DIR
 
 echo "Getting $MERGE_TO"
@@ -207,97 +277,142 @@ else
     echo -e "Merge successful.\n"
 fi
 echo
+set -e
+}
 
-if [ "$DO_SANITY" == "true" ]; then
-   
-    export ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/$SDK_VER
-    export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
-    export CCACHE_DISABLE=1
-    export USE_CCACHE=0
 
-    export SANITY_OUT=$ZEPHYR_BASE/sanity-out
-    SC_STATUS_FILE=$SANITY_OUT/sc_status
-    export PATH=$ZEPHYR_BASE/scripts:"$PATH"
+function do_sanity()
+{
+export ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/$SDK_VER
+export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+export CCACHE_DISABLE=1
+export USE_CCACHE=0
 
-    # echo critical env values
-    ###############################################################################
-    echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
-    echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
-    echo ZEPHYR_BRANCH_BASE=$ZEPHYR_BRANCH_BASE
-    echo ZEPHYRPROJECT_DIR=$ZEPHYRPROJECT_DIR
-    echo "ZEPHYR_BASE: $ZEPHYR_BASE"
-    echo PYTHONPATH=$PYTHONPATH
-    echo PATH=$PATH
-    echo cmake="path:$(which cmake), version: $(cmake --version)"
-    echo http_proxy=$http_proxy
-    echo https_proxy=$https_proxy
-    echo no_proxy=$no_proxy
+export SANITY_OUT=$ZEPHYR_BASE/sanity-out
+SC_STATUS_FILE=$SANITY_OUT/sc_status
+export PATH=$ZEPHYR_BASE/scripts:"$PATH"
 
-    # Check for the SDK required
-    echo "Checking for installed SDK."
-    if [ ! -d $ZEPHYR_SDK_INSTALL_DIR ]; then
-        echo -e "I cannot find the SDK at $ZEPHYR_SDK_INSTALL_DIR! Quitting!"
-        exit 1
-    else
-        echo "SDK exists."
-    fi
+# echo critical env values
+###############################################################################
+echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
+echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
+echo ZEPHYR_BRANCH_BASE=$ZEPHYR_BRANCH_BASE
+echo ZEPHYRPROJECT_DIR=$ZEPHYRPROJECT_DIR
+echo "ZEPHYR_BASE: $ZEPHYR_BASE"
+echo PYTHONPATH=$PYTHONPATH
+echo PATH=$PATH
+echo cmake="path:$(which cmake), version: $(cmake --version)"
+echo http_proxy=$http_proxy
+echo https_proxy=$https_proxy
+echo no_proxy=$no_proxy
 
-    echo -e "Initializing West.\n"
-    west init -l
-    west update
-    echo
-    pip3 install --user -r scripts/requirements.txt
-
-    source zephyr-env.sh
-    
-    set +e   # Don't catch sanitycheck-runner errors.
-
-    run_sanity "$TESTS"
-
-    echo
-    echo "Back from sanitycheck-runner."
-
-    # Pause to allow things to finish writing out and settle before trying to run the parser. 
-    sleep 10
-
-    echo "Calling $SCRIPT_PATH/get_failed.py"
-    python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT 
-
-    set -e   # Now put it back
-
-    # If the status files doesn't exist, we failed out of get_failed.py somewhere. If we don't fail out correctly from get_failed.py, try to catch that.
-    if [ -f "$SC_STATUS_FILE" ]; then
-        SC_STATUS=`sed -n '1p' $SC_STATUS_FILE`
-        echo "SC_STATUS: $SC_STATUS"
-        if [ "$SC_STATUS" == "FAILED" ]; then
-            echo "SanityCheck is FAILED. Manual intervention is required."
-            exit 1
-        fi
-    else
-        echo "Can't find the status file! Something went wrong. Manual intervention required."
-        exit 1
-    fi
+# Check for the SDK required
+echo "Checking for installed SDK."
+if [ ! -d $ZEPHYR_SDK_INSTALL_DIR ]; then
+   echo -e "I cannot find the SDK at $ZEPHYR_SDK_INSTALL_DIR! Quitting!"
+    exit 1
+else
+    echo "SDK exists."
 fi
 
-if [ "$GATE" == "true" ]; then
-    echo "You have selected to gate the merge push, so we are done. Follow up manually if necessary."
-    exit 
-elif [ "$GATE" == "false" ]; then
-    echo "We are not gated, so pushing."
-    if ! git push origin HEAD:$MERGE_TO; then
-        echo "Merge/tag push failed for some reason. Manual intervention needed."
-       exit 1
+echo -e "Initializing West.\n"
+west init -l
+west update
+echo
+#pip3 install --user -r scripts/requirements.txt
+
+source zephyr-env.sh
+
+set +e   # Don't catch sanitycheck-runner errors.
+
+run_sanity "$TESTS"
+
+echo
+echo "Back from sanitycheck-runner."
+
+# Pause to allow things to finish writing out and settle before trying to run the parser.
+sleep 10
+
+echo "Calling $SCRIPT_PATH/get_failed.py"
+python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT
+
+set -e   # Now put it back
+
+# If the status files doesn't exist, we failed out of get_failed.py somewhere. If we don't fail out correctly from get_failed.py, try to catch that.
+if [ -f "$SC_STATUS_FILE" ]; then
+    SC_STATUS=`sed -n '1p' $SC_STATUS_FILE`
+    echo "SC_STATUS: $SC_STATUS"
+    if [ "$SC_STATUS" == "FAILED" ]; then
+        echo "SanityCheck is FAILED. Manual intervention is required."
+        exit 1
     fi
+else
+    echo "Can't find the status file! Something went wrong. Manual intervention required."
+    exit 1
+fi
 
+
+function do_push()
+{
+set +e
+echo "Pushing the merge."
+if ! git push origin HEAD:$MERGE_TO; then
+    echo "Push failed for some reason. Manual intervention needed."
+    exit 1
+fi
+set -e
+}
+
+# Set up WORKDIR, if it doesn't already exist
+if [ ! -d $WORKDIR ]; then
+    mkdir -p $WORKDIR
+    chmod 777 $WORKDIR
+fi
+
+# Create the zephyrproject directory
+mkdir $ZEPHYRPROJECT_DIR
+
+do_merge
+
+if [ "$BLIND" == "true" ] && [ "$GATE" == "true" ]; then
+    echo "BLIND: $BLIND"
+    echo "GATE: $GATE"
+    echo "GATE is true so we are done. NOT PUSHING. Follow up manually if necessary."
+    exit 1
+elif [ "$BLIND" == "true" ] && [ "$GATE" == "false" ]; then
+    echo "BLIND: $BLIND"
+    echo "GATE: $GATE"
+    do_push
     if [ "$DO_TAG" == "true" ]; then
-        echo "Tagging Branch: $MERGE_TO"
- 
-        if ! make_tag; then
-            echo "Something failed when tagging. Manual intervention required. Quitting!"
-            exit 1
+        make_tag
+    fi
+elif [ "$BLIND" == "false" ]; then
+    echo "BLIND is FALSE"
+    do_sanity
+    if [ "$GATE" == "true" ]; then
+        echo "GATE is true so we are done. NOT PUSHING. Follow up manually if necessary."
+        exit 1
+    elif [ "$GATE" == "false" ]; then
+        if [ "$SC_STATUS" == "CLEAN" ]; then
+            echo "SC_STATUS: $SC_STATUS and FORCE: $FORCE"
+            echo "We push, cuz CLEAN"
+            do_push
+            if [ "$DO_TAG" == "true" ]; then
+                make_tag
+            fi
         fi
-
-        git push origin $TAG
+        if [ "$SC_STATUS" == "FAILED" ] && [ "$FORCE" == "true" ]; then
+            echo "SC_STATUS: $SC_STATUS and FORCE: $FORCE"
+            echo "We push, cuz FORCE"
+            do_push
+            if [ "$DO_TAG" == "true" ]; then
+                make_tag
+            fi
+        fi
+        if [ "$SC_STATUS" == "FAILED" ] && [ "$FORCE" == "false" ]; then
+            echo "SC_STATUS: $SC_STATUS and FORCE: $FORCE"
+            echo "We DON'T push, cuz FAILED and not force."
+        fi
     fi
 fi
 
