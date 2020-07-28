@@ -141,8 +141,8 @@ fi
 echo "SOURCE: $MERGE_SOURCE"
 echo "MERGE_TO: $MERGE_TO"
 
-#export SCRIPT_PATH=$WORKSPACE/ci/modules
-export SCRIPT_PATH=$WORKSPACE/ci/scripts/prod
+export SCRIPT_PATH=$WORKSPACE/ci/modules
+#export SCRIPT_PATH=$WORKSPACE/ci/scripts/prod
 
 export PYTHONPATH="$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib -name python3.* -print)/site-packages:$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib64 -name python3.* -print)/site-packages"
 export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/lib/python3.6/site-packages/west:/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
