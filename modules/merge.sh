@@ -29,7 +29,6 @@ set -e
 #
 ####################################################################################################
 
-
 # DEFAULTS
 BRANCH=""
 GATE="false"
@@ -251,6 +250,8 @@ git clone $REPO_URL $REPO_DIR --branch "$MERGE_SOURCE"
 echo
 cd $REPO_DIR
 
+source_head=$(git rev-parse HEAD)
+
 echo "Getting $MERGE_TO"
 if ! git checkout origin/$MERGE_TO -b $MERGE_TO; then
     echo "Couldn't check out $MERGE_TO branch! Dying on this hill"
@@ -276,10 +277,8 @@ if [ $head_before == $head_after ]; then
 else
     echo -e "Merge successful.\n"
 fi
-echo
 set -e
 }
-
 
 function do_sanity()
 {
@@ -363,6 +362,14 @@ fi
 set -e
 }
 
+function print_commits()
+{
+echo
+echo "$MERGE_SOURCE HEAD: $source_head"
+echo "$MERGE_TO HEAD: $head_before"
+echo -e "Merge commit: $head_after\n"
+}
+
 # Set up WORKDIR, if it doesn't already exist
 if [ ! -d $WORKDIR ]; then
     mkdir -p $WORKDIR
@@ -378,6 +385,7 @@ if [ "$BLIND" == "true" ] && [ "$GATE" == "true" ]; then
     echo "BLIND: $BLIND"
     echo "GATE: $GATE"
     echo "GATE is true so we are done. NOT PUSHING. Follow up manually if necessary."
+    print_commits
     exit 1
 elif [ "$BLIND" == "true" ] && [ "$GATE" == "false" ]; then
     echo "BLIND: $BLIND"
@@ -391,11 +399,11 @@ elif [ "$BLIND" == "false" ]; then
     do_sanity
     if [ "$GATE" == "true" ]; then
         echo "GATE is true so we are done. NOT PUSHING. Follow up manually if necessary."
+        print_commits
         exit 1
     elif [ "$GATE" == "false" ]; then
         if [ "$SC_STATUS" == "CLEAN" ]; then
             echo "SC_STATUS: $SC_STATUS and FORCE: $FORCE"
-            echo "We push, cuz CLEAN"
             do_push
             if [ "$DO_TAG" == "true" ]; then
                 make_tag
@@ -403,17 +411,13 @@ elif [ "$BLIND" == "false" ]; then
         fi
         if [ "$SC_STATUS" == "FAILED" ] && [ "$FORCE" == "true" ]; then
             echo "SC_STATUS: $SC_STATUS and FORCE: $FORCE"
-            echo "We push, cuz FORCE"
             do_push
             if [ "$DO_TAG" == "true" ]; then
                 make_tag
             fi
         fi
-        if [ "$SC_STATUS" == "FAILED" ] && [ "$FORCE" == "false" ]; then
-            echo "SC_STATUS: $SC_STATUS and FORCE: $FORCE"
-            echo "We DON'T push, cuz FAILED and not force."
-        fi
     fi
 fi
 
+print_commits
 echo "DONE!"
