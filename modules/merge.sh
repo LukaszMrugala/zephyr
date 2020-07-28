@@ -350,7 +350,7 @@ else
     echo "Can't find the status file! Something went wrong. Manual intervention required."
     exit 1
 fi
-
+}
 
 function do_push()
 {
