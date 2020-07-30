@@ -41,7 +41,7 @@ def find_results(sanity_out, branch_name):
             filelist.append(thing)
 
     return filelist
- 
+
 
 def get_failed(results, failed):
 
@@ -60,6 +60,9 @@ def get_failed(results, failed):
                 if grandchild.tag == "failure":
                     class_chunks = split_thing(subchild.get("classname"), ":")
                     classname = class_chunks[0]
+                    nuke_path = split_thing(classname, "sanity-out/")
+                    if len(nuke_path) == 2:
+                        classname = nuke_path[1]
                     test_chunks = split_thing(subchild.get("name"), " ")
                     test_name = test_chunks[0]
                     fail_type = grandchild.get("type")
@@ -107,7 +110,7 @@ if __name__ == "__main__":
 
        for testcase in failures:
            for thing in ['classname', 'test_name', 'Failed:']:
-               print(thing, testcase[thing], end =" ")
+               print(testcase[thing], end =" ")
            print()
        print()
        print("Sanity Check is NOT CLEAN")
