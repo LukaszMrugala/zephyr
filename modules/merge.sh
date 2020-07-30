@@ -332,6 +332,7 @@ echo "Back from sanitycheck-runner."
 # Pause to allow things to finish writing out and settle before trying to run the parser.
 sleep 10
 
+# Note that the get_failed.py script generates the SC_STATUS file that we use later in the script.
 echo "Calling $SCRIPT_PATH/get_failed.py"
 python3 $SCRIPT_PATH/get_failed.py $SANITY_OUT
 
@@ -341,10 +342,6 @@ set -e   # Now put it back
 if [ -f "$SC_STATUS_FILE" ]; then
     SC_STATUS=`sed -n '1p' $SC_STATUS_FILE`
     echo "SC_STATUS: $SC_STATUS"
-    if [ "$SC_STATUS" == "FAILED" ]; then
-        echo "SanityCheck is FAILED. Manual intervention is required."
-        exit 1
-    fi
 else
     echo "Can't find the status file! Something went wrong. Manual intervention required."
     exit 1
@@ -403,19 +400,21 @@ elif [ "$BLIND" == "false" ]; then
         exit 1
     elif [ "$GATE" == "false" ]; then
         if [ "$SC_STATUS" == "CLEAN" ]; then
-            echo "SC_STATUS: $SC_STATUS and FORCE: $FORCE"
             do_push
             if [ "$DO_TAG" == "true" ]; then
                 make_tag
             fi
         fi
         if [ "$SC_STATUS" == "FAILED" ] && [ "$FORCE" == "true" ]; then
-            echo "SC_STATUS: $SC_STATUS and FORCE: $FORCE"
             do_push
             if [ "$DO_TAG" == "true" ]; then
                 make_tag
             fi
-        fi
+	 elif [ "$SC_STATUS" == "FAILED" ] && [ "$FORCE" == "false" ]; then
+             echo "SanityCheck is FAILED. Manual intervention is required."
+	     print_commits
+             exit 1
+         fi
     fi
 fi
 
