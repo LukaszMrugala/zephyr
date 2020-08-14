@@ -20,7 +20,7 @@
 //
 branchConfigs = [ 
 	"v1.14-branch-intel": [sdkVersion:"0.10.3",sha:"247330d62a4b89fcf3900a160fbb195be78a55a9"],
-	"master": [sdkVersion:"0.11.3",sha:"0"]
+	"master": [sdkVersion:"0.11.4",sha:"0"]
 	]
 // master branch entry must be present & in last position, sha is a dont-care
 
