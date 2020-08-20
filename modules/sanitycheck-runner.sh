@@ -11,21 +11,37 @@
 #  * Uses ninja build option
 #  * Disables CCACHE as it's known to cause build state errors in automation
 #  * Generates junit xml output for reporting & visualization
-#  * Enables coverage-reporting
+#  * Enables coverage-reporting (*WIP)
 
-# Assumptions:
-#		Build environment is properly configured w/ python requirements for branch
+# Requirements:
+# =============
+# This script is designed to be run within a Jenkins pipeline but can be executed stand-alone 
+# with the following pre-reqs:
+#
+#	1. wget - required for fetching latest pythonpath set script 
+#	2. the following deps/env vars are required:
+#		i.   ci.git at $WORKSPACE/ci
+#		i.   zephyr src tree at $WORKSPACE/zephyr
+#		ii.  env vars:
+#			WORKSPACE = set to directory containing ci/ & zephyr/
+#			ZEPHYR_BRANCH_BASE = set to DevOps build-env type: 
+#				('master', 'v1.14-branch-intel', ...)
+#
 # Usage:
+# ======
 #		cd <path to zephyr-tree> #aka ZEPHYR_BASE
-#		./sanitycheck_runner.sh <total number of nodes> <this node number> <sanitycheck -p options>
+#		$WORKSPACE/ci/modules/sanitycheck_runner.sh <total # nodes> <this node #> <sanitycheck -p options>
 #			Example:
 #				./sanitycheck_runner.sh 4 1 -pqemu_x86
 # Output:
+# =======
 #		Sanitycheck output files are written to $ZEPHYR_BASE/run{1,2,3...}
 #		Junit xml output is written to $ZEPHYR_BASE/junit
 # Returns:
+# ========
 #		0 if all sanitycheck default cases succeed after 3 tries
-#       any other result indicates at least one failure exists in the final retry
+#		any other result indicates at least one failure exists in the final retry
+#
 #####################################################################################
 echo "ooooooooooooooooooooooooooooooooooooooooo"
 echo "  Zephyr Sanitycheck Runner starting..."
@@ -42,16 +58,10 @@ if [ -f "/container_env" ]; then
 	source /container_env	#container specific overrides, if any
 fi
 
-#configure variable python path
-export PYTHONPATH="$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib -name python3.* -print0)/site-packages:$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib64 -name python3.* -print0)/site-packages"
-export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
+#set PYTHONPATH using our helper script
+export PYTHONPATH=$($WORKSPACE/ci/modules/set-python-path.sh $ZEPHYR_BRANCH_BASE)
 
-# clean-up from previous runs
-echo "Cleaning output directories..."
-rm -rf $ZEPHYR_BASE/run1
-rm -rf $ZEPHYR_BASE/run2
-rm -rf $ZEPHYR_BASE/run3
-rm -rf $ZEPHYR_BASE/junit
+export PATH="/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH"
 
 # echo critical env values
 ###############################################################################
@@ -69,7 +79,6 @@ echo https_proxy=$https_proxy
 echo no_proxy=$no_proxy
 
 # Sanitycheck configuration & command-line generation
-# All default options EXCEPT -N for ninja build
 export TESTCASES="testcases"
 export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N --inline-logs"
 export SC_CMD_SAVE_TESTS="$SC_CMD_BASE -B $2/$1 $3 --save-tests $TESTCASES"
@@ -95,9 +104,9 @@ echo "run3: $SC_CMD3"
 # extract default testcases
 $SC_CMD_SAVE_TESTS
 # if testcase failure allowFail file for this branch exists, apply it to testcase file
-if [ -f "../../ci/allowlist/sanitycheck-$ZEPHYR_BRANCH_BASE.allowFail" ]; then
+if [ -f "$WORKSPACE/ci/allowlist/sanitycheck-$ZEPHYR_BRANCH_BASE.allowFail" ]; then
 	#get SC_ALLOWED_TO_FAIL array for this branch
-	source "../../ci/allowlist/sanitycheck-$ZEPHYR_BRANCH_BASE.allowFail"
+	source "$WORKSPACE/ci/allowlist/sanitycheck-$ZEPHYR_BRANCH_BASE.allowFail"
 	#iterate through list of fail-able testcases, erasing line from $TESTCASES if found
 	for tc in "${SC_ALLOWED_TO_FAIL[@]}"; do
 		#use sed to whack any lines that have exact matches
