@@ -1,8 +1,11 @@
 #!/bin/bash
 
 # standard west init + update method
-# run from zephyr-tree CWD w/ ZEPHYR_BRANCH_BASE set to something the infrastructure supports
-
+# run from zephyr-tree CWD with pre-reqs/env vars:
+#	ci.git & zephyr.git - at /ci & /zephyr, respectively
+#	WORKSPACE - set to directory containing /zephyr & /ci
+#	ZEPHYR_BRANCH_BASE - 'master', 'v1.14-branch-intel' or other supported value from branch-detect.groovy
+#
 #disable ccache, it's known to cause build issues with zephyr in an automation
 export CCACHE_DISABLE=1
 export USE_CCACHE=0
@@ -14,7 +17,7 @@ if [ -f "/container_env" ]; then
 fi
 
 #configure variable python path, both lib & lib64
-export PYTHONPATH="$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib -name python3.* -print0)/site-packages:$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib64 -name python3.* -print0)/site-packages"
+export PYTHONPATH=$($WORKSPACE/ci/modules/set-python-path.sh $ZEPHYR_BRANCH_BASE)
 export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
 
 # echo critical env values
