@@ -11,7 +11,7 @@
 //  * break-out gitlab bits into it's own interface, make generic
 
 //Pipeline variables
-//	baseBranch - 'master', 'v1.14-branch-intel', etc
+//  baseBranch - 'master', 'v1.14-branch-intel', etc
 //  sdkVersion - Zephyr SDK version string, eg: '0.10.3'
 //  agentType - specifies which type of agent to build, currently we support 'vm' or 'nuc'
 //  buildLocation - specifies where to execute the build, currently we support 'jf' or 'sh'
@@ -33,7 +33,10 @@ def abort_build(jobName) {
 //  sanitycheck-runner.sh is called on each agent, with -B split options to divide & conquer the execution
 //  after execution is complete, each agent stashes aritfacts (currently just junit.xml) & transfers back to master
 //  Jenkins master then unstashes all artifacts & creates a junit composite for all tests
-def run(branchBase,sdkVersion,agentType,buildLocation) {
+def run(branchBase,sdkVersion,agentType,buildLocation,sc_option) {
+	//default empty string for sc_option
+	sc_option = sc_option ?: ""
+
 	//job-wide globals
 	def targetAgentLabel = "${agentType}-${buildLocation}"
 	def availAgents = nodesByLabel "${targetAgentLabel}"
@@ -63,12 +66,15 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 									"https_proxy=http://proxy-chain.intel.com:911",
 									"HTTP_PROXY=http://proxy-chain.intel.com:911",
 									"HTTPS_PROXY=http://proxy-chain.intel.com:911"]) {
-								sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh ${numAvailAgents} ${batchNumber}"
+								sh "$WORKSPACE/ci/modules/sanitycheck-runner.sh ${numAvailAgents} ${batchNumber} ${sc_option}"
 							}
 						}
+						echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+						echo "currentBuild.result for this node = ${currentBuild.result}"
+						echo "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" 
 						//stash junit output for transfer back to master
 						dir ('sanity-out') {
-							stash allowEmpty: true, name: "junit-${batchNumber}", includes: '*.xml'
+							stash allowEmpty: true, name: "junit-${batchNumber}", includes: 'sanitycheck.xml'
 						}
 					}//dir
 				}//stage
@@ -91,7 +97,7 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 
 			//publish junit results.
 			//wrap in catchError block w/ buildResult=null to prevent failing entire build if there are no junit files
-			catchError(buildResult: null, stageResult: 'FAILURE') {
+			catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
 				step([$class: 'JUnitResultArchiver', testResults: '**/junit*/*.xml', healthScaleFactor: 1.0])
 					publishHTML (target: [
 					allowMissing: true,
@@ -99,10 +105,18 @@ def run(branchBase,sdkVersion,agentType,buildLocation) {
 					keepAll: false,
 					reportDir: '',
 					reportFiles: 'index.html',
-					reportName: "Sanitycheck Junit Report"
-				])
-//				xunit thresholds: [passed(failureNewThreshold: '0', failureThreshold: '0', unstableNewThreshold: '0', unstableThreshold: '0')], tools: [JUnit(deleteOutputFiles: true, failIfNotNew: false, pattern: '**/junit*/*.xml', skipNoTestFiles: true, stopProcessingIfError: true)]
+					reportName: "Sanitycheck Junit Report"])
 			}
+
+//			xunit thresholds: [passed(	failureNewThreshold: '0',
+//							failureThreshold: '0',
+//							unstableNewThreshold: '0',
+//							unstableThreshold: '0')],
+//				tools: [JUnit(	deleteOutputFiles: true,
+//						failIfNotNew: false,
+//						pattern: '**/junit*/*.xml',
+//						skipNoTestFiles: true,
+//						stopProcessingIfError: true)]
 		}
 	}
 }//start
