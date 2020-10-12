@@ -39,3 +39,11 @@ def get_active_branch(sanity_out):
     repo_object  = repo.active_branch
     branch = repo_object.name.split('\n')[0]
     return branch
+
+def where_am_i():
+    buildhost = socket.getfqdn()
+    if "zephyr-ci" in buildhost:
+        PROD_HOST = "PROD"
+    else:
+        PROD_HOST = "LOCAL"
+    sys.exit(PROD_HOST)
