@@ -81,7 +81,7 @@ echo DOCKER_RUN=$DOCKER_RUN
 
 # Sanitycheck configuration & command-line generation
 export TESTCASES="testcases"
-export SC_CMD_BASE="$DOCKER_RUN scripts/sanitycheck -x=USE_CCACHE=0 -N --inline-logs"
+export SC_CMD_BASE="$DOCKER_RUN scripts/twister -x=USE_CCACHE=0 -N --inline-logs"
 export SC_CMD_SAVE_TESTS="$SC_CMD_BASE -B $2/$1 $3 --save-tests $TESTCASES"
 
 #handle branch differences in sanitycheck junit output
@@ -90,7 +90,7 @@ if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch-intel" ]; then
     export SC_CMD2="$SC_CMD_BASE -f -v --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit2.xml"
     export SC_CMD3="$SC_CMD_BASE -f -v --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit3.xml"
 elif [ "$ZEPHYR_BRANCH_BASE" == "master" ]; then
-    export SC_CMD1="$SC_CMD_BASE --integration -v --load-tests $TESTCASES --retry-failed 3"
+    export SC_CMD1="$SC_CMD_BASE --integration -v --load-tests $TESTCASES --retry-failed 4"
 fi
 
 echo "Sanitycheck command-lines:"
