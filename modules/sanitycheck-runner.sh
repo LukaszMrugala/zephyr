@@ -97,7 +97,7 @@ if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch-intel" ]; then
     export SC_CMD2="$SC_CMD_BASE -f -v --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit2.xml"
     export SC_CMD3="$SC_CMD_BASE -f -v --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit3.xml"
 elif [ "$ZEPHYR_BRANCH_BASE" == "master" ]; then
-    export SC_CMD1="$SC_CMD_BASE --integration -v --load-tests $TESTCASES --retry-failed 4 --retry-interval 60"
+    export SC_CMD1="$SC_CMD_BASE --integration -v --load-tests $TESTCASES --retry-failed 10 --retry-interval 300"
 fi
 
 echo "Sanitycheck command-lines:"
