@@ -73,8 +73,15 @@ def run(branchBase,sdkVersion,agentType,buildLocation,sc_option) {
 						echo "currentBuild.result for this node = ${currentBuild.result}"
 						echo "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" 
 						//stash junit output for transfer back to master
-						dir ('sanity-out') {
-							stash allowEmpty: true, name: "junit-${batchNumber}", includes: 'sanitycheck.xml'
+						if(branchBase=="v1.14-branch-intel") {
+							dir ('sanity-out') {
+								stash allowEmpty: true, name: "junit-${batchNumber}", includes: 'sanitycheck.xml'
+							}
+						}
+						else {
+							dir ('twister-out') {
+								stash allowEmpty: true, name: "junit-${batchNumber}", includes: 'twister.xml'
+							}
 						}
 					}//dir
 				}//stage
