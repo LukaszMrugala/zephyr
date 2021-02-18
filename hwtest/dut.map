@@ -1,0 +1,5 @@
+# map of ttys across hwtest agents
+HWTEST_TTYS=(
+	'1c:69:7a:0a:96:e8,nucleo_f103rb,/dev/serial/by-path/pci-0000:00:14.0-usb-0:1:1.2'
+	'1c:69:7a:0f:09:07,reel_board,/dev/serial/by-path/pci-0000:00:14.0-usb-0:2:1.1'
+)
