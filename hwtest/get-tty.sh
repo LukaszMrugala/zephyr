@@ -8,6 +8,10 @@
 #  * Takes zephyr project platform name as param & checks tty.map for entries on this host
 #  * Returns tty path if match found, '1' if no match if found
 #
+# Requires:
+# ========
+# $WORKSPACE/ci/hwtest/dut.map must exist
+#
 # Example:
 # ======
 #  $./get-tty.sh reel_board
@@ -18,8 +22,8 @@
 #
 #####################################################################################
 
-if [ -f "dut.map" ]; then
-	source "dut.map"
+if [ -f "$WORKSPACE/ci/hwtest/dut.map" ]; then
+	source "$WORKSPACE/ci/hwtest/dut.map"
 	for dut in "${HWTEST_TTYS[@]}"; do
 		PATTERN=$(echo $dut | awk -F , '{ print $2; }')
 		if [ "$1" == "$PATTERN" ]; then

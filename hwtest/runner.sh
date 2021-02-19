@@ -31,21 +31,17 @@ export ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr
 export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
 export ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-0.12.2
 
-echo "hwtest-runner.sh: $ZEPHYR_BASE@$(hostname -f),sdk=$ZEPHYR_SDK_INSTALL_DIR,env=$ZEPHYR_BRANCH_BASE"
+echo "hwtest-runner.sh@$ZEPHYR_BASE,sdk=$ZEPHYR_SDK_INSTALL_DIR,env=$ZEPHYR_BRANCH_BASE"
 
-export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N"
-export SC_CMD1="$SC_CMD_BASE -p $1 -B $3/$2 --device-testing --device-serial /dev/$4"
-
-
-echo "Starting sanitycheck hwtest"
-DEVTTY=$("../../ci/hwtest/get-tty.sh $1")
-if( "$DEVTTY" == 1); then
+DEVTTY=$($WORKSPACE/ci/hwtest/get-tty.sh "$1")
+ret=$?
+if [ $ret -ne 0 ]; then
 	echo "ERROR: could not map tty $1 on this platform -- check ci.git/hwtest/tty.map"
 	echo "ABORTING"
 	exit 1
 fi
 
-CMD="scripts/twister -x=USE_CCACHE=0 -v --device-testing --device-serial $DEVTTY -p $1"
+CMD="scripts/twister -B $3/$2 -x=USE_CCACHE=0 -v --device-testing --device-serial $DEVTTY -p $1"
 $CMD
 RESULT=$?
 echo "Done. RESULT=$RESULT."
