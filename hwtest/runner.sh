@@ -31,6 +31,15 @@ export ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr
 export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
 export ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-0.12.2
 
+#if running in container, source these configs
+if [ -f "/container_env" ]; then
+        source /container_env   #container specific overrides, if any
+fi
+
+if [ -f "/proxy.sh" ]; then
+        source /proxy.sh        #location of imported proxy config in container env
+fi
+
 echo "hwtest-runner.sh@$ZEPHYR_BASE,sdk=$ZEPHYR_SDK_INSTALL_DIR,env=$ZEPHYR_BRANCH_BASE"
 
 DEVTTY=$($WORKSPACE/ci/hwtest/get-tty.sh "$1")

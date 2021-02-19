@@ -54,8 +54,11 @@ export USE_CCACHE=0
 
 #if running in container, source these configs
 if [ -f "/container_env" ]; then
-	source /proxy.sh 		#location of imported proxy config in container env
 	source /container_env	#container specific overrides, if any
+fi
+
+if [ -f "/proxy.sh" ]; then
+	source /proxy.sh 	#location of imported proxy config in container env
 fi
 
 #set PYTHONPATH using our helper script
