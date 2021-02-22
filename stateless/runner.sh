@@ -49,8 +49,12 @@
 #####################################################################################
 
 # VMs are allocated 72GB RAM with 64GB reserved.
-# Secure 56GB of build space, leaving a guaranteed 8GB real RAM
-mount -o remount,noatime,size=56G /dev/shm
+# Secure 48GB of build space, leaving a guaranteed 16GB real RAM
+mount -o remount,noatime,size=48G /dev/shm
+
+# aggressively scrub /dev/shm for old work-directories...
+find /dev/shm -name twister-out* -type d -print0 | xargs -0 rm -rf
+find /dev/shm -name sanity-out* -type d -print0 | xargs -0 rm -rf
 
 #disable ccache, it's known to cause build issues with zephyr in an automation
 export CCACHE_DISABLE=1
@@ -142,12 +146,8 @@ fi
 echo Done. SC_RESULT=$SC_RESULT.
 
 #schedule reboot in 30 sec... todo, make build-time option for retaining build results (aka, not rebooting)
-nohup sleep 30 && systemctl start reboot.target&
+# doesn't seem to be working...
+#nohup sleep 30 && systemctl start reboot.target&
 
 exit $SC_RESULT
-
-#echo "Running junit-condenser..."
-#cd junit
-#python $WORKSPACE/ci/modules/sanitycheck-junit-condenser.py
-#cd -
 
