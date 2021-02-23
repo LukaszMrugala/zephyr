@@ -3,7 +3,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // run - performs west init-update with timeoutMins (opt)
-//	requires 'buildConfig' set from previous call to detect-branch
+//	requires 'buildConfig' defined @Field & set from previous call to detect-branch
 //
 def run(timeoutMins) {
 	//default 15 min timemout

@@ -6,22 +6,22 @@
 //	srcRepo - ssh or http url supported
 //	srcBranch - branch name, tag or sha
 //
-def clone(srcRepo,srcBranch,timeoutMins) {
+def clone(sourceRepo,sourceBranch,timeoutMins) {
 
 	//default 5 min timemout
 	timeoutMins = timeoutMins ?: 5
 
 	stage('gitlab-clone') {
 		echo "stage: git-checkout, params:"
-		echo "   srcRepo=${srcRepo}"
-		echo "   srcBranch=${srcBranch}"
+		echo "   sourceRepo=$sourceRepo"
+		echo "   sourceBranch=$sourceBranch"
 		//wrap git operation in a 5-minute timeout
 		timeout(time: timeoutMins, unit: 'MINUTES') {
 			dir('zephyrproject/zephyr') {
 				checkout changelog: true, poll: false, scm: [
 					$class: 'GitSCM',
-					branches: [[name: "${srcBranch}"]],
-					userRemoteConfigs: [[url: "${srcRepo}"]]
+					branches: [[name: "$sourceBranch"]],
+					userRemoteConfigs: [[url: "$sourceRepo"]]
 				]
 			}
 		}
@@ -31,17 +31,16 @@ def clone(srcRepo,srcBranch,timeoutMins) {
 ////////////////////////////////////////////////////////////////////////////////
 // setStatus - set commit status on gitlab
 //	jobStatus -  [pending, running, canceled, success, failed] ONLY
-//	jobName - must be set as public
+//	jobName - must be defined @Field
 //
-def setStatus(jobStatus,jobName) {
+def setStatus(jobStatus) {
 
-	updateGitlabCommitStatus name: "$jobName", state: "$jobStatus"
+	updateGitlabCommitStatus name: "${jobName}", state: "$jobStatus"
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // addMRComment - adds comment to merge request associated with gitlab commit
 //	commentStr -  comment string
-//	jobName - must be set as public
 //
 def addMRComment(commentStr) {
 	stage("add MR comment") {

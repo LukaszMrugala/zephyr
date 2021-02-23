@@ -10,7 +10,7 @@ def setJobInfo() {
 	def src_sha = sh label: 'git rev-parse', returnStdout: true, script: 'git -C $WORKSPACE/zephyrproject/zephyr rev-parse --short=5 HEAD'
 	def ci_sha = sh label: 'git rev-parse', returnStdout: true, script: 'git -C $WORKSPACE/ci rev-parse --short=5 HEAD'
 	def build_displayName = sprintf("%s","${JOB_NAME}")
-	def build_description = sprintf("branch: %s@%s\nbuild env: %s, ci@%s",srcBranch,src_sha.trim(),buildConfig['branchBase'],ci_sha.trim())
+	def build_description = sprintf("branch: %s@%s\nbuild env: %s, ci@%s","${srcBranch}",src_sha.trim(),"${buildConfig['branchBase']},ci_sha.trim())
 	currentBuild.description = build_description
 	currentBuild.displayName = build_displayName
 }
