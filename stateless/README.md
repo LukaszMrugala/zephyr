@@ -11,7 +11,7 @@ It is intended to be branch, build-environment & CI platform agnostic.
 
 ## pipeline.groovy
 
-This is a Jenkins pipeline script wrapper for the sanitycheck-runner.sh script that implements a Gitlab CI flow for internal Zephyr CI functions. It supports parallel build expansion across Jenkins build agents & is intended to be called from a top-level Jenkins CI job with parameters set for:
+This is a Jenkins pipeline script wrapper for the above runner.sh script that implements a Gitlab CI flow for internal Zephyr CI functions. It supports parallel build expansion across Jenkins build agents & is intended to be called from a top-level Jenkins CI job with parameters set for:
 * Source Repo URL
 * Source Branch URL
 * Zephyr SDK Version
