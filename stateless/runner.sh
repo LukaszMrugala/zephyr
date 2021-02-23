@@ -34,7 +34,7 @@
 # Usage:
 # ======
 #		cd <path to zephyr-tree> #aka ZEPHYR_BASE
-#		$WORKSPACE/ci/modules/sanitycheck_runner.sh <total # nodes> <this node #> <sanitycheck -p options>
+#		$WORKSPACE/ci/stateless/runner.sh <total # nodes> <this node #> <sanitycheck -p options>
 #			Example:
 #				./sanitycheck_runner.sh 4 1 -pqemu_x86
 # Output:
@@ -73,7 +73,7 @@ fi
 # todo: move this script to /set-python-path.sh in ubuntu-zdo
 #
 #set PYTHONPATH using our helper script
-export PYTHONPATH=$($WORKSPACE/ci/modules/set-python-path.sh $ZEPHYR_BRANCH_BASE)
+export PYTHONPATH=$($WORKSPACE/ci/utils/set-python-path.sh $ZEPHYR_BRANCH_BASE)
 
 export PATH="/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH"
 

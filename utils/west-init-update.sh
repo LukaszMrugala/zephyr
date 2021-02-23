@@ -17,7 +17,7 @@ if [ -f "/container_env" ]; then
 fi
 
 #configure variable python path, both lib & lib64
-export PYTHONPATH=$($WORKSPACE/ci/modules/set-python-path.sh $ZEPHYR_BRANCH_BASE)
+export PYTHONPATH=$($WORKSPACE/ci/utils/set-python-path.sh $ZEPHYR_BRANCH_BASE)
 export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
 
 # echo critical env values

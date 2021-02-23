@@ -1,16 +1,28 @@
 //stateless/pipeline.groovy
-//	This is a Zephyr sanitycheck execution Jenkins pipeline supporting distributed execution.
-//  Execution is distributed across all agents with label matching the agent type & location parameters.
-//	Functions of this module:
-//		1. Unstash previously prepared zephyr build context
-//		2. Execute sanitycheck-runner in a parallel across agents
-//		3. Collect junit files from each agent & report failures in Jenkins build
-//		4. Report task status back to gitlab
-//Pipeline variables
-//  baseBranch - 'master', 'v1.14-branch-intel', etc
-//  sdkVersion - Zephyr SDK version string, eg: '0.10.3'
-//  agentType - specifies which type of agent to build, currently we support 'vm' or 'nuc'
-//  buildLocation - specifies where to execute the build, currently we support 'jf' or 'sh'
+//      A pipeline for parallel-executed Zephyr-project testing with sanitycheck/twister methods.
+//      Call from Jenkins build after 'git clone..', 'west init/update' & finally creating build context stash with 'stash: context'
+//      Parameters:
+//              baseBranch - 'master', 'v1.14-branch-intel', etc
+//              sdkVersion - Zephyr SDK version to use, eg: '0.10.3'
+//              agentType - specifies which type of agent to build, currently we support 'ubuntu_vm', 'zbuild' or 'nuc64GB'
+//              buildLocation - specifies where to execute the build, currently we support 'jf' or 'sh'
+//      Returns:
+//              Each parallel node is run as Jenkins stage & status is reflected by the stage result:
+//                      SUCCESS (green) ------- Test executed normally & no failures detected.
+//                      UNSTABLE (yellow) ----- Test executed normally but test-case failures were detected.
+//                      FAILED (red) ---------- Test execution failed. DevOps intervention required.
+//                      TIMEOUT/CANCEL (grey) - Test executed was cancelled or timed-out. DevOp intervention required.
+//
+//      Functions of this module:
+//              1. Search for available nodes matching the supplied agentType + buildLocation pattern.
+//              2. Expand execution to all available nodes and run the following steps on each:
+//                      a. Unstash prepared zephyr build, named 'context'
+//                      b. Detect which generation of zephyr test method, sanitycheck or twister
+//                      c. Run zephy-test-<METHOD>-runner.sh wrapper script, which sets env & passes along batch options
+//                      d. Collect log + junit.xml files from each agent & transfer back to calling pipeline
+//                      e. Report overall build result, setting the stage UNSTABLE on failure
+//              3. Back at the mater report failures in Jenkins build
+//              4. Report task status back to gitlab
 
 //for @Field String
 import groovy.transform.Field
