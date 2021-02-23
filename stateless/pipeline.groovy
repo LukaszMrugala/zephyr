@@ -56,15 +56,14 @@ def run(branchBase,sdkVersion,agentType,buildLocation,sc_option) {
 	for (int i = 0; i < numAvailAgents; i++)
 	{
 		def batchNumber = i + 1
-		def stageName = "sanitycheck-${batchNumber}/${numAvailAgents}"
+		def stageName = "ci-${batchNumber}/${numAvailAgents}"
 		nodejobs[stageName] = { ->
 		node("${targetAgentLabel}") {
 			deleteDir()
 			unstash "context"
 				stage("${stageName}") {
 					dir('zephyrproject/zephyr') {
-						//call our runner shell script
-						//withEnv block is temporary... debugging env vars not sticking from -runner.sh
+						//call runner.sh with catchError block setup for UNSTABLE, not FAILED status
 						catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') { 
 							withEnv(["ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
 									"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
@@ -97,7 +96,7 @@ def run(branchBase,sdkVersion,agentType,buildLocation,sc_option) {
 	//back at the master, expand junit archives from build nodes
 	node('master') {
 		deleteDir()
-		stage('junit report') {
+		stage('ci junit') {
 			//expand array of nodes & unstash results into directories
 			for (int j = 0; j < numAvailAgents; j++) {
 				def batchNumber = j + 1
