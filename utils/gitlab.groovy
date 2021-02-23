@@ -17,11 +17,13 @@ def clone(srcRepo,srcBranch,timeoutMins) {
 		echo "   srcBranch=${srcBranch}"
 		//wrap git operation in a 5-minute timeout
 		timeout(time: timeoutMins, unit: 'MINUTES') {
-			checkout changelog: true, poll: false, scm: [
-				$class: 'GitSCM',
-				branches: [[name: "${srcBranch}"]],
-				userRemoteConfigs: [[url: "${srcRepo}"]]
-			]
+			dir('zephyrproject/zephyr') {
+				checkout changelog: true, poll: false, scm: [
+					$class: 'GitSCM',
+					branches: [[name: "${srcBranch}"]],
+					userRemoteConfigs: [[url: "${srcRepo}"]]
+				]
+			}
 		}
 	}
 }
