@@ -31,7 +31,7 @@ def clone(srcRepo,srcBranch,timeoutMins) {
 //	jobStatus -  [pending, running, canceled, success, failed] ONLY
 //	jobName - must be set as public
 //
-def setStatus(jobStatus) {
+def setStatus(jobStatus,jobName) {
 
 	updateGitlabCommitStatus name: "$jobName", state: "$jobStatus"
 }
