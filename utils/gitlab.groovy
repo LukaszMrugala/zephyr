@@ -7,15 +7,10 @@
 //	srcBranch - branch name, tag or sha
 //
 def clone(sourceRepo,sourceBranch,timeoutMins) {
-
-	//default 5 min timemout
-	timeoutMins = timeoutMins ?: 5
-
 	stage('gitlab-clone') {
 		echo "stage: git-checkout, params:"
 		echo "   sourceRepo=$sourceRepo"
 		echo "   sourceBranch=$sourceBranch"
-		//wrap git operation in a 5-minute timeout
 		timeout(time: timeoutMins, unit: 'MINUTES') {
 			dir('zephyrproject/zephyr') {
 				checkout changelog: true, poll: false, scm: [
@@ -31,11 +26,10 @@ def clone(sourceRepo,sourceBranch,timeoutMins) {
 ////////////////////////////////////////////////////////////////////////////////
 // setStatus - set commit status on gitlab
 //	jobStatus -  [pending, running, canceled, success, failed] ONLY
-//	jobName - must be defined @Field
+//	jobName - should be set to $env.JOB_NAME
 //
-def setStatus(jobStatus) {
-
-	updateGitlabCommitStatus name: "${jobName}", state: "$jobStatus"
+def setStatus(jobName,jobStatus) {
+	updateGitlabCommitStatus name: "$jobName", state: "$jobStatus"
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,8 +38,7 @@ def setStatus(jobStatus) {
 //
 def addMRComment(commentStr) {
 	stage("add MR comment") {
-		addGitLabMRComment comment: "${commentStr}"
+		addGitLabMRComment comment: "$commentStr"
 	}
 }
-
 return this
