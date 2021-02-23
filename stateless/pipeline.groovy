@@ -69,12 +69,8 @@ def run(branchBase,sdkVersion,agentType,buildLocation,sc_option) {
 							withEnv(["ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
 									"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
 									"ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-${sdkVersion}",
-									"ZEPHYR_BRANCH_BASE=${branchBase}",
-									"http_proxy=http://proxy-chain.intel.com:911",
-									"https_proxy=http://proxy-chain.intel.com:911",
-									"HTTP_PROXY=http://proxy-chain.intel.com:911",
-									"HTTPS_PROXY=http://proxy-chain.intel.com:911"]) {
-								sh "$WORKSPACE/ci/stateless/runner.sh ${numAvailAgents} ${batchNumber} ${sc_option}"
+									"ZEPHYR_BRANCH_BASE=${branchBase}"]) {
+								sh "$WORKSPACE/ci/stateless/runner.sh ${numAvailAgents} ${batchNumber} \"${sc_option}\""
 							}
 						}
 						echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
