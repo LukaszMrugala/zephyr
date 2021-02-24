@@ -6,6 +6,10 @@
 #	WORKSPACE - set to directory containing /zephyr & /ci
 #	ZEPHYR_BRANCH_BASE - 'master', 'v1.14-branch-intel' or other supported value from branch-detect.groovy
 #
+# Params:
+# 	$1 - if set, will override west init directory (defaults to zephyr)
+#
+
 #disable ccache, it's known to cause build issues with zephyr in an automation
 export CCACHE_DISABLE=1
 export USE_CCACHE=0
@@ -25,7 +29,9 @@ export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
 echo "PYTHONPATH=$PYTHONPATH"
 echo "PATH=$PATH"
 echo "WEST=$(which west)"
-echo "CMAKE=path:$(which cmake), version: $(cmake --version)"
 
-rm -rf .west && west init -l zephyr && west update
-
+if [[ -z "$1" ]]; then
+	rm -rf .west && west init -l zephyr && west update
+else
+	rm -rf .west && west init -l "$1" && west update
+fi
