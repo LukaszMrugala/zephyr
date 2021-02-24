@@ -35,6 +35,20 @@ GATE="false"
 FORCE="false"
 TESTS=""
 
+# Test repos
+#REPO_BASE="ssh://git@gitlab.devtools.intel.com:29418/tgraydon1"
+#CI_BASE="ssh://git@gitlab.devtools.intel.com:29418/tgraydon1"
+
+# For production
+REPO_BASE="ssh://git@gitlab.devtools.intel.com:29418/zephyrproject-rtos"
+CI_BASE="ssh://git@gitlab.devtools.intel.com:29418/zephyrproject-rtos"
+ 
+REPO_DIR="zephyr"
+CI_DIR="ci"
+ 
+ZEPHYR_REPO="$REPO_BASE/$REPO_DIR"
+CI_REPO="$CI_BASE/$CI_DIR"
+ 
 while [ "$1" != "" ]; do
     case $1 in
         -b | --branch)          shift
@@ -60,10 +74,11 @@ while [ "$1" != "" ]; do
 done
 echo
 
+
 if [ "$BRANCH" == "" ]; then
     echo "You must at least specify the branch.
-    i.e. ./local_merge.sh -b <branch>
-    ./local_merge.sh -b master
+    i.e. ./merge.sh -b <branch>
+    ./merge.sh -b master
      Use master for master-intel, v1.14 for v1.14-branch-intel, or testsuite for testsuite-intel."
     exit 1
 fi
@@ -139,22 +154,50 @@ fi
 
 echo "SOURCE: $MERGE_SOURCE"
 echo "MERGE_TO: $MERGE_TO"
+echo
 
-export SCRIPT_PATH=$WORKSPACE/ci/utils
-#export SCRIPT_PATH=$WORKSPACE/ci/scripts/prod
+export WORKDIR="$PWD"
+echo "WORKDIR: $WORKDIR"
 
-export PYTHONPATH="$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib -name python3.* -print)/site-packages:$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib64 -name python3.* -print)/site-packages"
-export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/lib/python3.6/site-packages/west:/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
+# Set up the environment based on whether we are on a production host or local.
+# We have to toggle set +/-e here because we don't really want the function in utils.py to exit. We use sys.exit to throw us the value.
+set +e
+what_host=$((python3 -c 'import os; workdir = os.environ["WORKDIR"]; import sys; sys.path.append("%s/ci/modules" % workdir); import utils; utils.where_am_i()') 2>&1 > /dev/null)
+set -e
 
-ZEPHYRPROJECT_DIR="zephyrproject"
-REPO_DIR="zephyr"
+if [ $what_host == "PROD" ]; then
+    export SCRIPT_PATH=$WORKSPACE/ci/modules
+    export PATH=/usr/local_$ZEPHYR_BRANCH_BASE/lib/python3.6/site-packages/west:/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH
+    ZEPHYRPROJECT_DIR="zephyrproject"
+elif [ $what_host == "LOCAL" ]; then
+    export WORKSPACE=/srv/build
+    export SCRIPT_PATH=$WORKSPACE/ci/modules
+    ZEPHYRPROJECT_DIR="zephyrproject_$ZEPHYR_BRANCH_BASE"
+    # Set up working dir, if it doesn't already exist
+    if [ ! -d $WORKSPACE ]; then
+        mkdir -p $WORKSPACE
+        chmod 777 $WORKSPACE
+    fi
+    cd $WORKSPACE
+    if [ ! -d $CI_DIR ]; then
+        git clone $CI_REPO $CI_DIR  
+    fi
+    if [ -d $ZEPHYRPROJECT_DIR ]; then
+        STAMP=`date "+%Y%m%d_%T"`
+        echo "Found an existing zephyrproject dir. Moving it."
+        mv $ZEPHYRPROJECT_DIR $ZEPHYRPROJECT_DIR"_"$STAMP
+        echo "Moved $ZEPHYRPROJECT_DIR to $ZEPHYRPROJECT_DIR"_"$STAMP"
+        echo
+    fi
+fi
+
+#set PYTHONPATH using our helper script
+export PYTHONPATH=$($SCRIPT_PATH/set-python-path.sh $ZEPHYR_BRANCH_BASE)
+echo "PYTHONPATH: $PYTHONPATH"
+
+mkdir -p $ZEPHYRPROJECT_DIR
+
 export ZEPHYR_BASE=$WORKSPACE/$ZEPHYRPROJECT_DIR/zephyr
-
-# For testing
-#REPO_URL="ssh://git@gitlab.devtools.intel.com:29418/tgraydon1/$REPO_DIR"
-
-# PRODUCTION
-REPO_URL="ssh://git@gitlab.devtools.intel.com:29418/zephyrproject-rtos/$REPO_DIR"
 
 function make_tag()
 {
@@ -245,8 +288,8 @@ function do_merge()
 {
 set +e
 cd $ZEPHYRPROJECT_DIR
-echo "Cloning repo $REPO_URL"
-git clone $REPO_URL $REPO_DIR --branch "$MERGE_SOURCE"
+echo "Cloning repo $ZEPHYR_REPO"
+git clone $ZEPHYR_REPO $REPO_DIR --branch "$MERGE_SOURCE"
 echo
 cd $REPO_DIR
 
@@ -262,6 +305,7 @@ head_before=$(git rev-parse HEAD)
 
 if ! git merge --no-ff $MERGE_SOURCE $MERGE_TO -m "Merge $MERGE_SOURCE to $MERGE_TO"; then
     echo "E: $MERGE_SOURCE: automatic merge failed -- manual intervention needed"
+    print_commits
     exit 1
 fi
 
@@ -298,9 +342,8 @@ echo ZEPHYR_TOOLCHAIN_VARIANT=$ZEPHYR_TOOLCHAIN_VARIANT
 echo ZEPHYR_BRANCH_BASE=$ZEPHYR_BRANCH_BASE
 echo ZEPHYRPROJECT_DIR=$ZEPHYRPROJECT_DIR
 echo "ZEPHYR_BASE: $ZEPHYR_BASE"
-echo PYTHONPATH=$PYTHONPATH
 echo PATH=$PATH
-echo cmake="path:$(which cmake), version: $(cmake --version)"
+#echo cmake="path:$(which cmake), version: $(cmake --version)"
 echo http_proxy=$http_proxy
 echo https_proxy=$https_proxy
 echo no_proxy=$no_proxy
@@ -314,11 +357,16 @@ else
     echo "SDK exists."
 fi
 
+cd $ZEPHYR_BASE
+
 echo -e "Initializing West.\n"
 west init -l
 west update
 echo
-#pip3 install --user -r scripts/requirements.txt
+
+#if [ $what_host == "LOCAL" ]; then
+#    pip3 install --user -r scripts/requirements.txt
+#fi
 
 source zephyr-env.sh
 
@@ -363,18 +411,9 @@ function print_commits()
 {
 echo
 echo "$MERGE_SOURCE HEAD: $source_head"
-echo "$MERGE_TO HEAD: $head_before"
-echo -e "Merge commit: $head_after\n"
+echo -e "$MERGE_TO HEAD: $head_before\n"
+#echo -e "Merge commit: $head_after\n"
 }
-
-# Set up WORKDIR, if it doesn't already exist
-if [ ! -d $WORKDIR ]; then
-    mkdir -p $WORKDIR
-    chmod 777 $WORKDIR
-fi
-
-# Create the zephyrproject directory
-mkdir $ZEPHYRPROJECT_DIR
 
 do_merge
 
@@ -419,4 +458,5 @@ elif [ "$BLIND" == "false" ]; then
 fi
 
 print_commits
+echo -e "Merge commit: $head_after\n"
 echo "DONE!"
