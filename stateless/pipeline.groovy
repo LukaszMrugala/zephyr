@@ -2,10 +2,12 @@
 //      A pipeline for parallel-executed Zephyr-project testing with sanitycheck/twister methods.
 //      Call from Jenkins build after 'git clone..', 'west init/update' & finally creating build context stash with 'stash: context'
 //      Parameters:
+//		test_skip_div - sets testcase skipping, set to 1 for normal operation, N will limit execution to 1 in N cases
 //              baseBranch - 'master', 'v1.14-branch-intel', etc
 //              sdkVersion - Zephyr SDK version to use, eg: '0.10.3'
 //              agentType - specifies which type of agent to build, currently we support 'ubuntu_vm', 'zbuild' or 'nuc64GB'
 //              buildLocation - specifies where to execute the build, currently we support 'jf' or 'sh'
+//		sc_option - extra string to insert in twister/sanitycheck cmdline
 //      Returns:
 //              Each parallel node is run as Jenkins stage & status is reflected by the stage result:
 //                      SUCCESS (green) ------- Test executed normally & no failures detected.
@@ -41,14 +43,13 @@ def abort_build(jobName) {
 //  sanitycheck-runner.sh is called on each agent, with -B split options to divide & conquer the execution
 //  after execution is complete, each agent stashes aritfacts (currently just junit.xml) & transfers back to master
 //  Jenkins master then unstashes all artifacts & creates a junit composite for all tests
-def run(branchBase,sdkVersion,agentType,buildLocation,sc_option) {
-	//default empty string for sc_option
-	sc_option = sc_option ?: ""
+def run(test_skip_div,branchBase,sdkVersion,agentType,buildLocation,sc_option) {
 
 	//job-wide globals
 	def targetAgentLabel = "${agentType}-${buildLocation}"
 	def availAgents = nodesByLabel "${targetAgentLabel}"
 	int numAvailAgents = availAgents.size()
+	int denominator = numAvailAgents*test_skip_div.toInteger()
 
 	//parallel expansion around available nodes
 	echo "Preparing for distributed sanitycheck across all available nodes matching label: ${targetAgentLabel}"
@@ -69,7 +70,7 @@ def run(branchBase,sdkVersion,agentType,buildLocation,sc_option) {
 									"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
 									"ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-${sdkVersion}",
 									"ZEPHYR_BRANCH_BASE=${branchBase}"]) {
-								sh "$WORKSPACE/ci/stateless/runner.sh ${numAvailAgents} ${batchNumber} \"${sc_option}\""
+								sh "$WORKSPACE/ci/stateless/runner.sh ${denominator} ${batchNumber} \"${sc_option}\""
 							}
 						}
 						echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
