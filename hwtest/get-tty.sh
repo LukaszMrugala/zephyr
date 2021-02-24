@@ -25,8 +25,10 @@
 if [ -f "$WORKSPACE/ci/hwtest/dut.map" ]; then
 	source "$WORKSPACE/ci/hwtest/dut.map"
 	for dut in "${HWTEST_TTYS[@]}"; do
-		PATTERN=$(echo $dut | awk -F , '{ print $2; }')
-		if [ "$1" == "$PATTERN" ]; then
+		LISTPLAT=$(echo $dut | awk -F , '{ print $2; }')
+		LISTMAC=$(echo $dut | awk -F , '{ print $1; }')
+		MYMAC=$(ip address show eth0 | grep link/ether | awk '{ print $2; }')
+		if [[ "$1" == "$LISTPLAT" ]] && [[ "$LISTMAC" == "$MYMAC" ]]; then
 			echo $dut | awk -F , '{ print $3; }'
 			exit 0
 		fi
