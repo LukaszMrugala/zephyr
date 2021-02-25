@@ -33,8 +33,8 @@ function die() { echo "$@" 1>&2; exit 1; }
 export CCACHE_DISABLE=1
 which ${COV_CONF} && which ${COV_BUILD} || die "Coverity Build Tool is not in PATH"
 
-${COV_CONF} --comptype gcc --compiler i586-zephyr-elf-gcc --template
-${COV_BUILD} --emit-complementary-info --dir ${COV_INT} sanitycheck -a x86 -t kernel -b
+${COV_CONF} --comptype gcc --compiler arm-zephyr-eabi-gcc --template
+${COV_BUILD} --emit-complementary-info --dir ${COV_INT} west build -p -b mimxrt1050_evk ./tests/benchmarks/footprints/
 
 ${COV_ANALYZE} --misra-config $WORKSPACE/ci/coverity/misra_c_scans/MISRA.config --tu-pattern "! file('.*/samples/.*') && ! file('.*\.cpp') && ! file('.*/tests/.*') && ! file('autoconf.h') && ! file('.*/drivers/*/') && ! file('.*/lib/libc/.*') && ! file('.*/lib/crc/.*') && ! file('.*/subsys/[fb|fs|app_memory|fs|blueooth|console|cpp|debug|dfu|disk|fb|fs|mgmt|net|power|random|settings|shell|stats|storage|usb]/.*')" --dir ${COV_INT}
 ${COV_FORMAT_ERRORS} --dir ${COV_INT} --json-output-v6 $WORKSPACE/errors.json
