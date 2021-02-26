@@ -69,14 +69,6 @@ if [ -f "/proxy.sh" ]; then
 	source /proxy.sh 	#location of imported proxy config in container env
 fi
 
-#
-# todo: move this script to /set-python-path.sh in ubuntu-zdo
-#
-#set PYTHONPATH using our helper script
-export PYTHONPATH=$($WORKSPACE/ci/utils/set-python-path.sh $ZEPHYR_BRANCH_BASE)
-
-export PATH="/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH"
-
 # echo critical env values
 ###############################################################################
 echo ZEPHYR_SDK_INSTALL_DIR=$ZEPHYR_SDK_INSTALL_DIR
