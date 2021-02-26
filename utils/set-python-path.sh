@@ -12,11 +12,11 @@
 PYPTH=""
 #search for base lib path...
 if [ -d "/usr/local_$1/lib" ]; then
-	 PYPTH="$(find /usr/local_$1/lib -type d -regex .*python3.*/site-packages)"
+	 PYPTH="$(find /usr/local_$1/lib -type d -regex .*python3.*/*-packages)"
 fi
 #append lib64 path if it exists too
 if [ -d "/usr/local_$1/lib64" ]; then
-	PYPTH+=":$(find /usr/local_$1/lib64 -type d -regex .*python3.*/site-packages)"
+	PYPTH+=":$(find /usr/local_$1/lib64 -type d -regex .*python3.*/*-packages)"
 fi
 
 #return on stdout for upstream consumption
