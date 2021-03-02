@@ -48,9 +48,15 @@
 #
 #####################################################################################
 
-# VMs are allocated 72GB RAM with 64GB reserved.
-# Secure 48GB of build space, leaving a guaranteed 16GB real RAM
-mount -o remount,noatime,size=48G /dev/shm
+# if MAC contains "a4:bf:01" assume is builder w/ 128GB RAM, else assume 64GB
+MYMAC=$(ip address show eth0 | grep "link/ether a4:bf:01" | awk '{ print $2; }')
+if [ -z "$MYMAC" ]; then
+	# default to 64GB config: 48GB of build space, leaving a guaranteed 16GB real RAM
+	mount -o remount,noatime,size=48G /dev/shm
+else
+	# builder nodes each have 128GB RAM, 112GB leaves 16GB real RAM
+	mount -o remount,noatime,size=112G /dev/shm
+fi
 
 # aggressively scrub /dev/shm for old work-directories...
 find /dev/shm -name twister-out* -type d -print0 | xargs -0 rm -rf
