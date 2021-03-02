@@ -1,8 +1,12 @@
 #!/bin/bash
 
-# Distributed sanitycheck runner script for zephyrproject @ Intel CI
-#   Targets any -intel branch & intended to run under any properly configured
-#   Zephyr build environment, container or native.
+# Statless, distributed sanitycheck runner script for zephyrproject @ Intel CI
+#   Targets any -intel branch & intended to run under DevOps stateless CI
+#   execution environment consisting of ubuntu-zephyr-devops + pxeboot RAMdisk VMsa
+
+#
+#  todo: comment refresh...
+#
 
 # Functions:
 #  * Takes batch split options as params, allowing load to be spread across multiple nodes
@@ -30,7 +34,7 @@
 # Usage:
 # ======
 #		cd <path to zephyr-tree> #aka ZEPHYR_BASE
-#		$WORKSPACE/ci/modules/sanitycheck_runner.sh <total # nodes> <this node #> <sanitycheck -p options>
+#		$WORKSPACE/ci/stateless/runner.sh <total # nodes> <this node #> <sanitycheck -p options>
 #			Example:
 #				./sanitycheck_runner.sh 4 1 -pqemu_x86
 # Output:
@@ -43,10 +47,20 @@
 #		any other result indicates at least one failure exists in the final retry
 #
 #####################################################################################
-echo "ooooooooooooooooooooooooooooooooooooooooo"
-echo "  Zephyr Sanitycheck Runner starting..."
-echo "ooooooooooooooooooooooooooooooooooooooooo"
-echo "Running in ZEPHYR_BASE=$ZEPHYR_BASE on $(hostname -f)"
+
+# if MAC contains "a4:bf:01" assume is builder w/ 128GB RAM, else assume 64GB
+MYMAC=$(ip address show eth0 | grep "link/ether a4:bf:01" | awk '{ print $2; }')
+if [ -z "$MYMAC" ]; then
+	# default to 64GB config: 48GB of build space, leaving a guaranteed 16GB real RAM
+	mount -o remount,noatime,size=48G /dev/shm
+else
+	# builder nodes each have 128GB RAM, 112GB leaves 16GB real RAM
+	mount -o remount,noatime,size=112G /dev/shm
+fi
+
+# aggressively scrub /dev/shm for old work-directories...
+find /dev/shm -name twister-out* -type d -print0 | xargs -0 rm -rf
+find /dev/shm -name sanity-out* -type d -print0 | xargs -0 rm -rf
 
 #disable ccache, it's known to cause build issues with zephyr in an automation
 export CCACHE_DISABLE=1
@@ -54,14 +68,12 @@ export USE_CCACHE=0
 
 #if running in container, source these configs
 if [ -f "/container_env" ]; then
-	source /proxy.sh 		#location of imported proxy config in container env
 	source /container_env	#container specific overrides, if any
 fi
 
-#set PYTHONPATH using our helper script
-export PYTHONPATH=$($WORKSPACE/ci/modules/set-python-path.sh $ZEPHYR_BRANCH_BASE)
-
-export PATH="/usr/local_$ZEPHYR_BRANCH_BASE/bin:$PATH"
+if [ -f "/proxy.sh" ]; then
+	source /proxy.sh 	#location of imported proxy config in container env
+fi
 
 # echo critical env values
 ###############################################################################
@@ -77,22 +89,27 @@ echo PLATFORM_OPTS=$3
 echo http_proxy=$http_proxy
 echo https_proxy=$https_proxy
 echo no_proxy=$no_proxy
+echo DOCKER_RUN=$DOCKER_RUN
 
 # Sanitycheck configuration & command-line generation
 export TESTCASES="testcases"
-export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N --inline-logs"
+
+# handle switch from sanitycheck -> twister, gracefully
+if [ -f "scripts/twister" ]; then
+    export SC_CMD_BASE="$DOCKER_RUN scripts/twister -x=USE_CCACHE=0 -N --inline-logs"
+else
+    export SC_CMD_BASE="$DOCKER_RUN scripts/sanitycheck -x=USE_CCACHE=0 -N --inline-logs"
+fi
+
 export SC_CMD_SAVE_TESTS="$SC_CMD_BASE -B $2/$1 $3 --save-tests $TESTCASES"
 
-#handle branch differences in sanitycheck junit output
+#handle branch differences in twister / sanitycheck params + junit output
 if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch-intel" ]; then
     export SC_CMD1="$SC_CMD_BASE -B $2/$1 -v --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit1.xml --load-tests $TESTCASES"
     export SC_CMD2="$SC_CMD_BASE -f -v --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit2.xml"
     export SC_CMD3="$SC_CMD_BASE -f -v --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit3.xml"
-else if [ "$ZEPHYR_BRANCH_BASE" == "master" ]; then
-        export SC_CMD1="$SC_CMD_BASE --integration -v --load-tests $TESTCASES"
-        export SC_CMD2="$SC_CMD_BASE --integration -v -f"
-        export SC_CMD3="$SC_CMD_BASE --integration -v -f"
-    fi
+elif [ "$ZEPHYR_BRANCH_BASE" == "master" ]; then
+    export SC_CMD1="$SC_CMD_BASE --integration -v --load-tests $TESTCASES --retry-failed 5 --retry-interval 60"
 fi
 
 echo "Sanitycheck command-lines:"
@@ -116,14 +133,19 @@ if [ -f "$WORKSPACE/ci/allowlist/sanitycheck-$ZEPHYR_BRANCH_BASE.allowFail" ]; t
 fi
 
 echo "Starting sanitycheck run w/ retries"
-$SC_CMD1 || sleep 10; $SC_CMD2 ||  sleep 10; $SC_CMD3
-SC_RESULT=$?
-
-#echo "Running junit-condenser..."
-#cd junit
-#python $WORKSPACE/ci/modules/sanitycheck-junit-condenser.py
-#cd -
+if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch-intel" ]; then
+	$SC_CMD1 || sleep 10; $SC_CMD2 ||  sleep 10; $SC_CMD3
+	SC_RESULT=$?
+elif [ "$ZEPHYR_BRANCH_BASE" == "master" ]; then
+	$SC_CMD1
+	SC_RESULT=$?
+fi
 
 echo Done. SC_RESULT=$SC_RESULT.
 
+#schedule reboot in 30 sec... todo, make build-time option for retaining build results (aka, not rebooting)
+# doesn't seem to be working...
+#nohup sleep 30 && systemctl start reboot.target&
+
 exit $SC_RESULT
+
