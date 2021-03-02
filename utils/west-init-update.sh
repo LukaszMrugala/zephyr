@@ -14,20 +14,40 @@
 export CCACHE_DISABLE=1
 export USE_CCACHE=0
 
-#if running in container, source these configs
-if [ -f "/container_env" ]; then
-	source /proxy.sh 		#location of imported proxy config in container env
-	source /container_env	#container specific overrides, if any
-fi
 
 # echo critical env values
 ###############################################################################
-echo "PYTHONPATH=$PYTHONPATH"
 echo "PATH=$PATH"
-echo "WEST=$(which west)"
+echo "ZEPHYR_BRANCH_BASE=$ZEPHYR_BRANCH_BASE"
+echo "\$1=$1"
 
-if [[ -z "$1" ]]; then
-	rm -rf .west && west init -l zephyr && west update
+#search for base lib path...
+if [ -d "/usr/local_$ZEPHYR_BRANCH_BASE/lib" ]; then
+	PYTHONPATH+="$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib -type d -regex .*python3.*/site-packages)"
+fi
+#append lib64 path if it exists too
+if [ -d "/usr/local_$ZEPHYR_BRANCH_BASE/lib64" ]; then
+	PYTHONPATH+=":$(find /usr/local_$ZEPHYR_BRANCH_BASE/lib64 -type d -regex .*python3.*/site-packages)"
+fi
+
+export PYTHONPATH=$PYTHONPATH
+
+#if running in container, source these configs
+if [ -f "/proxy.sh" ]; then
+	source /proxy.sh 		#location of imported proxy config in container env
+fi
+
+if [ -f "/container_env" ]; then
+	source /container_env	#container specific overrides, if any
+fi
+
+###############################################################################
+# run west init + update
+
+echo "PYTHONPATH=$PYTHONPATH"
+
+if [ -z "$1" ]; then
+	rm -rf .west && /usr/local_$ZEPHYR_BRANCH_BASE/bin/west init -l zephyr && /usr/local_$ZEPHYR_BRANCH_BASE/bin/west update
 else
-	rm -rf .west && west init -l "$1" && west update
+	rm -rf .west && /usr/local_$ZEPHYR_BRANCH_BASE/bin/west init -l "$1" && /usr/local_$ZEPHYR_BRANCH_BASE/bin/west update
 fi
