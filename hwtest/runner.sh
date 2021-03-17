@@ -50,7 +50,7 @@ if [ $ret -ne 0 ]; then
 	exit 1
 fi
 
-CMD="scripts/twister -B $3/$2 -x=USE_CCACHE=0 -v --device-testing --device-serial $DEVTTY -p $1"
+CMD="scripts/twister -N -B $3/$2 -x=USE_CCACHE=0 -v --device-testing --device-serial $DEVTTY -p $1"
 $CMD
 RESULT=$?
 echo "Done. RESULT=$RESULT."
