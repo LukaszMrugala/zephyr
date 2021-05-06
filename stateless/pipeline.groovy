@@ -1,9 +1,9 @@
 //stateless/pipeline.groovy
-//      A pipeline for parallel-executed Zephyr-project testing with sanitycheck/twister methods.
+//      A pipeline for parallel-executed Zephyr-project testing with sanitycheck/twister methods. 
 //      Call from Jenkins build after 'git clone..', 'west init/update' & finally creating build context stash with 'stash: context'
 //      Parameters:
 //		test_skip_div - sets testcase skipping, set to 1 for normal operation, N will limit execution to 1 in N cases
-//              baseBranch - 'master', 'v1.14-branch-intel', etc
+//              baseBranch - 'master', 'v1.14-branch', etc
 //              sdkVersion - Zephyr SDK version to use, eg: '0.10.3'
 //              agentType - specifies which type of agent to build, currently we support 'ubuntu_vm', 'zbuild' or 'nuc64GB'
 //              buildLocation - specifies where to execute the build, currently we support 'jf' or 'sh'
@@ -17,14 +17,13 @@
 //
 //      Functions of this module:
 //              1. Search for available nodes matching the supplied agentType + buildLocation pattern.
-//              2. Expand execution to all available nodes and run the following steps on each:
+//              2. Use Jenkins parallel expansion + twister/sanitycheck batch option to distribute build across all available nodes:
 //                      a. Unstash prepared zephyr build, named 'context'
 //                      b. Detect which generation of zephyr test method, sanitycheck or twister
-//                      c. Run zephy-test-<METHOD>-runner.sh wrapper script, which sets env & passes along batch options
+//                      c. Run ci.git/<THIS METHOD>/runner.sh wrapper script, which sets env & passes along batch options
 //                      d. Collect log + junit.xml files from each agent & transfer back to calling pipeline
 //                      e. Report overall build result, setting the stage UNSTABLE on failure
-//              3. Back at the mater report failures in Jenkins build
-//              4. Report task status back to gitlab
+//              3. Back at the master node, report overall job status, using above color/status map
 
 //for @Field String
 import groovy.transform.Field
@@ -63,31 +62,27 @@ def run(test_skip_div,branchBase,sdkVersion,agentType,buildLocation,sc_option) {
 			deleteDir()
 			unstash "context"
 				stage("${stageName}") {
-					dir('zephyrproject/zephyr') {
-						//call runner.sh with catchError block setup for UNSTABLE, not FAILED status
-						catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') { 
-							withEnv(["ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
-									"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
-									"ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-${sdkVersion}",
-									"ZEPHYR_BRANCH_BASE=${branchBase}"]) {
-								sh "$WORKSPACE/ci/stateless/runner.sh ${denominator} ${batchNumber} \"${sc_option}\""
-							}
+					//call runner.sh with catchError block setup for UNSTABLE, not FAILED status
+					catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') { 
+						withEnv(["ZEPHYR_BASE=$WORKSPACE/zephyrproject/zephyr",
+								"ZEPHYR_TOOLCHAIN_VARIANT=zephyr",
+								"ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-${sdkVersion}",
+								"ZEPHYR_BRANCH_BASE=${branchBase}"]) {
+							sh "ci/stateless/runner.sh ${denominator} ${batchNumber} \"${sc_option}\""
 						}
-						echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-						echo "currentBuild.result for this node = ${currentBuild.result}"
-						echo "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" 
-						//stash junit output for transfer back to master
-						if(branchBase=="v1.14-branch-intel") {
-							dir ('sanity-out') {
-								stash allowEmpty: true, name: "junit-${batchNumber}", includes: 'sanitycheck.xml'
-							}
+					}
+					echo "currentBuild.currentResult for this node = ${currentBuild.currentResult}"
+					//stash junit output for transfer back to master
+					if(branchBase=="v1.14-branch") {
+						dir ('zephyrproject/zephyr/sanity-out') {
+							stash allowEmpty: true, name: "junit-${batchNumber}", includes: 'sanitycheck.xml'
 						}
-						else {
-							dir ('twister-out') {
-								stash allowEmpty: true, name: "junit-${batchNumber}", includes: 'twister.xml'
-							}
+					}
+					else {
+						dir ('zephyrproject/zephyr/twister-out') {
+							stash allowEmpty: true, name: "junit-${batchNumber}", includes: 'twister.xml'
 						}
-					}//dir
+					}
 				}//stage
 			}//node
 		}//nodejobs

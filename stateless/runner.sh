@@ -1,49 +1,42 @@
 #!/bin/bash
 
-# Statless, distributed sanitycheck runner script for zephyrproject @ Intel CI
+# Stateless, distributed sanitycheck runner script for zephyrproject @ Intel CI
 #   Targets any -intel branch & intended to run under DevOps stateless CI
-#   execution environment consisting of ubuntu-zephyr-devops + pxeboot RAMdisk VMsa
-
+#   execution environment consisting of ubuntu-zephyr-devops + pxeboot RAMdisk VMs,
+#   container or native build env w/ /usr/local_<branchBase> python deps.
 #
-#  todo: comment refresh...
-#
-
 # Functions:
+#  * Performs ramdisk setup, using MAC address to customize build space per agent type
+#  * Purges ALL twister/sanity-out directories from ramdisk
 #  * Takes batch split options as params, allowing load to be spread across multiple nodes
-#  * Allows specification of sanitycheck platform using -p option
+#  * Allows specification of test platform using -p option
+#  * Implements a test-case skipping mechanism using arrays defined in ci.git
 #  * Runs default test-cases, retrying two times on failures
 #  * Uses ninja build option
 #  * Disables CCACHE as it's known to cause build state errors in automation
 #  * Generates junit xml output for reporting & visualization
-#  * Enables coverage-reporting (*WIP)
+#  * Enables coverage-reporting (*planned, not completed)
 
 # Requirements:
 # =============
-# This script is designed to be run within a Jenkins pipeline but can be executed stand-alone 
-# with the following pre-reqs:
-#
-#	1. wget - required for fetching latest pythonpath set script 
-#	2. the following deps/env vars are required:
-#		i.   ci.git at $WORKSPACE/ci
-#		i.   zephyr src tree at $WORKSPACE/zephyr
-#		ii.  env vars:
-#			WORKSPACE = set to directory containing ci/ & zephyr/
-#			ZEPHYR_BRANCH_BASE = set to DevOps build-env type: 
-#				('master', 'v1.14-branch-intel', ...)
+# This script is designed to be run as root on DevOps stateless infrastructure only.
 #
 # Usage:
 # ======
-#		cd <path to zephyr-tree> #aka ZEPHYR_BASE
-#		$WORKSPACE/ci/stateless/runner.sh <total # nodes> <this node #> <sanitycheck -p options>
+#		cd $WORKSPACE
+#		ci/stateless/runner.sh <total # nodes> <this node #> <sanitycheck -p options>
 #			Example:
-#				./sanitycheck_runner.sh 4 1 -pqemu_x86
+#				mkdir zephyrproject
+#				cd zephyrproject
+#				git clone ci.git ci
+#				west init
+#				ci/stateless/runner.sh 4 1 -pqemu_x86
 # Output:
 # =======
-#		Sanitycheck output files are written to $ZEPHYR_BASE/run{1,2,3...}
-#		Junit xml output is written to $ZEPHYR_BASE/junit
+#		Output files are written to $WORKSPACE/zephyrproject/zephyr/{twister/sanity}-out
 # Returns:
 # ========
-#		0 if all sanitycheck default cases succeed after 3 tries
+#		0 if all default cases succeed after N tries
 #		any other result indicates at least one failure exists in the final retry
 #
 #####################################################################################
@@ -89,22 +82,23 @@ echo PLATFORM_OPTS=$3
 echo http_proxy=$http_proxy
 echo https_proxy=$https_proxy
 echo no_proxy=$no_proxy
-echo DOCKER_RUN=$DOCKER_RUN
+
+cd zephyrproject/zephyr
 
 # Sanitycheck configuration & command-line generation
 export TESTCASES="testcases"
 
 # handle switch from sanitycheck -> twister, gracefully
 if [ -f "scripts/twister" ]; then
-    export SC_CMD_BASE="$DOCKER_RUN scripts/twister -x=USE_CCACHE=0 -N --inline-logs"
+    export SC_CMD_BASE="scripts/twister -x=USE_CCACHE=0 -N --inline-logs"
 else
-    export SC_CMD_BASE="$DOCKER_RUN scripts/sanitycheck -x=USE_CCACHE=0 -N --inline-logs"
+    export SC_CMD_BASE="scripts/sanitycheck -x=USE_CCACHE=0 -N --inline-logs"
 fi
 
 export SC_CMD_SAVE_TESTS="$SC_CMD_BASE -B $2/$1 $3 --save-tests $TESTCASES"
 
 #handle branch differences in twister / sanitycheck params + junit output
-if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch-intel" ]; then
+if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch" ]; then
     export SC_CMD1="$SC_CMD_BASE -B $2/$1 -v --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit1.xml --load-tests $TESTCASES"
     export SC_CMD2="$SC_CMD_BASE -f -v --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit2.xml"
     export SC_CMD3="$SC_CMD_BASE -f -v --detailed-report $ZEPHYR_BASE/sanity-out/node$2-junit3.xml"
@@ -133,7 +127,7 @@ if [ -f "$WORKSPACE/ci/allowlist/sanitycheck-$ZEPHYR_BRANCH_BASE.allowFail" ]; t
 fi
 
 echo "Starting sanitycheck run w/ retries"
-if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch-intel" ]; then
+if [ "$ZEPHYR_BRANCH_BASE" == "v1.14-branch" ]; then
 	$SC_CMD1 || sleep 10; $SC_CMD2 ||  sleep 10; $SC_CMD3
 	SC_RESULT=$?
 elif [ "$ZEPHYR_BRANCH_BASE" == "master" ]; then
