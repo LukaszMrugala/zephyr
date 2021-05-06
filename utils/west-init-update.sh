@@ -4,7 +4,7 @@
 # run from zephyr-tree CWD with pre-reqs/env vars:
 #	ci.git & zephyr.git - at /ci & /zephyr, respectively
 #	WORKSPACE - set to directory containing /zephyr & /ci
-#	ZEPHYR_BRANCH_BASE - 'master', 'v1.14-branch-intel' or other supported value from branch-detect.groovy
+#	ZEPHYR_BRANCH_BASE - 'master', 'v1.14-branch' or other supported value from branch-detect.groovy
 #
 # Params:
 # 	$1 - if set, will override west init directory (defaults to zephyr)

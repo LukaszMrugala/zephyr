@@ -11,7 +11,7 @@
 //   Defined as:
 //		"<branch_name>": ["<sdk_version>","<branch_sha>"]
 //
-//	branch sha is found by checking-out feature branch (eg v1.14-branch-intel)
+//	branch sha is found by checking-out feature branch (eg v1.14-branch)
 //		and doing visual search with git log --graph -OR- by running:
 //			git log --reverse --boundary --format=%h HEAD ^origin/master | head -1
 //		then selecting the *next* commit sha (todo: insert more git-fu here)
@@ -19,7 +19,7 @@
 //		an intentionally simple method but maybe unsuitable for some repos.
 //
 branchConfigs = [ 
-	"v1.14-branch-intel": [sdkVersion:"0.10.3",sha:"247330d62a4b89fcf3900a160fbb195be78a55a9"],
+	"v1.14-branch": [sdkVersion:"0.10.3",sha:"247330d62a4b89fcf3900a160fbb195be78a55a9"],
 	"master": [sdkVersion:"0.12.4",sha:"0"]
 	]
 // master branch entry must be present & in last position, sha is a dont-care
