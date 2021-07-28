@@ -1,0 +1,24 @@
+name: runner-group-test
+on:
+  schedule:
+    - cron:  '20 1,7,13,19 * * *'
+  workflow_dispatch:
+
+jobs:
+  ciVerify:
+    defaults:
+      run:
+        shell: bash  
+    runs-on: uzdo128
+    container:
+      image: 192.168.0.200:5000/sdk-docker-intel:main
+      options: --privileged --user root:root -v/opt/toolchains:/opt/toolchains
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: 'ci.git'
+      - name: test
+        run: |
+          set
+          pwd
+          df -h
