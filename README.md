@@ -1,21 +1,32 @@
-# Intel internal Zephyr CI
-## *operated by your friendly IAGS/FMOS Zephyr DevOps team*
-### mail PDL: FMOS_DevOps 
+# Intel 1RTOS / Zephyr internal CI repo
+*a catch-all for DevOps services & documentation*
 
-## [DevOps Documentation Wiki](https://gitlab.devtools.intel.com/zephyrproject-rtos/ci/-/wikis/home)
-## [Zephyr DevOps Overview](https://intel-my.sharepoint.com/:p:/p/christopher_g_turner/EfZ2TF9ElydPjpGBEAKiUkwBiFt5LFBZPI2aGO_HZnP7Wg?e=Bxeeho)
+**Contact: email to: FMOS_DevOps, cc: Vondrachek, Chris & Graydon, Connor**
 
-# CI Terminology
-* **Jenkins** - A popular open-source CI/CD tool. Zephyr DevOps operates several Jenkins master instances at zerobot2, zerobot-stg & zephyr-ci.
-* **Agent** - Jenkins terminology for a remote computer used for building, testing in a CI/CD pipeline. Any computer capable of executing commands over ssh can be a Jenkins agent.
-* **Test-agent** - Jenkins agent that's configured for device-testing
-* **Build-agent** - Jenkins agent that's intended for virtual (qemu-only) sanitycheck jobs, not device-testing
-* **Test-head** - A dedicated server that provides services for a set of agents, via test-network.
-* **Test-net** - Private network linking a Testhead with a set of agents, implemented as a star-topology around a Gigabit Ethernet switch
-* **PXE Boot** - Also known as "network boot", this service allows a computer to receive it's operating system via a network link, removing the requirement for a hard-disk
-* **PXE Boot Docker (pxeboot.docker)** - Zephyr DevOps-created tool that provides PXE boot services & automates generation of PXE boot initramfs payload
-* **Workspace** - A build directory created by Jenkins for a specific job. Test-agents can have multiple workspaces, one for each job.
+## hidden.tar.secret & accessing the hidden/ directory
+DevOps infrastructure secrets & private configuration data is stored encrypted as hidden.tar.secret with access controlled by a GPG keyring. 
 
-# Architecture
+### To reveal contents of hidden.tar.secret into hidden/ :
+1. Your public GPG key must be enrolled in the keyring in this repo. 
+2. Use our automation script to decrypt hidden.tar.secret & decompress to hidden/
 
-![Zephyr CI Block Diagram](zephyrCI-block-diagrams-WW08-2021.png "zephyr CI block diagram WW08 2021")
+	````trusted-gpg-user@ci.git/ $ ./reveal-hidden.sh````
+
+3. Access protected files at hidden/
+4. If any changes are made, you MUST run ./hide-hidden.sh to capture changes & encrypt
+
+### To hide the contents of hidden/ & stage hidden.tar.secret for commit:
+1. Your public GPG key must be enrolled in the keyring in this repo. 
+2. Use our automation script to tar & encrypt hidden/, and also stage the change for commit:
+
+	````trusted-gpg-user@ci.git/ $ ./hide-hidden.sh````
+
+3. Commit changes to hidden.tar.secret & push per usual
+
+## Useful Links
+### [ci.git/docs](docs/) - more DevOps documentation
+### [Zephyr DevOps Overview.pptx](https://intel-my.sharepoint.com/:p:/p/christopher_g_turner/EfZ2TF9ElydPjpGBEAKiUkwBiFt5LFBZPI2aGO_HZnP7Wg?e=Bxeeho) - Permalink for our most-often presented slide-deck
+
+# Block Diagram
+
+![Zephyr CI Block Diagram](zephyrCI-block-diagram-WW36-2021.png "zephyr CI block diagram WW36 2021")

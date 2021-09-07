@@ -1,8 +1,0 @@
-# test-cases that CI skips to prevent hangs/known issues
-SC_ALLOWED_TO_FAIL=(
-	"tests/application_development/libcxx/application_development.cpp.libcxx.exceptions"
-	"tests/application_development/cpp/application_development.cpp.main,posix,native_posix"
-	"tests/application_development/libcxx/application_development.cpp.libcxx,posix,native_posix"
-	"sample.display.sdl,posix,native_posix_64"
-	"tests/subsys/power/power_mgmt/subsys.power.device_pm,arm,qemu_cortex_m0"
-	)
