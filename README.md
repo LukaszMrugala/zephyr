@@ -1,23 +1,23 @@
 # Intel 1RTOS / Zephyr internal CI repo
-*a catch-all for DevOps services & documentation*
+*a catch-all repo for DevOps services & documentation*
 
 **Contact: email to: FMOS_DevOps, cc: Vondrachek, Chris & Graydon, Connor**
 
 ## hidden.tar.secret & accessing the hidden/ directory
-DevOps infrastructure secrets & private configuration data is stored encrypted as hidden.tar.secret with access controlled by a GPG keyring. 
+DevOps infrastructure secrets & private configuration data is stored in hidden.tar.secret, a git-secret encrypted tar archive with access controlled by a GPG keyring. 
 
-### To reveal contents of hidden.tar.secret into hidden/ :
-1. Your public GPG key must be enrolled in the keyring in this repo. 
+### To reveal contents of hidden.tar.secret into ./hidden/ :
+1. Your public GPG key must be enrolled in the git-secret keyring - email FMOS DevOps PDL for more info. 
 2. Use our automation script to decrypt hidden.tar.secret & decompress to hidden/
 
 	````trusted-gpg-user@ci.git/ $ ./reveal-hidden.sh````
 
 3. Access protected files at hidden/
-4. If any changes are made, you MUST run ./hide-hidden.sh to capture changes & encrypt
+4. If any changes are made, you MUST run ````./hide-hidden.sh```` to capture changes & re-encrypt the ./hidden directory
 
 ### To hide the contents of hidden/ & stage hidden.tar.secret for commit:
 1. Your public GPG key must be enrolled in the keyring in this repo. 
-2. Use our automation script to tar & encrypt hidden/, and also stage the change for commit:
+2. Use our automation script to tar & encrypt ./hidden/, and also stage the change for commit:
 
 	````trusted-gpg-user@ci.git/ $ ./hide-hidden.sh````
 
