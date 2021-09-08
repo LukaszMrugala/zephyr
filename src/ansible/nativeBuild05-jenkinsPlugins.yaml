@@ -1,0 +1,59 @@
+---
+# Ansible playbook for managing Jenkins plugins across DevOps infrastructure
+#
+# NOTE: This playbook requires that you have a Jenkins token for the target at 
+#	$HOME/.ssh/jenkins.token-<hostname>, with the following format:
+#		<intel-idsid>:<token>
+#
+#	Steps:
+#	1. Downloads CLI jar from jenkins & copies your jenkins credential file to remote /tmp
+#	2. Fetches latest versions of plugins listed in jenkins-plugins.yaml (this repo)
+#	3. Installs plugins using your Jenkins credentials
+#	4. Restarts Jenkins when no jobs are running
+#
+# Run:
+#  ansible-playbook -i inventory.ssp-ops-vms --limit zephyr-ci-stg.ostc.intel.com \
+#	--key-file=<your ssh id> nativeBuild05-jenkinsPlugins.yaml
+#
+#####################################################################################################
+- hosts: master
+  vars:
+    jenkins_updates: http://updates.jenkins-ci.org/latest
+    jenkins_cli_url: jnlpJars/jenkins-cli.jar
+    jenkins_cli: /tmp/jenkins-cli.jar
+  roles:
+  - intel-jf
+  environment: "{{ vars_env_proxy }}"
+  tasks:
+    - name: 'get_url jenkins cli from local jenkins instance'
+      get_url:
+        url: "https://{{ inventory_hostname }}/{{ jenkins_cli_url }}"
+        dest: "{{ jenkins_cli }}"
+        force: yes
+        use_proxy: no
+
+    - name: 'include jenkins-plugins var'
+      include_vars:
+        file: jenkins-plugins.yaml
+
+    - name: 'fetch latest version of all required jenkins plugins'
+      get_url:
+        url: "{{ jenkins_updates }}/{{ item }}.hpi"
+        dest: "/tmp/{{ item }}.hpi"
+      loop: "{{ jenkins_plugins }}"
+
+    - name: 'copy jenkins credentials to remote'
+      copy:
+        src: "~/.ssh/jenkins.token-{{ inventory_hostname }}"
+        dest: '/tmp/.jenkins.token'
+        mode: 0600
+
+    - name: 'install downloaded plugins'
+      shell: java -jar {{ jenkins_cli }} -s http://{{ inventory_hostname }}:8080 -auth @/tmp/.jenkins.token install-plugin file:///tmp/{{ item }}.hpi && rm /tmp/{{ item }}.hpi
+      loop: "{{ jenkins_plugins }}"
+
+    - name: 'removing our jenkins token'
+      file: path='/tmp/.jenkins.token' state=absent
+
+    - name: 'restart jenkins (when no jobs are running)'
+      shell: java -jar {{ jenkins_cli }} -s http://{{ inventory_hostname }}:8080 -auth @/tmp/.jenkins.token safe-restart

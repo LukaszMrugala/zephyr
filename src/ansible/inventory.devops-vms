@@ -1,0 +1,43 @@
+[ubuntu_prd_vms]
+zephyrtest-blue.jf.intel.com
+zephyrtest-orange.jf.intel.com
+zephyr-ci.jf.intel.com
+zephyr-automation.intel.com
+zserver6.gar.corp.intel.com
+zephyr-zabbix.jf.intel.com
+fresno.jf.intel.com
+
+[ubuntu_prd_vms:vars]
+ansible_become=true
+ansible_user=ad_cvondra
+ansible_ssh_private_key_file=~/.ssh/ad_cvondra-at-remotehw-WW05_2021.pem
+
+
+[zbuilders]
+zbuild01.testnet ansible_host=192.168.0.111 
+zbuild02.testnet ansible_host=192.168.0.112 
+zbuild03.testnet ansible_host=192.168.0.113 
+zbuild04.testnet ansible_host=192.168.0.114 
+zbuild05.testnet ansible_host=192.168.0.115 
+zbuild06.testnet ansible_host=192.168.0.116 
+
+[zbuilders:vars]
+ansible_become=true
+ansible_user=zephyradmin
+ansible_ssh_private_key_file=~/.ssh/zephyradmin-at-zbuilders-WW05_2021.pem
+
+[hwtestNUCs]
+hwtestNUC-221 ansible_host=192.168.0.221
+hwtestNUC-223 ansible_host=192.168.0.223
+hwtestNUC-224 ansible_host=192.168.0.224
+hwtestNUC-225 ansible_host=192.168.0.225
+
+[hwtestNUCs:vars]
+ansible_become=true
+ansible_user=root
+ansible_ssh_private_key_file=~/.ssh/root-at-hwtestNUCs-WW05_2021.pem
+ansible_port=22
+ansible_ssh_extra_args=-R127.0.0.1:9110:proxy-chain.intel.com:911 -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no"
+
+[inactive]
+zephyrtest-green.jf.intel.com ansible_become=true

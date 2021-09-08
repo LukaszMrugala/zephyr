@@ -1,0 +1,13 @@
+---
+# misc automatation for zbuild VMs
+#####################################################################################################
+- hosts: zbuilders
+  environment: "{{ env_by_group }}"
+  tasks:
+
+    - name: 'remount /dev/shm at 48GB'
+      shell: |
+        mount -o remount,noatime,size=48G /dev/shm
+
+
+

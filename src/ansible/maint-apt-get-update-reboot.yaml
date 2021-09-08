@@ -1,0 +1,28 @@
+---
+# Ansible playbook to automate installation of ubuntu OS updates via apt, then REBOOT
+#
+# NOTE: THIS PLAYBOOK WILL REBOOT ALL INFRASTRUCTURE AFTER UPDATES ARE INSTALLED
+#
+# 
+#####################################################################################################
+- hosts: production staging master
+  roles:
+  - intel-jf
+  environment: "{{ vars_env_proxy }}"
+  tasks:
+    - name: apt update + upgrade
+      apt:
+        update_cache=yes 
+        upgrade=dist
+        force_apt_get=yes
+
+    - name: Confirm reboot
+      pause: prompt='A reboot is generally required after updates. Please confirm no jobs are running on production or staging and check with the rest of DevOps. If you are sure, hit enter to continue. Otherwise, USE CTRL-C + "a" to abort playbook.'
+
+    - name: Confirm reboot again
+      pause: prompt='Sorry to ask again... are you sure you wish to reboot all DevOps infrastucture, right now? Just want to make sure I heard you right. Hit enter to continue and nuke all jobs + terminate DevOps login sessions. Otherwise, USE CTRL-C + "a" to abort playbook.'
+
+    - name: 'rebooting'
+      command:
+        cmd: reboot
+        ignore_errors: yes

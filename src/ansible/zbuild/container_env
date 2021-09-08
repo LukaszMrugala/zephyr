@@ -1,0 +1,8 @@
+# container_env
+
+export DOCKER_RUN=''
+
+# delete any twister/sanity-out directories older than 30mins
+echo "===WORKSPACE CLEAN-UP ENABLED==="
+find /dev/shm -name twister-out* -type d -mmin +30 -print0 | xargs -0 rm -rf
+find /dev/shm -name sanity-out* -type d -mmin +30 -print0 | xargs -0 rm -rf

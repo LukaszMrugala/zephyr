@@ -1,0 +1,28 @@
+---
+devops:
+  -
+    idsid: aasthagr
+    domain: AMR
+  -
+    idsid: cgturner
+    domain: AMR
+  -
+    idsid: cvondra
+    domain: AMR
+  -
+    idsid: tgraydon
+    domain: AMR
+  -
+    idsid: chenp1
+    domain: CCR
+  -
+    idsid: lwang6
+    domain: CCR
+
+users:
+  -
+    idsid: jennife2
+    domain: AMR
+  -
+    idsid: dleung5
+    domain: AMR

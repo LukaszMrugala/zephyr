@@ -1,0 +1,86 @@
+---
+# Ansible playbook to recycle python dependencies across zephyr devops infrastructure
+# 
+# * Installs/updates pip
+# * Deletes all python deps from /usr/local_<branch-type> 
+# * Installs python pkgs listed in python_pkgs var-list
+# * Installs west, cmake versions for v1.14-branch + master build_envs
+# * wget scripts/requirements.txt from for v1.14 + master & installs them
+#
+# Notes:
+#   Don't execute this playbook on operating infrastructure.
+#   build_env list must match definitions in ci.git/modules/branch-detect.groovy
+#####################################################################################################
+- hosts: ubuntu_ssp_vms ubuntu_prd_vms zbuilders
+  vars:
+#1. Specify extra python packages to install beyond project requirements.
+    python_pkgs:
+    - lxml
+    - ply
+    - psutil
+#2. Specific build envs that are handled by this playbook
+    build_envs:
+    - v1.14-branch
+    - master
+  environment: "{{env_by_group}}"
+  tasks:
+# Update/install pip + setuptools 
+    - name: update pip
+      shell: |
+        pip3 install --upgrade pip
+        pip3 install --upgrade setuptools
+
+# clean all current installs
+    - name: "clean /usr/local_{{ item }}"
+      file:
+        path: /usr/local_{{ item }}
+        state: absent
+        force: yes
+      loop:
+        - master
+        - v1.14-branch
+#       - "{{ build_envs }}"
+#            ^^^^ not working as expected, fails silently:
+
+# install set of python packages defined about, both all build envs
+    - name: install python modules
+      shell: "pip3 install --isolated --prefix /usr/local_{{ item[0] }} --no-cache-dir --ignore-installed {{ item[1] }}"
+      with_nested:
+         - "{{ build_envs }}"
+         - "{{ python_pkgs }}"
+
+#install python deps for v1.14 from tree
+    - name: install v1.14-branch python requirements from tree 
+      shell: "pip3 install --isolated --prefix /usr/local_v1.14-branch --no-cache-dir --ignore-installed -r https://gitlab.devtools.intel.com/zephyrproject-rtos/zephyr/raw/v1.14-branch/scripts/requirements.txt"
+
+#install python deps for master from tree
+    - name: install master python requirements from tree 
+      shell: "pip3 install --isolated --prefix /usr/local_master --no-cache-dir --ignore-installed -r {{ item }}" 
+      loop:
+         - https://raw.githubusercontent.com/zephyrproject-rtos/zephyr/master/scripts/requirements.txt
+         - https://raw.githubusercontent.com/zephyrproject-rtos/mcuboot/master/scripts/requirements.txt
+
+# install v1.14-branch install specific versions of west + cmake
+    - name: install sh, cmake, west for v1.14-branch
+      shell: "pip3 install --isolated --prefix /usr/local_{{ item }} --no-cache-dir --ignore-installed sh west==0.6.3 wheel cmake==3.13.3"
+      loop:
+         - v1.14-branch
+
+#install latest sh, west & wheel for master build env
+    - name: install sh, west & wheel for master branch
+      shell: pip3 install --isolated --prefix /usr/local_{{ item }} --no-cache-dir --ignore-installed sh west wheel
+      loop:
+         - master
+
+# fix permissions, required for PRD VMs
+    - name: fix permissions
+      file:
+        dest=/usr/local_{{ item }}
+        owner=root group=root
+        mode=u=rwX,g=rX,o=rX
+        recurse=yes
+      loop:
+        - master
+        - v1.14-branch
+#       - "{{ build_envs }}"
+#            ^^^^ not working as expected, fails silently:

@@ -1,0 +1,16 @@
+---
+#run memtester on agents
+
+- hosts: agents
+  roles:
+  - intel-jf
+  environment: "{{ vars_env_proxy }}"
+  tasks:
+    - name: 'apt update & install memtester'
+      apt:
+        name: memtester
+        state: present
+        update_cache: yes
+
+    - name: 'run memtester'
+      shell: memtester 28G 1

@@ -1,0 +1,98 @@
+---
+# Ansible playbook for automated mgmt of Jenkins build agents on a CI
+#
+# NOTE: This playbook assumes the follow pre-reqs:
+#	1. A valid Jenkins token for the target is at $HOME/.ssh/jenkins.token-<hostname>. 
+#		file format: <intel-idsid>:<token>
+#	2. Jenkins has a SSH key credential definition for the local jenkins user, labels:
+#		production: jenkins-at-ssp-vms
+#		staging: jenkins-at-ssp-vms-staging
+#
+#	Steps:
+#	0. enrolls jenkins id_rsa into remote authorized keys
+#	1. Downloads CLI jar from jenkins & copies your jenkins credential file to remote /tmp
+#	2. Removes all existing agents from the Jenkins head
+#	3. Iterates over 'production' or 'staging' inventory group, sed node-template & use CLI to enroll
+#
+# Run:
+#  ansible-playbook -i inventory.ssp-ops-vms --limit zephyr-ci-stg.ostc.intel.com \
+#	--key-file=<your ssh id> nativeBuild04-registerNodes.yaml
+#
+#####################################################################################################
+#
+# phase 1: register jenkins user ssh pubkey on CI masters
+- hosts: master
+  tasks:
+    - name: 'register local jenkins ssh pub key'
+      shell: sudo cat /var/lib/jenkins/.ssh/id_rsa.pub
+      register: sshpubkey
+    - name: 'set facts'
+      set_fact: 
+        sshpubkeys="{{ sshpubkey.stdout }}"
+
+# phase 2: authorize jenkins users on all infra
+- hosts: master production staging
+  tasks:
+    - debug: var=hostvars[item].sshpubkeys
+      with_items: "{{ groups['master'] }}" 
+
+    - name: 'authorize local jenkins user on remote agents'
+      authorized_key:
+        user: jenkins
+        state: present
+        key: "{{ hostvars[item].sshpubkeys }}"
+      with_items: "{{ groups['master'] }}"
+
+#phase 3: back on masters, connect nodes
+- hosts: master
+  vars:
+    jenkins_cli_url: jnlpJars/jenkins-cli.jar
+    jenkins_cli: /tmp/jenkins-cli.jar
+  tasks:
+    - name: 'get_url jenkins cli from local jenkins instance'
+      get_url:
+        url: "https://{{ inventory_hostname }}/{{ jenkins_cli_url }}"
+        dest: "{{ jenkins_cli }}"
+        force: yes
+        use_proxy: no
+
+    - name: 'copy jenkins credentials to remote'
+      copy:
+        src: "~/.ssh/jenkins.token-{{ inventory_hostname }}"
+        dest: '/tmp/.jenkins.token'
+        mode: 0600
+
+    - name: 'remove all existing nodes'
+      shell: java -jar {{ jenkins_cli }} -s http://{{ inventory_hostname }}:8080 -auth @/tmp/.jenkins.token delete-node {{ item }}
+      with_inventory_hostnames:
+        - staging
+        - production
+      ignore_errors: yes
+
+    - name: 'copy PROD node template to remote'
+      copy:
+        src: node-config-template-prod.xml
+        dest: ~/node-config-template-prod.xml
+
+    - name: 'copy STG node template to remote'
+      copy:
+        src: node-config-template-stg.xml
+        dest: ~/node-config-template-stg.xml
+
+    - name: 'iterate over PROD agents, injecting node-config & registering with jenkins for each...'
+      shell: |
+        sed 's/SEDTARGET-HOSTNAME/{{ item }}/g' ~/node-config-template-prod.xml > ~/node-config.xml
+        java -jar {{ jenkins_cli }} -s http://{{ inventory_hostname }}:8080 -auth @/tmp/.jenkins.token create-node {{ item }} < ~/node-config.xml
+      with_inventory_hostnames:
+        - production
+
+    - name: 'iterate over STG agents, injecting node-config & registering with jenkins for each...'
+      shell: |
+        sed 's/SEDTARGET-HOSTNAME/{{ item }}/g' ~/node-config-template-stg.xml > ~/node-config.xml
+        java -jar {{ jenkins_cli }} -s http://{{ inventory_hostname }}:8080 -auth @/tmp/.jenkins.token create-node {{ item }} < ~/node-config.xml
+      with_inventory_hostnames:
+        - staging
+
+    - name: 'removing our jenkins token'
+      file: path='/tmp/.jenkins.token' state=absent
+

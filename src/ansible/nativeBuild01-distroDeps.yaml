@@ -1,0 +1,82 @@
+---
+# Ansible playbook to automate teardown & setup of build agents for native-executed zephyr builds
+#
+#####################################################################################################
+- hosts: master production staging
+  roles:
+  - intel-jf
+  environment: "{{ vars_env_proxy }}"
+  tasks:
+    - name: 'remove broken cmake kitware ppa'
+      apt_repository:
+        repo: deb https://apt.kitware.com/ubuntu/ bionic main
+        state: absent
+      when: ansible_distribution_release == "bionic"
+
+    - name: 'apt update & install zephyr dependencies'
+      apt:
+        name: "{{packages}}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+          - git
+#          - cmake <-- bionic/stable cmake isn't recent enough for zephyr
+          - ninja-build
+          - gperf
+          - ccache
+          - dfu-util
+          - device-tree-compiler
+          - wget
+          - python3-pip
+          - python3-setuptools
+          - python3-tk
+          - python3-wheel
+          - xz-utils
+          - file
+          - make
+          - gcc
+          - gcc-multilib
+          - lcov
+          - libsdl2-dev
+          - java-common
+          - default-jre
+          - srecord
+
+    - name: 'remove bionic/stable cmake (3.10.x). zephyr requires 3.13.1+'
+      apt:
+        name: cmake
+        state: absent
+      when: ansible_distribution_release == "bionic"
+
+    - name: 'setup jenkins user'
+      user:
+        name: jenkins
+        create_home: yes
+        home: /srv/jenkins
+        shell: /bin/bash
+        groups: plugdev
+        append: yes
+      when: ansible_distribution_release == "bionic"
+
+    - name: 'set jenkins authorized keys'
+      authorized_key:
+        user: jenkins
+        state: present
+        key: "{{ lookup('file', 'ssp_vms-jenkins.pem.pub') }}"
+
+# works for latest cmake, but 1.14 branch doesn't appear to like it...
+#    - name: 'get cmake ppa apt key'
+#      apt_key:
+#        url: https://apt.kitware.com/keys/kitware-archive-latest.asc
+#        state: present
+#    - name: 'add cmake kitware ppa (bionic)'
+#      apt_repository:
+#        repo: deb https://apt.kitware.com/ubuntu/ bionic main
+#        state: present
+#      when: ansible_distribution_release == "bionic"
+#    - name: 'apt update & install cmake from ppa'
+#      apt:
+#        name: cmake
+#        state: present
+#        update_cache: yes

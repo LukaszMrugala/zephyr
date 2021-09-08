@@ -1,0 +1,43 @@
+---
+# define testnet machine names + ips.
+testnetJF1:
+  - name: zephyr-zabbix
+    ip: 192.168.0.240
+  - name: zephyr-automation
+    ip: 192.168.0.242
+  - name: zephyr-ci
+    ip: 192.168.0.200
+  - name: zephyrtest-orange
+    ip: 192.168.0.202
+  - name: zephyrtest-blue
+    ip: 192.168.0.206
+  - name: fresno
+    ip: 192.168.0.207
+  - name: pwrswitch-orange
+    ip: 192.168.0.5
+  - name: pwrswitch-blue
+    ip: 192.168.0.4
+  - name: pwrswitch-green
+    ip: 192.168.0.3
+  - name: pwrswitch-red
+    ip: 192.168.0.2
+  - name: usbtta-blue01
+    ip: 192.168.0.80
+  - name: usbtta-blue02
+    ip: 192.168.0.82
+  - name: usbtta-blue03
+    ip: 192.168.0.84
+  - name: zephyrhwtest-head01
+    ip: 192.168.0.210
+  - name: zephyrhwtest-head02
+    ip: 192.168.0.212
+
+testnetSH:
+  - name: zserver6
+    ip: 192.168.2.1
+
+inactive:
+  - name: usbtta-blue-upx01.testnet
+  - name: usbtta-blue-ehlcrb01.testnet
+  - name: zephyrtest-green
+

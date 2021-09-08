@@ -1,0 +1,48 @@
+---
+# automates creating a remotehw env
+#
+#####################################################################################################
+- hosts: remotehw
+  roles:
+  - intel-jf
+  environment: "{{ vars_env_proxy }}"
+  tasks:
+    - name: remove old stuff
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/etc/profile.d/zephyr-remotehw-lib.sh"
+        - "/etc/profile.d/remotehw-TEMPLATE.sh"
+        - "/etc/profile.d/remotehw.yaml"
+
+    - name: copy our remotehw implementation into profile.d
+      copy:
+        src: "{{ item }}"
+        dest: /etc/profile.d
+        owner: root
+        group: root
+        mode: '0755'
+        force: yes
+      with_fileglob:
+        - "remotehw/remotehw*"
+
+    - name: create /opt/remotehw
+      file:
+        path=/opt/remotehw
+        state=directory
+        owner=root
+        group=root
+        mode='0755'
+
+    - name: copy contents of remotehw/opt into /opt/remotehw
+      copy:
+        src: "{{ item }}"
+        dest: /opt/remotehw
+        owner: root
+        group: root
+        mode: '0755'
+        force: yes
+      with_fileglob:
+        - "remotehw/opt/*"
+

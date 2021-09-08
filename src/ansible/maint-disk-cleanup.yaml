@@ -1,0 +1,9 @@
+---
+- hosts: production staging
+  tasks:
+    - name: remove file
+      file: path=/opt/{{ item }} state=absent
+      loop:
+        - zephyr-sdk-0.10.3-setup.run
+        - zephyr-sdk-0.11.2-setup.run
+        - zephyr-sdk-0.11.3-setup.run

@@ -1,0 +1,8 @@
+---
+env_by_group:
+  http_proxy: http://127.0.0.1:9110
+  https_proxy: http://127.0.0.1:9110
+  HTTP_PROXY: http://127.0.0.1:9110
+  HTTPS_PROXY: http://127.0.0.1:9110
+  ftp_proxy: http://127.0.0.1:9110
+  no_proxy: 127.0.0.1

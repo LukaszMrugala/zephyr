@@ -1,0 +1,35 @@
+---
+# mount SDK toolchains nfs share
+#
+#####################################################################################################
+- hosts: remotehw fresno
+  roles:
+  - intel-jf
+  environment: "{{ vars_env_proxy }}"
+  tasks:
+    - name: 'install nfs-common'
+      apt:
+        name: "{{packages}}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+          - nfs-common
+
+
+    - name: create /opt/toolchains mount point
+      file:
+        path: /opt/toolchains
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: mount nfs-toolchains to /opt/toolchains
+      ansible.posix.mount:
+        path: /opt/toolchains
+        src: 192.168.0.20:/mnt/zfs-prod/nfs-toolchains
+        fstype: nfs
+        opts: ro,noatime
+        state: mounted
+

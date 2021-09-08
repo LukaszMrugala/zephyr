@@ -1,0 +1,94 @@
+# setup ACL per machine
+
+---
+- hosts: testheads agents fresno remotehw
+  tasks:
+# read per-machine acl file (or symlink to template)
+  - name: 'including acl-<machine>.yaml'
+    include_vars:
+      file: "acl-{{ ansible_fqdn }}.yaml"
+#           ^ this populates two arrays, devops & users
+
+#  - debug:
+#      msg: '{{ item.domain }}\{{ item.idsid }}'
+#    loop: "{{ devops + users }}"
+
+# grant machine access to devops + users
+  - name: 'grant machine access to users in access list'
+    lineinfile:
+      path: /etc/opt/quest/vas/users.allow
+      regexp: '{{ item.domain }}\\{{ item.idsid }}'
+      line: '{{ item.domain }}\{{ item.idsid }}'
+      state: present
+    loop: "{{ devops + users }}"
+
+# grant sudo to devops  
+  - name: 'grant sudo to devops users'
+    user:
+      name: "{{ item.idsid }}"
+      create_home: no
+      groups: sudo
+      append: yes
+    loop: "{{ devops }}"
+
+# enable usb + serial port access for all users with access
+  - name: 'add all users to dialout & plugdev groups'
+    user:
+      name: "{{ item.idsid }}"
+      create_home: no
+      groups: dialout,plugdev
+      append: yes
+    loop: "{{ devops + users }}"
+
+##########################################################
+## setup jenkins user
+  - name: 'setup jenkins user'
+    user:
+      name: jenkins
+      create_home: yes
+      home: /srv/jenkins
+      shell: /bin/bash
+      groups: dialout,plugdev
+      append: yes
+
+  - name: 'set jenkins authorized keys'
+    authorized_key:
+      user: jenkins
+      state: present
+      key: "{{ lookup('file', 'devops_vms-jenkins.pem.pub') }}"
+
+
+# works but needs testing & clean-up
+#############################################
+# deploy current user ssh key
+############################################
+#- hosts: jenkins sysmgmt remotehw agents
+#  tasks:
+  # register local ssh pubkey 
+#  - name: 'register local ssh pub key'
+#    shell: cat "{{ ansible_env.USER}}-id_rsa.pub"
+#    register: sshpubkey
+
+#  - debug: var=sshpubkey
+
+#  - name: 'authorize local user on all infrastructure'
+#    authorized_key:
+#      user: "{{ ansible_env.USER }}"
+#      state: present
+#      key: "{{ sshpubkey }}"
+
+### account/access revoke support
+# disabled 22 oct, 2020 - is matching ad_cvondra... need to finish domain/user code
+#
+# remove any users in the revoked list
+#  - name: 'remove vas access for users in revoked list'
+#    lineinfile:
+#      path: /etc/opt/quest/vas/users.allow
+#      regexp: "{{ item }}"
+#      state: absent
+#    loop: "{{ revoked }}"
+#  - name: 'remove revoked users from all groups'
+#    user:
+#      name: "{{ item }}"
+#      groups: ''
+#    loop: "{{ revoked }}"

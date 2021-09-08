@@ -1,0 +1,29 @@
+---
+# bootstrap playbook - first steps to establish a sane ansible inventory
+- hosts: all
+#  roles:
+#  - intel-jf
+#  environment: "{{ vars_env_proxy }}"
+  tasks:
+# setup proxy in system environment
+#  - name: 'set http_proxy in /etc/environment'
+#    lineinfile:
+#      path: /etc/environment
+#      regexp: '^http_proxy='
+#      line: http_proxy=http://proxy-chain.intel.com:911
+#  - name: 'set https_proxy in /etc/environment'
+#    lineinfile:
+#      path: /etc/environment
+#      regexp: '^https_proxy='
+#      line: https_proxy=http://proxy-chain.intel.com:911
+
+# removes python2.7* & install python3-pip
+  - name: 'purge python2.7 & install python3-pip'
+    raw: 'sudo apt-get -y purge python-minimal; sudo apt-get -y install python3'
+
+# reset swap to 8G & extend root partition to fill space
+#
+# !! doesn't work as-is... hangs & probably needs a -y for the lv cmds
+#
+#  - name: 'swapoff & resize'
+#    raw: 'sudo swapoff /dev/dm-3 && sudo lvresize -y -L8G /dev/mapper/ubuntu--vg-swap_1 && sudo mkswap /dev/mapper/ubuntu--vg-swap_1 && sudo swapon /dev/dm-3 && sudo lvextend  -l +100%FREE /dev/mapper/ubuntu--vg-root && sudo resize2fs /dev/mapper/ubuntu--vg-root'

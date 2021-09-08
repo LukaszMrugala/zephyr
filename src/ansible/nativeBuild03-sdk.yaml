@@ -1,0 +1,99 @@
+---
+# Ansible playbook to automate installation of zephyr SDKs on systems without access to NFS toolchains mount.
+#
+# To add a new version, simply insert additional version string in the "active_sdks" list.
+# To retire an SDK from the environment, add the version to the "inactive_sdks" list.
+#
+# NOTE: The SDK installation directory must match SDK_INSTALL_DIR env var used in job configs
+#
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# BUGS: 
+#	1. ansible file:remove tasks that use loop {{ inactive_sdks }} do not appear to be functioning
+#	2. 0.12.2 install isn't working - likely a change to params
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#####################################################################################################
+- hosts: zbuilders ubuntu_prd_vms ubuntu_ssp_vms
+  vars:
+    active_sdks:
+    - 0.10.3
+    - 0.11.4
+    inactive_sdks:
+    - 0.11.1
+    - 0.11.2
+    - 0.11.3
+    - 0.12.0
+    - 0.12.2
+  environment: "{{ env_by_group }}"
+  tasks:
+#remove link from /opt/toolchains to /srv/toolchains
+    - name: remove /opt/toolchains
+      file:
+        path: /opt/toolchains
+        state: absent
+        force: yes
+#clean inactive SDKs from /srv/toolchains/
+    - name: remove inactive SDKs from /srv/toolchains
+      file:
+        path: "/srv/toolchains/zephyr-sdk-{{ item }}"
+        state: absent
+        force: yes
+      loop: "{{ inactive_sdks }}"
+#clean inactive SDKs from /srv/ (old method)
+    - name: remove inactive SDKs from /srv
+      file:
+        path: "/srv/zephyr-sdk-{{ item }}"
+        state: absent
+        force: yes
+      loop: "{{ inactive_sdks }}"
+#remove inactive SDK setup bins
+    - name: remove inactive SDK setup bins from /srv
+      file:
+        path: "/srv/zephyr-sdk-{{ item }}-setup.run"
+        state: absent
+        force: yes
+      loop: "{{ inactive_sdks }}"
+
+#make sure /srv/toolchains is created
+    - name: create /srv/toolchains for active SDKs
+      file:
+        path: /srv/toolchains
+        state: directory
+        owner: root
+        group: root
+
+#link /opt/toolchains to /srv/toolchains
+    - name: link /opt/toolchains to /srv/toolchains
+      file:
+        src: /srv/toolchains
+        dest: /opt/toolchains
+        owner: root
+        group: root
+        state: link
+
+## acquire SDK on target, pick method:
+# 1. via http (slow)
+#    - name: 'get_url zephyr {{ item }} SDK (allow 5-10 minutes for this step, depending on network conditions)'
+#      get_url:
+#        url: "https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v{{ item }}/zephyr-sdk-{{ item }}-setup.run"
+#        dest: "/opt/toolchains/zephyr-sdk-{{ item }}-setup.run"
+#        force: no
+#        mode: '777'
+# 2. local copy over ssh
+    - name: copy previously downloaded SDK from local to remote
+      copy:
+        src: /srv/zephyr-sdk-{{ item }}-setup.run
+        dest: /srv/zephyr-sdk-{{ item }}-setup.run
+        owner: root
+        group: root
+        mode: '0655'
+        force: no
+        follow: yes
+        local_follow: yes
+      loop: "{{ active_sdks }}"
+
+    - name: 'install zephyr {{ item }} SDK (allow 10-15 minutes for this step)'
+      command:
+        cmd: /srv/zephyr-sdk-{{ item }}-setup.run --quiet -- -d /opt/toolchains/zephyr-sdk-{{ item }}
+        creates: /opt/toolchains/zephyr-sdk-{{ item }}/sdk_version
+      loop: "{{ active_sdks }}"

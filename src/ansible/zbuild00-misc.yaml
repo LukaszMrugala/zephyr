@@ -1,0 +1,36 @@
+---
+# misc automatation for zbuild VMs
+#####################################################################################################
+- hosts: zbuilders
+  environment: "{{ env_by_group }}"
+  tasks:
+    - name: remove old stuff
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/home/zephyradmin/cmake-3.15.3-Linux-x86_64.sh"
+        - "/home/zephyradmin/zephyr-sdk-0.11.4-setup.run"
+
+#    - name: 'apt update & upgrade + install srecord'
+#      apt:
+#        name: "{{packages}}"
+#        state: present
+#        update_cache: yes
+#      vars:
+#        packages:
+#          - srecord
+   
+    - name: copy container_env & proxy.sh
+      copy:
+        src: "{{ item }}"
+        dest: /
+        owner: root
+        group: root
+        mode: '0755'
+        force: yes
+      loop:
+        - "zbuild/container_env"
+        - "zbuild/proxy.sh"
+
+

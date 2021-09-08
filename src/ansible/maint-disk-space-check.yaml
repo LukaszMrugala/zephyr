@@ -1,0 +1,8 @@
+---
+- hosts: all
+  tasks:
+    - shell: df -h
+      register: ret
+
+    - debug:
+        var: ret.stdout_lines

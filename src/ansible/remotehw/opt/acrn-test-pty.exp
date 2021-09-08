@@ -1,0 +1,28 @@
+#!/usr/bin/expect -f
+
+set dev [lindex $argv 0]
+
+set stty_init raw
+ 
+set timeout 300
+
+spawn bash -c "source /etc/profile.d/remotehw*; remotehw-$dev-reset; remotehw-$dev-get-console"
+
+set timeout -1
+  
+expect "*add_pte, pte 0x813e7000 is already present*" { send "\r" }
+ 
+set timeout -1
+
+expect "*ACRN\:\\\\>"
+
+set timeout -1
+ 
+send "vm_console 0\r"
+
+set timeout -1
+  
+expect "PROJECT EXECUTION*"
+ 
+expect eof
+

@@ -1,0 +1,20 @@
+---
+# Enroll gitlab-runner with zephyrproject-rtos/zephyr @ gitlab.devtools.intel.com
+#  see https://gitlab.devtools.intel.com/zephyrproject-rtos/zephyr/-/settings/ci_cd for status
+#
+# Note: Enrollment url & token are static for project & thus are hardcoded in register call
+##############################################################################################
+- hosts: agents
+  roles:
+  - intel-jf
+  environment: "{{ vars_env_proxy }}"
+  tasks:
+    - name: 'unregister any existing runner connections'
+      shell: |
+        gitlab-runner unregister --url https://gitlab.devtools.intel.com/ --name zephyr-build-at-{{ ansible_hostname }}
+      ignore_errors: yes
+
+    - name: 'register runner'
+      shell: |
+        gitlab-runner register --non-interactive -r TNKXSQUrL-rYeeBB-Jkd -u https://gitlab.devtools.intel.com --executor shell --custom_build_dir-enabled --name zephyr-build-at-{{ ansible_hostname }} --tag-list zephyr-build-virtual --builds-dir /srv/gitlab-runner
+

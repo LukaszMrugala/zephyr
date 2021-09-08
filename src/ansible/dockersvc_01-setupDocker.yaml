@@ -1,0 +1,93 @@
+---
+#zephyr devops: setup VMs with docker
+#
+#assumptions & prerequsites
+# 1. agents are ubuntu (or apt-capable)
+# 5. there's nothing of value in /var/lib/docker
+
+###################################################
+# >> WARNING: this play will whack /var/lib/docker!
+###################################################
+
+- hosts: all
+  roles:
+  - intel-jf
+  environment: "{{ vars_env_proxy }}"
+  tasks:
+# firewall setup (todo:only run once!)
+####################
+#    - name: 'add tcp firewall rules'
+#      iptables:
+#        chain: INPUT
+#        protocol: tcp
+#        destination_port: "{{ vars_tcp_ports }}"
+#        match: multiport
+#        jump: ACCEPT
+#        action: insert
+#        rule_num: 8
+#    - name: 'add udp firewall rules'
+#      iptables:
+#        chain: INPUT
+#        protocol: udp
+#        destination_port: "{{ vars_udp_ports }}"
+#        match: multiport
+#        jump: ACCEPT
+#        action: insert
+#        rule_num: 8
+#    - name: 'netfilter-persistence, please'
+#      shell: netfilter-persistent save
+
+# docker setup
+###################
+    - name: 'creating /srv/docker (for otcops disk config)'
+      file: path=/srv/docker state=directory
+    - name: 'removing /var/lib/docker if it exists'
+      file: path=/var/lib/docker state=absent
+    - name: 'linking /srv/docker to /var/lib/docker'
+      file: path=/var/lib/docker src=/srv/docker state=link force=yes
+    - name: 'get docker ppa apt key'
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+    - name: 'add docker ppa (bionic)'
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+      when: ansible_distribution_release == "bionic"
+
+    - name: 'apt update & install docker prereqs'
+      apt:
+        name: "{{packages}}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg-agent
+          - software-properties-common
+
+    - name: 'add systemd hook for docker proxy config'
+      file: path=/etc/systemd/system/docker.service.d state=directory
+    - name: 'inject docker proxy environment file'
+      template: src=http-proxy.conf dest=/etc/systemd/system/docker.service.d/http_proxy.conf owner=root mode=0644
+    - name: 'daemon reload'
+      shell: systemctl daemon-reload
+
+    - name: 'install docker-ce, cli & containerd'
+      apt:
+        name: "{{packages}}"
+        state: present
+        update_cache: yes
+        allow_unauthenticated: yes
+      vars:
+        packages:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+
+    - name: 'start docker service'
+      service: name=docker enabled=yes
+
+#docker is now installed & running

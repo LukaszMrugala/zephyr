@@ -1,0 +1,7 @@
+---
+env_by_group:
+  http_proxy: http://proxy-chain.intel.com:911
+  https_proxy: http://proxy-chain.intel.com:911
+  HTTP_PROXY: http://proxy-chain.intel.com:911
+  HTTPS_PROXY: http://proxy-chain.intel.com:911
+  ftp_proxy: http://proxy-chain.intel.com:911

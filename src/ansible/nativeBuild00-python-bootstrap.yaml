@@ -1,0 +1,8 @@
+---
+#installs python on target using ansible raw-method
+
+- hosts: all
+  gather_facts: no
+  pre_tasks:
+  - name: 'install python'
+    raw: 'sudo apt-get -y purge python-minimal; sudo apt-get -y install python3'

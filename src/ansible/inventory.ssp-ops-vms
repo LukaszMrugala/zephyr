@@ -1,0 +1,22 @@
+[ubuntu_ssp_vms]
+zephyr-ci-s06.ostc.intel.com ansible_host=10.165.28.37
+zephyr-ci-s05.ostc.intel.com ansible_host=10.165.28.36
+zephyr-ci-s04.ostc.intel.com ansible_host=10.165.28.35
+zephyr-ci-s03.ostc.intel.com ansible_host=10.165.28.34
+zephyr-ci-s02.ostc.intel.com ansible_host=10.165.28.33
+zephyr-ci-s01.ostc.intel.com ansible_host=10.165.28.32
+zephyr-ci.ostc.intel.com ansible_host=10.165.28.27
+
+[ubuntu_ssp_vms:vars]
+ansible_become=true
+ansible_ssh_private_key_file=~/.ssh/cvondra-at-sspops-vms-2020.pem
+
+[inactive]
+zephyr-ci-stg-s06.ostc.intel.com ansible_host=10.165.28.196 ansible_become=true
+zephyr-ci-stg-s05.ostc.intel.com ansible_host=10.165.28.195 ansible_become=true
+zephyr-ci-stg-s04.ostc.intel.com ansible_host=10.165.28.194 ansible_become=true
+zephyr-ci-stg-s03.ostc.intel.com ansible_host=10.165.28.193 ansible_become=true
+zephyr-ci-stg-s02.ostc.intel.com ansible_host=10.165.28.192 ansible_become=true
+zephyr-ci-stg-s01.ostc.intel.com ansible_host=10.165.28.191 ansible_become=true
+zephyr-ci-stg.ostc.intel.com ansible_host=10.165.28.187 ansible_become=true
+

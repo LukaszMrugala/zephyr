@@ -1,0 +1,58 @@
+---
+# setup agents with gitlab runner
+#####################################
+- hosts: agents
+  roles:
+  - intel-jf
+  environment: "{{ vars_env_proxy }}"
+  tasks:
+    - name: 'unregister any existing runner connections'
+      shell: |
+        gitlab-runner unregister --url https://gitlab.devtools.intel.com/ --all-runners
+      ignore_errors: yes
+
+    - name: 'uninstall gitlab-runner service'
+      shell: |
+        gitlab-runner uninstall 
+      ignore_errors: yes
+
+    - name: 'remove existing gitlab-runner pkg'
+      apt:
+        name: gitlab-runner
+        state: absent
+
+    - name: 'remove gitlab-runner user + home directory'
+      user:
+        name: gitlab-runner
+        remove: yes
+        groups: ''
+        state: absent
+
+    - name: 'setup new gitlab-runner user'
+      user:
+        name: gitlab-runner
+        create_home: yes
+        home: /srv/gitlab-runner
+        shell: /bin/bash
+        groups: docker
+        append: yes
+
+    - name: 'fetch gitlab official repo'
+      shell: |
+        curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | bash
+
+    - name: 'apt update & install gitlab-runner'
+      apt:
+        name: "{{packages}}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+          - gitlab-runner
+
+# this doesn't appear to be neccessary... the curl'd install script above configures the service w/ proper defaults automatically
+#    - name: 'setup gitlab-runner service running as user gitlab-runner'
+#      shell: |
+#        gitlab-runner install --working-directory /srv/gitlab-runner --user gitlab-runner
+
+

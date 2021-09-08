@@ -1,0 +1,35 @@
+---
+# setup swarm master + nodes
+############################
+- hosts: master
+  tasks:
+  - name: 'recycle swarm on master'
+    shell: |
+      docker service rm zephyr-swarm-production
+      docker swarm leave -f
+      sleep 3
+      docker swarm init
+
+  - name: 'get join token'
+    command: docker swarm join-token worker -q
+    register: jointoken
+
+  - name: 'stash master hostname'
+    command: hostname -f
+    register: master_hostname
+
+  - name: 'set swarm master facts'
+    set_fact: swarm_jointoken="{{ jointoken.stdout }}" swarm_master_fqdn="{{ master_hostname.stdout }}"
+
+- hosts: agents*
+  tasks:
+  - name: 'leave any existing swarms'
+    shell: docker swarm leave -f
+    ignore_errors: yes
+  - debug: var=hostvars[groups['master'][0]].swarm_jointoken
+  - debug: var=hostvars[groups['master'][0]].swarm_master_fqdn
+
+  - name: 'agents join swarm'
+    shell: "docker swarm join --token {{ hostvars[groups['master'][0]].swarm_jointoken }} {{ hostvars[groups['master'][0]].swarm_master_fqdn }}:2377"
+
+#now swarm is setup on master with all nodes connected

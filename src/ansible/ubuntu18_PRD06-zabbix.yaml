@@ -1,0 +1,53 @@
+---
+# automates installation/config of zabbix agent across all infra 
+#
+#####################################################################################################
+- hosts: testheads remotehw ubuntu_prd_vms
+  environment: "{{ env_by_group }}"
+  tasks:
+    - name: apt update & install zephyr dependencies
+      apt:
+        name: "{{packages}}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+          - zabbix-agent
+
+    - name: copy our zabbix config template to remote
+      copy:
+        src: zabbix/zabbix_agentd.conf.TEMPLATE
+        dest: /etc/zabbix/zabbix_agentd.conf
+
+    - name: use sed to customize /etc/zabbix/zabbix_agentd.conf for this host
+      shell: |
+        sed -i 's/SEDTARGET-ZABBIX-SERVER/zephyr-zabbix.jf.intel.com/g' /etc/zabbix/zabbix_agentd.conf
+        sed -i 's/SEDTARGET-ZABBIX-HOSTNAME/{{ inventory_hostname }}/g' /etc/zabbix/zabbix_agentd.conf
+
+
+# fix-up zabbix system def, which appears to be pretty broken on PRD ubuntu
+    - name: set zabbix-agent to run as nogroup
+      lineinfile:
+        path: /lib/systemd/system/zabbix-agent.service
+        regexp: "Group="
+        line: "Group=nogroup"
+    - name: add runtime directory to service def
+      lineinfile:
+        path: /lib/systemd/system/zabbix-agent.service
+        regexp: "RuntimeDirectory="
+        line: "RuntimeDirectory=zabbix"
+        insertafter: '\[Service\]'
+    - name: add log directory to service def
+      lineinfile:
+        path: /lib/systemd/system/zabbix-agent.service
+        regexp: "LogsDirectory="
+        line: "LogsDirectory=zabbix"
+        insertafter: '\[Service\]'
+
+    - name: 'start zabbix-agent service'
+      systemd:
+        name: zabbix-agent.service
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+

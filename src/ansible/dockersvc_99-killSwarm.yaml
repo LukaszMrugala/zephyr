@@ -1,0 +1,16 @@
+---
+# kill swarm on master + nodes
+############################
+
+- hosts: agents*
+  tasks:
+  - name: 'agents exit swarm...'
+    shell: docker swarm leave -f
+    ignore_errors: yes
+
+- hosts: master
+  tasks:
+  - name: 'kill swarm service on master'
+    shell: |
+      docker service rm zephyr-swarm-production
+      docker swarm leave -f

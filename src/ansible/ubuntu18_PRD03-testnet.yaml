@@ -1,0 +1,61 @@
+---
+# implements our testnet with hosts template, etc
+#
+#####################################################################################################
+- hosts: remotehw
+  roles:
+  - intel-jf
+  environment: "{{ vars_env_proxy }}"
+  tasks:
+# read-in testnet definition
+  - name: 'including testnet.yaml'
+    include_vars:
+      file: testnet.yaml
+#           ^ currently, this populates three arrays: testnetJF1, testnetSH & inactive
+
+#########################################################################
+##   JF1 testnet
+#################
+
+# debug dump + example of parsing config array
+  - debug:
+      msg: "name: {{ item.name }}, ip: {{ item.ip }}"
+    loop: "{{ testnetJF1 }}" 
+
+# attempt to prevent ip collisions from old entries by deleting any lines with matching entries
+  - name: 'remove all lines matching names in inactive group'
+    lineinfile:
+      path: /etc/hosts
+      regexp: "{{ item.name }}"
+      state: absent
+    loop: "{{ inactive }}"
+  - name: 'remove any exising /etc/hosts entries for ips that match definitions in testnet.yaml'
+    lineinfile:
+      path: /etc/hosts
+      regexp: "{{ item.ip }}"
+      state: absent
+    loop: "{{ testnetJF1 }}"
+
+# inject testnet hosts entries from testnet.yaml
+  - name: 'template /etc/hosts entries from testnet.yaml'
+    lineinfile:
+      path: /etc/hosts
+      regexp: "{{ item.name }}.testnet"
+      line: "{{ item.ip }}  {{ item.name }}.testnet"
+    loop: "{{ testnetJF1 }}"
+
+#########################################################################
+##   SH testnet
+#################
+
+
+## TODO
+
+# pull testnet definition yaml from devops config repo & populate dictionary
+#    - name: pull testnet ips from zephyr-hardware-testing repo & populate dictionary with contents
+#      uri:
+#        url: https://gitlab.devtools.intel.com/zephyrproject-rtos/devops/zephyr-hardware-testing/-/raw/master/testnet/testnet-ips.yaml
+#        return_content: yes
+#      register: testnet_ips
+#      failed_when: "'zephyrtest' not in testnet_ips.content"
+
