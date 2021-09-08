@@ -1,0 +1,16 @@
+#!/bin/sh
+
+for d in ehl03 ehl04 ehl05 ehl06
+do
+	echo $d
+ln -s cleware-control-endpoint.sh  command-$d-on
+ln -s cleware-control-endpoint.sh  command-$d-off
+
+ln -s cleware-control-endpoint.sh  command-$d-mountusb
+ln -s cleware-control-endpoint.sh  command-$d-detachusb
+ln -s cleware-control-endpoint.sh  command-$d-status
+ln -s cleware-control-endpoint.sh  command-$d-flash
+ln -s cleware-control-endpoint.sh  command-$d-westflash
+done
+
+

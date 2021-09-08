@@ -1,0 +1,54 @@
+2020-07-15 14:13:57,699 [1] DEBUG AIT.YProg.Burner.YProgBase - Loading flash info db file
+2020-07-15 14:13:57,896 [1] DEBUG AIT.YProg.Burner.YProgBase - Creating YProgBurner Version: 2.0
+2020-07-15 14:13:57,896 [1] INFO  AIT.YProg.Cli.Program - Batch device started
+2020-07-15 14:13:57,897 [1] INFO  AIT.YProg.Cli.Program - (Batch) Erase device started
+2020-07-15 14:13:57,900 [1] DEBUG AIT.YProg.Burner.YProgBase - Selected driving strength, Clock: DS_4MA, data: DS_4MA, sso: DS_4MA
+2020-07-15 14:13:57,902 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Opening device by index: 10
+2020-07-15 14:13:57,907 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Device handle: 41401408, with index: 10 and description: Y2Prog B
+2020-07-15 14:13:57,916 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Opening device by index: 9
+2020-07-15 14:13:57,921 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Device handle: 41411504, with index: 9 and description: Y2Prog A
+2020-07-15 14:13:57,928 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Setting driving strength, Clock: DS_4MA, data: DS_4MA, sso: DS_4MA
+2020-07-15 14:13:58,333 [1] DEBUG AIT.YProg.Burner.YProgBase - LDO Level was set to: LDO_ENABLE
+2020-07-15 14:13:58,551 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Manufacturer: 0, SpiId: 0, Product: 0
+2020-07-15 14:13:59,157 [1] DEBUG AIT.YProg.Burner.YProgBase - LDO Level was set to: LDO_1_8V
+2020-07-15 14:13:59,361 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Manufacturer: 255, SpiId: 255, Product: 255
+2020-07-15 14:13:59,967 [1] DEBUG AIT.YProg.Burner.YProgBase - LDO Level was set to: LDO_3_3V
+2020-07-15 14:14:00,171 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Manufacturer: 239, SpiId: 64, Product: 25
+2020-07-15 14:14:00,176 [1] INFO  AIT.YProg.Burner.YProgBase - Run action: Erase
+2020-07-15 14:14:00,178 [4] DEBUG AIT.YProg.Burner.YProgBase - SetEraseChip called
+2020-07-15 14:14:44,276 [1] DEBUG AIT.YProg.Burner.YProgBase - Action Erase elapsed time(ms): 44099
+2020-07-15 14:14:44,681 [1] DEBUG AIT.YProg.Burner.YProgBase - LDO Level was set to: LDO_OFF
+2020-07-15 14:14:44,684 [1] INFO  AIT.YProg.Cli.Program - (Batch) Erase device completed
+2020-07-15 14:14:44,684 [1] INFO  AIT.YProg.Cli.Program - (Batch) Burn device started
+2020-07-15 14:14:45,293 [1] DEBUG AIT.YProg.Burner.YProgBase - LDO Level was set to: LDO_3_3V
+2020-07-15 14:14:45,295 [1] INFO  AIT.YProg.Burner.YProgBase - Run action: Burn
+2020-07-15 14:14:45,302 [4] DEBUG AIT.YProg.Burner.YProgBase - Enter32BitMode called
+2020-07-15 14:14:45,302 [4] DEBUG AIT.YProg.Burner.YProgBase - Enter32BitMode command found
+2020-07-15 14:15:31,043 [4] DEBUG AIT.YProg.Burner.YProgBase - Program operation for device: Y2Prog A completed
+2020-07-15 14:15:31,084 [4] DEBUG AIT.YProg.Burner.YProgBase - Enter32BitMode called
+2020-07-15 14:15:31,084 [4] DEBUG AIT.YProg.Burner.YProgBase - Enter32BitMode command found
+2020-07-15 14:15:31,085 [1] DEBUG AIT.YProg.Burner.YProgBase - Action Burn elapsed time(ms): 45789
+2020-07-15 14:15:31,491 [1] DEBUG AIT.YProg.Burner.YProgBase - LDO Level was set to: LDO_OFF
+2020-07-15 14:15:31,494 [1] INFO  AIT.YProg.Cli.Program - (Batch) Burn device completed
+2020-07-15 14:15:31,494 [1] INFO  AIT.YProg.Cli.Program - (Batch) Verify device started (use single mode: False)
+2020-07-15 14:15:32,103 [1] DEBUG AIT.YProg.Burner.YProgBase - LDO Level was set to: LDO_3_3V
+2020-07-15 14:15:32,106 [1] INFO  AIT.YProg.Burner.YProgBase - Run action: Verify
+2020-07-15 14:15:32,122 [4] DEBUG AIT.YProg.Burner.YProgBase - Enter32BitMode called
+2020-07-15 14:15:32,122 [4] DEBUG AIT.YProg.Burner.YProgBase - Enter32BitMode command found
+2020-07-15 14:16:18,514 [4] DEBUG AIT.YProg.Burner.YProgBase - Enter32BitMode called
+2020-07-15 14:16:18,514 [4] DEBUG AIT.YProg.Burner.YProgBase - Enter32BitMode command found
+2020-07-15 14:16:19,450 [1] DEBUG AIT.YProg.Burner.YProgBase - Action Verify elapsed time(ms): 47344
+2020-07-15 14:16:19,854 [1] DEBUG AIT.YProg.Burner.YProgBase - LDO Level was set to: LDO_OFF
+2020-07-15 14:16:19,858 [1] INFO  AIT.YProg.Cli.Program - Flash content and files are the same
+2020-07-15 14:16:19,858 [1] INFO  AIT.YProg.Cli.Program - (Batch) Verify device completed
+2020-07-15 14:16:19,858 [1] INFO  AIT.YProg.Cli.Program - Batch device completed
+2020-07-15 14:16:19,858 [1] DEBUG AIT.YProg.Cli.Program - Running command: exit
+2020-07-15 14:16:19,865 [1] INFO  AIT.YProg.Cli.Program - Exit was called, cleaning...
+2020-07-15 14:16:19,866 [1] DEBUG AIT.YProg.Burner.YProgBase - Disposing...
+2020-07-15 14:16:19,866 [1] DEBUG AIT.YProg.Burner.YProgBase - Clean V2.0 started...
+2020-07-15 14:16:19,869 [1] DEBUG AIT.YProg.Burner.YProgBase - LDO Level was already set to: LDO_OFF, skipping...
+2020-07-15 14:16:19,872 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Closing handle for device: Y2Prog A
+2020-07-15 14:16:19,888 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Closing handle device: Y2Prog A Done
+2020-07-15 14:16:19,888 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Closing handle for device: Y2Prog B
+2020-07-15 14:16:19,893 [1] DEBUG AIT.YProg.Burner.Utils.FTHelper - Closing handle device: Y2Prog B Done
+2020-07-15 14:16:19,893 [1] INFO  AIT.YProg.Burner.YProgBase - Cleaning Done

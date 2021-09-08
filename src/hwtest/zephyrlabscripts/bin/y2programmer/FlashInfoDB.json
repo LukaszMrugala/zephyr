@@ -1,0 +1,945 @@
+﻿[
+  {
+    "Name": "W25Q128FV",
+    "JedecManufacturer": "0xEF",
+    "JedecProduct": "0x18",
+    "JedecSpiId": "0x40",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 65536,
+    "MinEraseTime": 20,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF", "0xFF", "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "W25Q256FV",
+    "JedecManufacturer": "0xEF",
+    "JedecProduct": "0x19",
+    "JedecSpiId": "0x40",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 131072,
+    "MinEraseTime": 40,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xB7",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xE9",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF", "0xFF", "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "W25Q128FW",
+    "JedecManufacturer": "0xEF",
+    "JedecProduct": "0x18",
+    "JedecSpiId": "0x60",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 65536,
+    "MinEraseTime": 20,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF", "0xFF", "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "W25Q256JW",
+    "JedecManufacturer": "0xEF",
+    "JedecProduct": "0x19",
+    "JedecSpiId": "0x60",
+    "JedecQpiId": "0x80",
+    "PageSize": 256,
+    "NumPages": 131072,
+    "MinEraseTime": 40,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xB7",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xE9",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF", "0xFF", "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "W25Q64FW",
+    "JedecManufacturer": "0xEF",
+    "JedecProduct": "0x17",
+    "JedecSpiId": "0x60",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 32768,
+    "MinEraseTime": 20,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF", "0xFF", "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "W25Q512JV",
+    "JedecManufacturer": "0xEF",
+    "JedecProduct": "0x20",
+    "JedecSpiId": "0x40",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 262144,
+    "MinEraseTime": 80,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xB7",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xE9",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF", "0xFF", "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "MT25QU128ABA",
+    "JedecManufacturer": "0x20",
+    "JedecProduct": "0x18",
+    "JedecSpiId": "0xBB",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 65536,
+    "MinEraseTime": 20,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF", "0xFF", "0xFF", "0xFF", "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "MT25QL512A",
+    "JedecManufacturer": "0x20",
+    "JedecProduct": "0x20",
+    "JedecSpiId": "0xBA",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 262144,
+    "MinEraseTime": 40,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xB7",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xE9",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF", "0xFF", "0xFF", "0xFF", "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "MT25QL01GB",
+    "JedecManufacturer": "0x20",
+    "JedecProduct": "0x21",
+    "JedecSpiId": "0xBA",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 524288,
+    "MinEraseTime": 40,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xB7",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xE9",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF", "0xFF", "0xFF", "0xFF", "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "MX25L51245G",
+    "JedecManufacturer": "0xC2",
+    "JedecProduct": "0x1A",
+    "JedecSpiId": "0x20",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 262144,
+    "MinEraseTime": 40,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xB7",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xE9",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "MX25U25635F",
+    "JedecManufacturer": "0xC2",
+    "JedecProduct": "0x39",
+    "JedecSpiId": "0x25",
+    "JedecQpiId": "0x25",
+    "PageSize": 256,
+    "NumPages": 131072,
+    "MinEraseTime": 40,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xB7",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xE9",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "MX25L12845G",
+    "JedecManufacturer": "0xC2",
+    "JedecProduct": "0x18",
+    "JedecSpiId": "0x20",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 65536,
+    "MinEraseTime": 40,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0B",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEB",
+      "UseAddress": true,
+      "Dummy": [ "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "S25FS512S",
+    "JedecManufacturer": "0x01",
+    "JedecProduct": "0x20",
+    "JedecSpiId": "0x02",
+    "JedecQpiId": "0x60",
+    "PageSize": 256,
+    "NumPages": 262144,
+    "MinEraseTime": 40,
+    "EraseChip": {
+      "Command": "0x60",
+      "Dummy": [],
+      "UseAddress": false,
+      "Additional": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0x30",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0x30",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x05",
+      "UseAddress": false,
+      "Dummy": [ "0xFF", "0xFF" ],
+      "MaskAddress": [],
+      "Additional": [],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "MaskAddress": [],
+      "Dummy": [],
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x12",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0C",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEC",
+      "UseAddress": true,
+      "Dummy": [ "0xFF" ],
+      "Additional": []
+    }
+  },
+  {
+    "Name": "S70FS01GS",
+    "JedecManufacturer": "0x1",
+    "JedecProduct": "0x21",
+    "JedecSpiId": "0x2",
+    "JedecQpiId": "0x80",
+    "PageSize": 256,
+    "NumPages": 262144,
+    "MinEraseTime": 60,
+    "EraseChip": {
+      "Command": "0xFE",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": []
+    },
+    "WriteEnable": {
+      "Command": "0x06",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Enter32bitAddr": {
+      "Command": "0xB7",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "Exit32bitAddr": {
+      "Command": "0xFF",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "IsWriteInProgress": {
+      "Command": "0x65",
+      "UseAddress": true,
+      "MaskAddress": [ "0x00", "0x80", "0x00", "0x00" ],
+      "Additional": [],
+      "Dummy": [ "0xFF", "0xFF" ],
+      "Mask": "0x01"
+    },
+    "GetDummyCycles": {
+      "Command": "0x65",
+      "UseAddress": true,
+      "MaskAddress": [ "0x00", "0x80", "0x00", "0x03" ],
+      "Dummy": [ "0xFF", "0xFF" ],
+      "Mask": "0x0F",
+      "Additional": []
+    },
+    "PageProgram": {
+      "Command": "0x02",
+      "UseAddress": false,
+      "Additional": [],
+      "Dummy": []
+    },
+    "FastRead": {
+      "Command": "0x0C",
+      "UseAddress": true,
+      "Additional": [],
+      "Dummy": [ "0xFF" ]
+    },
+    "FastQuadRead": {
+      "Command": "0xEC",
+      "UseAddress": true,
+      "Additional": [ "0xFF" ],
+      "Dummy": [ "0xFF" ]
+    },
+    "DieAddressList": [
+      { "Address": [ "0x00", "0x00", "0x00", "0x00" ] },
+      { "Address": [ "0x04", "0x00", "0x00", "0x00" ] }
+    ]
+  }
+]

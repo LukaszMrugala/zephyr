@@ -1,0 +1,5 @@
+#!/bin/sh
+echo resetting all cleware devices...
+lsusb | grep leware | awk  '{print "sudo usbreset " $2 "/" $4}' | sed -e 's/:$//' | sh
+echo the following command shound now complete without errors: 
+sudo clewarecontrol  -l
