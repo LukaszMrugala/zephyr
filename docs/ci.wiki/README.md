@@ -11,9 +11,9 @@
 
 ## DevOps Service Links
 
-### CI
+### CI: Innersource Github Actions + Jenkins 
 
-We use Jenkins for CI/CD automation. Our main instance is accessible to anyone inside of Intel, here: **https://zephyr-ci.ostc.intel.com**. We also operate a staging instance at **https://zephyr-ci.jf.intel.com:8080**.
+We have embedded Github Actions workflows in all production innersource repos, for example: [zephyr](https://github.com/intel-innersource/os.rtos.zephyr.zephyr/actions) & [zephyr-intel](https://github.com/intel-innersource/os.rtos.zephyr.zephyr-intel/actions). DevOps maintains a minimal Jenkins instance running on [zephyr-ci.jf.intel.com](https://zephyr-ci.jf.intel.com/) for supporting automation tasks + testing. 
 
 ### Remote Hardware (RemoteHW)
 
@@ -28,17 +28,13 @@ For additional information & source code, please see **[Remote Hardware](Remote 
 We maintain an internal fork of the Zephyr project SDK docker configured for use within the Intel intranet.
 See: 
 
-**https://gitlab.devtools.intel.com/zephyrproject-rtos/devops/infrastructure/sdk-docker-intel/-/tree/intel**
+https://github.com/intel-innersource/os.rtos.zephyr.devops.infrastructure.sdk-docker-intel/README-INTEL.md
 
 ### Infrastructure & Systems
 
 ### TestNet (.testnet)
 
 DevOps maintains a private test network for all HW test automation & operations. Most VMs in our cluster have access to this network via a secondary network interface with address 192.168.0.0/24. See **[DevOps Virtual Infrastructure](DevOps Virtual Infrastructure.md)** for more info.
-
-#### SSP Ops VMs (*.ostc.intel.com)
-
-DevOps production CI services are currently hosted on VMs provided by SSP-Ops but we expect to leave their support umbrella around WW08 2021. This section will be removed in the near future. 
 
 #### DevOps VMs 
 
@@ -48,7 +44,7 @@ The following VMs are deployed to the Vmware ESXi hypervisor in JF1-2 lab.
 
 **zephyr-zabbix.jf.intel.com** - Zabbix systems-monitoring instance
 
-**zephyrtest-orange.jf.intel.com** - remoteHW host, DevOps use
+**zephyr-devops.jf.intel.com** - DevOps staging
 
 **zephyrtest-blue.jf.intel.com** - remoteHW host, EHL + TGRVP
 
@@ -68,28 +64,23 @@ Backend Service VMs (accessible only from within TestNet)
 
 **zephyr-ci-th02.jf.intel.com** - 1U server, implements "TestHead" function in SH (once installed)
 
+
 ### git services
 
-#### zephyrproject-rtos@gitlab.devtools
+#### innersource/os.rtos.zephyr.*
+
+Main internal Zephyr/1RTOS repos
+
+#### zephyrproject-rtos@gitlab.devtools ( pending EOL )
 
 DevOps adminstrates the IT-provided gitlab project for all Intel-internal Zephyr development:
 
 https://gitlab.devtools.intel.com/zephyrproject-rtos
 
-#### git cache (gitlab container)
-
-**todo:** new gitlab-container url
-
-#### zephyr devops teamforge
+#### zephyr devops teamforge ( pending EOL )
 
 Teamforge repo with CI keys & credentials (DevOps only)
 
 https://tf-amr-1.devtools.intel.com/sf/projects/zdevops/
 
-### Hardware Test (HWTest & TestNet)
-**todo:** condense docs & link here  
-
-### SWLC/SDL
-**todo:** link to local docs
-
-
+2021: Replaced by hidden.tar.secret in ci.git
