@@ -1,0 +1,13 @@
+# CODEOWNERS for autoreview assigning in github
+
+# https://help.github.com/en/articles/about-code-owners#codeowners-syntax
+
+# Order is important; for each modified file, the last matching
+# pattern takes the most precedence.
+# That is, with the last pattern being
+# *.rst                                     @user
+# if only .rst files are being modified, only 'user' is
+# automatically requested for review, but you can manually
+# add others as needed.
+
+*                                         @chrisvintc @cjgraydon
