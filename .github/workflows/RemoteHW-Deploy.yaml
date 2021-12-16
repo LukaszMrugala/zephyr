@@ -1,0 +1,27 @@
+# RemoteHW-Deploy 
+#   triggered on push to main:src/remotehw/, this workflow uses scp to deploy 
+#   remoteHW configuration & scripts to zephyrtest-blue. This method requires
+#   the runner user be pre-authenticated. See FMOS-DevOps-KeyRoll workflow.
+
+name: RemoteHW-Deploy
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/remotehw/**'    
+  workflow_dispatch:
+        
+jobs:
+  deploy_zephyrtest-blue:
+    defaults:
+      run:
+        shell: bash  
+    runs-on: testhead
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: 'repo'
+      - name: scp src/remotehw/opt/*
+        run: scp repo/src/remotehw/opt/* zephyrtest-blue.jf.intel.com:/opt/remotehw/
+      - name: scp src/remotehw/profile/*
+        run: scp repo/src/remotehw/profile/* zephyrtest-blue.jf.intel.com:/etc/profile.d/

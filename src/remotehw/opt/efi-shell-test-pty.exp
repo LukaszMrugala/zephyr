@@ -1,0 +1,16 @@
+#!/usr/bin/expect -f
+
+set dev [lindex $argv 0]
+
+send_user ">>>>>>>>>>>>>> starting expect for $dev <<<<<<<<<<<<<<<<<<\n" 
+
+set stty_init raw
+ 
+set timeout 120
+
+spawn bash -c "source /etc/profile.d/remotehw*; remotehw-$dev-power-on; remotehw-$dev-get-console"
+send_user ">>>>>>>>>>>>>> remotehw called <<<<<<<<<<<<<<<<<<\n" 
+  
+expect "Shell>" { send "exit\r" }
+ 
+exit
