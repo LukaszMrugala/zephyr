@@ -7,12 +7,13 @@ a signal you wish to control & use this application to set the state
 from the command-line.
 
 ## Supported Cables
-Developed & tested soley with FTDI part-number: TTL-232R-RPi.
+Developed & tested soley with FTDI part-number TTL-232R-RPi.
 Any FTDI cable based on the FT232R ASIC should function though.
 
 ## Prerequisites
-libftdi developent libraries on the are required to build/run. Naming
+libftdi development libraries are required to build/run. Naming
 for this component varies across distros:
+
 **Fedora:** sudo dnf install libftdi-devel
 
 **Ubuntu:** sudo apt-get install libftdi1 libftdi1-dev libftdi-dev
