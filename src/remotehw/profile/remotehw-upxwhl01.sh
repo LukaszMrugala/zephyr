@@ -25,11 +25,6 @@ export -f remotehw-${_name}-get-tty;
 };
 export -f .remotehw-${_name}-get-baud;
 
-remotehw-${_name}-usb-get-p1() {
-        .remotehw-usb-get-p1 ${_usbtta} ${_name}
-};
-export -f remotehw-${_name}-usb-get-p1;
-
 remotehw-${_name}-rsvrst() {
         .remotehw-rsvrst ${_name}
 };
@@ -65,26 +60,6 @@ remotehw-${_name}-get-console() {
 	.remotehw-rsvchk ${_name} .remotehw-get-console ${_ttydev}
 };
 export -f remotehw-${_name}-get-console;
-
-remotehw-${_name}-usb-grub() {
-	.remotehw-rsvchk ${_name} .remotehw-usb-grub ${_usbtta} "\$1"
-}
-export -f remotehw-${_name}-usb-grub
-
-remotehw-${_name}-usb-efi() {
-	.remotehw-rsvchk ${_name} .remotehw-usb-efi ${_usbtta} "\$1"
-}
-export -f remotehw-${_name}-usb-efi
-
-remotehw-${_name}-usb-acrn() {
-        .remotehw-rsvchk ${_name} .remotehw-usb-acrn ${_usbtta} "\$1" "\$2" "\$3"
-}
-export -f remotehw-${_name}-usb-acrn
-
-remotehw-${_name}-usb-iso() {
-        .remotehw-rsvchk ${_name} .remotehw-usb-iso ${_usbtta} "\$1"
-}
-export -f remotehw-${_name}-usb-iso
 
 .remotehw-${_name}-get-tta() {
 	.remotehw-get-tta ${_usbtta} "\$1"
