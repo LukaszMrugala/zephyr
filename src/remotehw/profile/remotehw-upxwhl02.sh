@@ -1,13 +1,10 @@
-# remoteHW implementation for Up Xtreme i11 TGL #2
-#  a PXE boot target with SSH + console & virtual USB flash functions
+# remoteHW implementation for Up Xtreme i11 WHL #2
+#  a PXE boot target with SSH + virtual USB flash functions
 
-_name=upx-tgl02
+_name=upx-whl02
 _host=zephyrtest-blue.jf.intel.com
-_pwrsw=pwrswitch-orange.testnet/outlet?2
-_usbtta=root@usbtta-gray-02.testnet
-
-# system console
-_ttydev="115200 /dev/serial/by-path/pci-0000:0b:00.2-usb-0:3.2:1.0-port0"
+_pwrsw=pwrswitch-orange.testnet/outlet?4
+_usbtta=root@usbtta-gray-01.testnet
 
 # only define commands on machines matching _host var
 if [ "$HOSTNAME" != "$_host" ]; then
@@ -15,16 +12,6 @@ if [ "$HOSTNAME" != "$_host" ]; then
 fi
 
 source /dev/stdin <<EOF
-
-remotehw-${_name}-get-tty() {
-        echo "$_ttydev" | awk '{print \$2}'
-};
-export -f remotehw-${_name}-get-tty;
-
-.remotehw-${_name}-get-baud() {
-        echo "$_ttydev" | awk '{print \$1}'
-};
-export -f .remotehw-${_name}-get-baud;
 
 remotehw-${_name}-rsvrst() {
         .remotehw-rsvrst ${_name}
@@ -57,23 +44,18 @@ remotehw-${_name}-reset() {
 };
 export -f remotehw-${_name}-reset;
 
-remotehw-${_name}-get-console() {
-	.remotehw-rsvchk ${_name} .remotehw-get-console ${_ttydev}
-};
-export -f remotehw-${_name}-get-console;
-
 remotehw-${_name}-usb-get-p1() {
         .remotehw-usb-get-p1 ${_usbtta} ${_name}
 };
 export -f remotehw-${_name}-usb-get-p1;
 
 remotehw-${_name}-usb-grub() {
-	.remotehw-rsvchk ${_name} .remotehw-usb-grub ${_usbtta} "\$1"
+        .remotehw-rsvchk ${_name} .remotehw-usb-grub ${_usbtta} "\$1"
 }
 export -f remotehw-${_name}-usb-grub
 
 remotehw-${_name}-usb-efi() {
-	.remotehw-rsvchk ${_name} .remotehw-usb-efi ${_usbtta} "\$1"
+        .remotehw-rsvchk ${_name} .remotehw-usb-efi ${_usbtta} "\$1"
 }
 export -f remotehw-${_name}-usb-efi
 
@@ -82,13 +64,8 @@ remotehw-${_name}-usb-acrn() {
 }
 export -f remotehw-${_name}-usb-acrn
 
-remotehw-${_name}-usb-iso() {
-        .remotehw-rsvchk ${_name} .remotehw-usb-iso ${_usbtta} "\$1"
-}
-export -f remotehw-${_name}-usb-iso
-
 .remotehw-${_name}-get-tta() {
-	.remotehw-get-tta ${_usbtta} "\$1"
+        .remotehw-get-tta ${_usbtta} "\$1"
 }
 export -f .remotehw-${_name}-get-tta
 

@@ -1,9 +1,9 @@
-# remoteHW implementation for Up Xtreme i11 TGL #1 
+# remoteHW implementation for Up Xtreme i11 TGL #1
+#  SSD boot target with console but no USB functions
 
 _name=upx-tgl01
 _host=zephyrtest-blue.jf.intel.com
 _pwrsw=pwrswitch-orange.testnet/outlet?1
-_usbtta=root@usbtta-gray-01.testnet
 
 # system console at ttyUSB3
 _ttydev="115200 /dev/serial/by-path/pci-0000:0b:00.2-usb-0:3.1.4:1.0-port0"
@@ -24,11 +24,6 @@ export -f remotehw-${_name}-get-tty;
         echo "$_ttydev" | awk '{print \$1}'
 };
 export -f .remotehw-${_name}-get-baud;
-
-remotehw-${_name}-usb-get-p1() {
-        .remotehw-usb-get-p1 ${_usbtta} ${_name}
-};
-export -f remotehw-${_name}-usb-get-p1;
 
 remotehw-${_name}-rsvrst() {
         .remotehw-rsvrst ${_name}
@@ -65,30 +60,5 @@ remotehw-${_name}-get-console() {
 	.remotehw-rsvchk ${_name} .remotehw-get-console ${_ttydev}
 };
 export -f remotehw-${_name}-get-console;
-
-remotehw-${_name}-usb-grub() {
-	.remotehw-rsvchk ${_name} .remotehw-usb-grub ${_usbtta} "\$1"
-}
-export -f remotehw-${_name}-usb-grub
-
-remotehw-${_name}-usb-efi() {
-	.remotehw-rsvchk ${_name} .remotehw-usb-efi ${_usbtta} "\$1"
-}
-export -f remotehw-${_name}-usb-efi
-
-remotehw-${_name}-usb-acrn() {
-        .remotehw-rsvchk ${_name} .remotehw-usb-acrn ${_usbtta} "\$1" "\$2" "\$3"
-}
-export -f remotehw-${_name}-usb-acrn
-
-remotehw-${_name}-usb-iso() {
-        .remotehw-rsvchk ${_name} .remotehw-usb-iso ${_usbtta} "\$1"
-}
-export -f remotehw-${_name}-usb-iso
-
-.remotehw-${_name}-get-tta() {
-	.remotehw-get-tta ${_usbtta} "\$1"
-}
-export -f .remotehw-${_name}-get-tta
 
 EOF

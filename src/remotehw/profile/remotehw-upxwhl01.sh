@@ -1,9 +1,9 @@
-# remoteHW implementation for Up Xtreme i11 TGL #1 
+# remoteHW implementation for Up Xtreme WHL #1
+#  eMMC boot target with console but no USB functions
 
 _name=upx-whl01
 _host=zephyrtest-blue.jf.intel.com
 _pwrsw=pwrswitch-orange.testnet/outlet?3
-_usbtta=root@usbtta-gray-03.testnet
 
 # system console at ttyUSB2 on 12/12/2012
 _ttydev="115200 /dev/serial/by-path/pci-0000:0b:00.2-usb-0:3.1.1:1.0-port0"
@@ -60,10 +60,5 @@ remotehw-${_name}-get-console() {
 	.remotehw-rsvchk ${_name} .remotehw-get-console ${_ttydev}
 };
 export -f remotehw-${_name}-get-console;
-
-.remotehw-${_name}-get-tta() {
-	.remotehw-get-tta ${_usbtta} "\$1"
-}
-export -f .remotehw-${_name}-get-tta
 
 EOF
