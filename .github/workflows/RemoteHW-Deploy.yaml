@@ -21,7 +21,13 @@ jobs:
       - uses: actions/checkout@v2
         with:
           path: 'repo'
-      - name: scp src/remotehw/opt/*
-        run: scp repo/src/remotehw/opt/* zephyrtest-blue.jf.intel.com:/opt/remotehw/
-      - name: scp src/remotehw/profile/*
-        run: scp repo/src/remotehw/profile/* zephyrtest-blue.jf.intel.com:/etc/profile.d/
+      - name: deploy src/remotehw/opt/* to /opt/remotehw
+        run: |
+         scp repo/src/remotehw/opt/* zephyrtest-blue.jf.intel.com:/opt/remotehw/
+         ssh zephyrtest-blue.jf.intel.com chmod 644 /opt/remotehw/*
+         ssh zephyrtest-blue.jf.intel.com chmod 755 /opt/remotehw/*.sh
+      - name: deploy src/remotehw/profile/remotehw* to /etc/profile.d
+        run: |
+         scp repo/src/remotehw/profile/remotehw* zephyrtest-blue.jf.intel.com:/etc/profile.d/
+         ssh zephyrtest-blue.jf.intel.com chmod 644 /etc/profile.d/remotehw*
+         ssh zephyrtest-blue.jf.intel.com chmod 755 /etc/profile.d/remotehw*.sh
