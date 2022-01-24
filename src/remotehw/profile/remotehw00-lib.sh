@@ -101,7 +101,7 @@ export -f .remotehw-rsvchk
 # remotehw-reserve - reserve a system for exclusive use
 .remotehw-reserve() {
 	printf "\n.remotehw-reserve ($remotehw_ver)\n"
-	echo "https://gitlab.devtools.intel.com/zephyrproject-rtos/devops/documentation/-/tree/latest/RemoteHW"
+	echo "https://intel.sharepoint.com/:w:/s/IAGSZephyr/EVendZYNgUtGhu6DidrqJ1gB5G_2BrmT00nw2xIsql7Okg?e=n26edb"
 
         if [ -f "/tmp/remotehw-$1.owner" ]; then
                 sysowner=$(cat "/tmp/remotehw-$1.owner")
