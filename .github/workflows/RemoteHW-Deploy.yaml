@@ -26,6 +26,7 @@ jobs:
          scp repo/src/remotehw/opt/* zephyrtest-blue.jf.intel.com:/opt/remotehw/
          ssh zephyrtest-blue.jf.intel.com chmod 644 /opt/remotehw/*
          ssh zephyrtest-blue.jf.intel.com chmod 755 /opt/remotehw/*.sh
+         ssh zephyrtest-blue.jf.intel.com chmod 755 /opt/remotehw/*.exp
       - name: deploy src/remotehw/profile/remotehw* to /etc/profile.d
         run: |
          scp repo/src/remotehw/profile/remotehw* zephyrtest-blue.jf.intel.com:/etc/profile.d/
