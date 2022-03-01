@@ -1,0 +1,36 @@
+platforms:
+  inherit: false
+  build_on_all: false
+  default:
+    - qemu_arc_em
+    - qemu_cortex_a53
+    - mps2_an385
+    - native_sim
+    - qemu_riscv32
+    - qemu_x86_lakemont
+    - qemu_x86
+    - qemu_xtensa
+plans:
+  - name: smoke
+    description: >
+      A plan to be used verifying basic zephyr features on hardware.
+    adds:
+      - kernel.threads.*
+      - kernel.timer.behavior
+      - arch.interrupt
+      - boards.*
+  - name: acceptance
+    description: >
+      More coverage
+    adds:
+      - kernel.*
+      - arch.*
+      - boards.*
+      - logging.*
+      - drivers.*
+      - libraries.mem_blocks.*
+      - libraries.lib.*
+      - libraries.p4wq
+      - libraries.libc.*
+      - libraries.heap
+      - libraries.heap_align
