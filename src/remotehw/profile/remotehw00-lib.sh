@@ -275,7 +275,7 @@ export -f .remotehw-usb-efi
 
 	echo " * unzipping acrn-binaries.zip to EFI/BOOT..."
 	$_scp /opt/remotehw/acrn-binaries.zip "$1:/tmp/acrn-binaries.zip"
-	$_ssh "$1" "mkdir -p /tmp/acrn && unzip -d /tmp/acrn /tmp/acrn-binaries.zip && mv /tmp/acrn/acrn-binaries/* /mnt/loop/EFI/BOOT && rm -rf /tmp/acrn*"
+	$_ssh "$1" "rm -rf /tmp/acrn; mkdir -p /tmp/acrn && unzip -d /tmp/acrn /tmp/acrn-binaries.zip && mv /tmp/acrn/acrn-binaries/* /mnt/loop/EFI/BOOT && rm -rf /tmp/acrn*"
 
 	if [ -f "$2" ]; then
 		echo " * deploying user-provided zephyr.bin and zephyr.elf ($2) to EFI/BOOT"
