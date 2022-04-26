@@ -20,7 +20,7 @@ jobs:
         shell: bash
     container:
       image: ${{ inputs.container }}
-      options: -v/opt/toolchains:/opt/toolchains
+      options: -v/opt/toolchains:/opt/toolchains -v/testhead/workspace/west-cache:/west-cache:ro
     strategy:
       matrix:
         batch: [1, 2, 3]
