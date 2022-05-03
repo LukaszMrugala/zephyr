@@ -31,7 +31,7 @@ jobs:
         with:
           path: 'zephyrproject/zephyr'
           repository: 'intel-innersource/os.rtos.zephyr.zephyr.git'
-          ref: '1rtos-ci-self-test'
+          ref: 'fmos-self-test'
           token: ${{ secrets.token }}
       - name: run 1rtos-ci twister wrapper with batch options
         run: /opt/1rtos/container-api.sh 1rtos-ci $GITHUB_WORKSPACE ${{ matrix.batch }} ${{ matrix.batch_total }}
