@@ -1,0 +1,40 @@
+# FMOS DevOps Github Actions SSH API
+# - a basic github action wrapper for remote work with ssh and scp
+#  * requires that executing user be pre-authorized on target system
+#  * appends .testnet to provided hostname parameter, isolating API to local test network
+name: 'fmos-ssh-api'
+description: 'executes commands and transfers files over pre-authorized SSH connection'
+inputs:
+  hostname:
+    description: 'target hostname for command'
+    required: true
+  ssh-cmd:
+    description: 'command to execute, unset to select scp mode'
+    required: true
+    default: 'scp'
+  ssh-user:
+    description: 'user name for remote ssh connection'
+    required: true
+    default: 'zephyr'
+  ssh-id:
+    description: 'ssh id in local filesystem'
+    required: true
+    default: '/srv/jenkins/.ssh/id_ed25519'
+  ssh-opts:
+    description: 'ssh connection options'
+    required: true
+    default: '-o "UserKnownHostsFile=/dev/null"  -o "LogLevel ERROR" -o "StrictHostKeyChecking no"'
+  scp-file:
+    description: 'file to transfer in scp mode'
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - name: execute ssh api task
+      run: |
+        if [ "${{ inputs.ssh-cmd }}" = "scp" ]; then
+          scp -i ${{ inputs.ssh-id }} ${{ inputs.ssh-opts }} ${{ inputs.scp-file }} ${{ inputs.ssh-user }}@${{ inputs.hostname }}.testnet:
+        else
+          ssh -i ${{ inputs.ssh-id }} ${{ inputs.ssh-opts }} ${{ inputs.ssh-user }}@${{ inputs.hostname }}.testnet ${{ inputs.ssh-cmd }}
+        fi
+      shell: bash

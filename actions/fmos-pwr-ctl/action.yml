@@ -1,0 +1,30 @@
+# Ubuntu Zephyr DevOps Power Control
+# - github action wrapper for curl-initiated machine power control
+#
+name: 'fmos-power-control'
+description: 'issues power-control commands to PDL via curl'
+inputs:
+  agent-name:
+    description: 'agent hostname, used for ping-test if enabled'
+    required: true
+  pdu:     
+    description: 'PDU name'
+    required: true
+  outlet:     
+    description: 'PDU outlet'
+    required: true
+  wait-for-ping:
+    description: 'block action while waiting for n timeouts for host to reply'
+    required: true
+    default: '0'
+
+runs:
+  using: "composite"
+  steps:
+    - name: power-cycle target
+      run: |
+        curl --noproxy "*" -s -u admin:1234 "http://admin:1234@${{ inputs.pdu }}.testnet/outlet?${{ inputs.outlet }}=OFF" > /dev/null
+        sleep 5
+        curl --noproxy "*" -s -u admin:1234 "http://admin:1234@${{ inputs.pdu }}.testnet/outlet?${{ inputs.outlet }}=ON" > /dev/null
+        if [ ${{ inputs.wait-for-ping }} -gt 0 ]; then ping -c ${{ inputs.wait-for-ping }} ${{ inputs.agent-name }}.testnet; fi
+      shell: bash

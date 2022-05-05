@@ -1,0 +1,73 @@
+# FMOS Github intel-innersource group-runner bootstrap action
+# - a ssh initiated github GROUP runner install/deploy task 
+#
+# requires:
+#  0. Named runner groups exist on intel-innersource Github org
+#  1. runner user@host dt setup complete & authorized to intel-innersource
+#  2. DNS valid for set of all expected hostnames
+#  3. existing /srv/jenkins/.config/dt/config.toml & /srv/jenkins/.netrc
+
+name: 'github-runner-start'
+description: 'installs, registers & starts group runner using dt over pre-auth SSH connection'
+inputs:
+  group:
+    description: 'innersource runner group name to target'
+    required: true
+    default: '1RTOS_test'
+  labels:
+    description: 'labels for this instance, comma seperated list'
+    required: true
+  hostname:
+    description: 'testnet hostname to target for install'
+    required: true
+  ssh-id:
+    description: 'ssh id in local filesystem'
+    required: true
+  runner-ver:
+    description: 'github runner version to install'
+    required: true
+    default: '2.291.1'
+  runner-sha:
+    description: 'expected sha for github runner installer'
+    required: true
+    default: '2a504f852b0ab0362d08a36a84984753c2ac159ef17e5d1cd93f661ecd367cbd'
+
+runs:
+  using: "composite"
+  steps:
+    - name: authorize agent for runner enrollment (.netrc)
+      uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-ssh-api@main
+      with:
+        hostname: ${{ inputs.hostname }}
+        ssh-id: ${{ inputs.ssh-id }}
+        scp-file: /srv/jenkins/.netrc
+    - name: authorize agent for runner enrollment (.config/dt/config.toml)
+      uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-ssh-api@main
+      with:
+        hostname: ${{ inputs.hostname }}
+        ssh-id: ${{ inputs.ssh-id }}
+        scp-file: /srv/jenkins/.config/dt/config.toml
+    - name: inline remoteop.sh script
+      run: |
+        cat <<REMOTEOPSH > remote-op.sh
+        #!/bin/bash
+        mkdir -p .config/dt; mv config.toml .config/dt
+        mkdir ./ar
+        dt github install-runner --no-prompt --name=${{ inputs.group }}.${{ inputs.hostname }} --location=./ar --github-token=$(dt github print-token https://github.com/intel-innersource) --label=${{ inputs.labels }}
+        rm -f .netrc
+        rm -f .config/dt/config.toml
+        REMOTEOPSH
+        chmod +x remote-op.sh
+      shell: bash
+    - name: upload remote-op.sh
+      uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-ssh-api@main
+      with:
+        hostname: ${{ inputs.hostname }}
+        ssh-id: ${{ inputs.ssh-id }}
+        scp-file: remote-op.sh
+    - name: run remote-op.sh
+      uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-ssh-api@main
+      with:
+        hostname: ${{ inputs.hostname }}
+        ssh-id: ${{ inputs.ssh-id }}
+        ssh-cmd: ./remote-op.sh
