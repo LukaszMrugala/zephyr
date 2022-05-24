@@ -9,7 +9,7 @@
 # If you want to reuse an existing repo, this script makes an attempt to
 # clean up. It will nuke, or should, ANYTHING that hasn't been pushed to
 # remote. It deletes existing local tags and fetches them fresh. Don't be
-# alarmed at the "Deleting tag spew at the command line. It is not nuking
+# alarmed at the "Deleting tag" spew at the command line. It is not nuking
 # remote tags.
 #
 # Generates the tag and then shows the details, then prompts for the push
@@ -79,7 +79,7 @@ done < VERSION
 
 DATE_STAMP=`date "+%Y%m%d"`
 echo "DATE: $DATE_STAMP"
-VERSION="v"$MAJOR"."$MINOR"."$PATCH"-intel"
+VERSION=$MAJOR"."$MINOR"."$PATCH"-intel"
 echo "VERSION: $VERSION"
 }
 
@@ -88,7 +88,6 @@ function make_tag()
 {
 # Generate tag in format of: zephyr-VERSION_MAJOR.VERSION_MINOR.PATCHLEVEL
 # i.e. zephyr-v3.0.99-intel-<date>   zephyr-3.0.99-intel-20220524
-
 
 TAG=$REPO_DIR"-"$VERSION"-"$DATE_STAMP
 echo "TAG: $TAG"
