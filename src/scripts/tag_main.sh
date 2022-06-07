@@ -38,7 +38,6 @@ if [ -d $WORKDIR/$REPO_DIR ]; then
                    ;;
               y|Y) echo "You said DO IT. Resetting repo."
                    cd $REPO_DIR
-                   git fetch origin --tags
                    git checkout $BRANCH
                    git reset --hard origin/$BRANCH
                    git clean -d --force
@@ -112,7 +111,6 @@ while true; do
 done
 
 git tag -a -m "$TAG" $TAG
-#git push origin $TAG
 }
 
 echo; echo
