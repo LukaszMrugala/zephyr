@@ -38,10 +38,15 @@ if [ -d $WORKDIR/$REPO_DIR ]; then
                    ;;
               y|Y) echo "You said DO IT. Resetting repo."
                    cd $REPO_DIR
+                   echo "Refreshing branch"
                    git checkout $BRANCH
+                   echo "Hard reset branch"
                    git reset --hard origin/$BRANCH
+                   echo "Force clean"
                    git clean -d --force
-                   git tag -l | xargs git tag -d && git fetch --tags
+                   echo "Refreshing tags"
+                   git tag -l | xargs git tag -d > /dev/null 2>&1 && git fetch --tags > /dev/null 2>&1
+                   echo "Refresh Done"
                    break
                    ;;
               *) echo "Wut? Choose Y/n";;

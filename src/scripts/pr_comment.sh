@@ -46,11 +46,12 @@ if [ "$PR_REPO" == "" ] || [ "$PR" == "" ] || [ "$TAG" == "" ]; then
    exit
 fi
 
+
 function clone_repo()
 {
 # If repo exists hard reset everything and reuse it
 if [ -d $WORKDIR/$REPO_DIR ]; then
-    echo "Found an existing $REPO_DIR repo. Reuse it? This will annihilate any unpushed changes."
+    echo "Found an existing repo. Reuse it? This will annihilate any unpushed changes."
     while true
         do
           read -r -p "REUSE IT? Y/N: " choice
@@ -60,15 +61,19 @@ if [ -d $WORKDIR/$REPO_DIR ]; then
                    ;;
               y|Y) echo "You said DO IT. Resetting repo."
                    cd $REPO_DIR
-                   #git fetch origin --tags
+                   echo "Refreshing branch"
                    git checkout $BRANCH
+                   echo "Hard reset branch"
                    git reset --hard origin/$BRANCH
+                   echo "Force clean"
                    git clean -d --force
                    # We only care about the tags if we are reusing zephyr repo.
                    # We never look at tags on zephyr-intel.
                    if [ "$REPO_DIR" == "zephyr" ]; then
-                       git tag -l | xargs git tag -d && git fetch --tags
+                       echo "Refreshing tags"
+                       git tag -l | xargs git tag -d > /dev/null 2>&1 && git fetch --tags > /dev/null 2>&1
                    fi
+                   echo "Refresh Done."
                    break
                    ;;
               *) echo "Wut? Choose Y/n";;
