@@ -25,9 +25,15 @@ if(CONFIG_BOARD_INTEL_ADSP_CAVS25 OR CONFIG_BOARD_INTEL_ADSP_CAVS25_TGPH)
 
 elseif(CONFIG_BOARD_INTEL_ADSP_ACE15_MTPM  OR CONFIG_BOARD_INTEL_ADSP_ACE15_MTPM_SIM)
 
+  set(SUPPORTED_EMU_PLATFORMS acesim)
+  board_set_flasher_ifnset(intel_adsp)
   board_set_rimage_target(mtl)
-
-  set(RIMAGE_SIGN_KEY "otc_private_key_3k.pem" CACHE STRING "default in ace15_mtpm/board.cmake")
+  if(CONFIG_BOARD_INTEL_ADSP_ACE15_MTPM)
+    set(RIMAGE_SIGN_KEY ${CMAKE_CURRENT_LIST_DIR}/support/mtl_private_key.pem CACHE STRING "default in ace15_mtpm/board.cm
+ake")
+  else()
+    set(RIMAGE_SIGN_KEY "otc_private_key_3k.pem" CACHE STRING "default in ace15_mtpm/board.cmake")
+  endif()
 
   board_finalize_runner_args(intel_adsp)
 

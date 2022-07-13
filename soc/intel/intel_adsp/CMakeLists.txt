@@ -4,6 +4,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 zephyr_include_directories(common)
+find_program(
+  RIMAGE
+  NAMES rimage
+  )
 
 add_subdirectory(common)
 if(CONFIG_SOC_SERIES_INTEL_ADSP_ACE)
