@@ -47,6 +47,13 @@ elseif(CONFIG_BOARD_INTEL_ADSP_ACE20_LNL OR CONFIG_BOARD_INTEL_ADSP_ACE20_LNL_SI
 
 elseif(CONFIG_BOARD_INTEL_ADSP_ACE30_PTL OR CONFIG_BOARD_INTEL_ADSP_ACE30_PTL_SIM)
 
+  set(SUPPORTED_EMU_PLATFORMS acesim)
+  # RIMAGE_CONFIG_PATH tells rimage where to find the config file,
+  # as the PTL config file is under support/ here.
+  if(CONFIG_BOARD_INTEL_ADSP_ACE30_PTL_SIM OR CONFIG_BOARD_INTEL_ADSP_ACE30_PTL)
+    set(RIMAGE_CONFIG_PATH "${BOARD_DIR}/support" CACHE STRING "rimage config path")
+    zephyr_check_cache(RIMAGE_CONFIG_PATH)
+  endif()
   board_set_rimage_target(ptl)
 
   set(RIMAGE_SIGN_KEY "otc_private_key.pem" CACHE STRING "default rimage key")
