@@ -36,3 +36,8 @@ jobs:
           token: ${{ secrets.token }}
       - name: run 1rtos-ci twister wrapper with batch options
         run: /opt/1rtos/container-api.sh 1rtos-ci $GITHUB_WORKSPACE ${{ matrix.batch }} ${{ matrix.batch_total }}
+      - name: post clean
+        if: always()
+        run: |
+          shopt -s dotglob
+          rm -rf twister*
