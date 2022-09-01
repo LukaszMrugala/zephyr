@@ -1,0 +1,16 @@
+name: labgrid-release
+on:
+  workflow_call:
+    inputs:
+      systemName:
+        required: true
+        type: string
+      geo:
+        required: true
+        type: string
+jobs:
+  reserve:
+    name: reserve and acquire
+    runs-on: testhead-${{ inputs.geo }}
+    steps:
+    - run: labgrid-client -p ${{ inputs.systemName }} release

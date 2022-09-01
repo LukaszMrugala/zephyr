@@ -1,0 +1,24 @@
+name: labgrid github API test
+on:
+  workflow_dispatch:
+jobs:
+  test-matrix-reserve:
+    strategy:
+      matrix:
+        systemNames: [nuc-jf-01,nuc-jf-02,nuc-jf-03]
+    uses: intel-innersource/os.rtos.zephyr.devops.ci/.github/workflows/labgrid-reserve.yml@main
+    with:
+      systemName: ${{ matrix.systemNames }}
+      geo: hf
+      timeoutSecs: 60
+
+  test-matrix-release:
+    needs: test-matrix-reserve
+    strategy:
+      matrix:
+        systemNames: [nuc-jf-01,nuc-jf-02,nuc-jf-03]
+    uses: intel-innersource/os.rtos.zephyr.devops.ci/.github/workflows/labgrid-release.yml@main
+    with:
+      systemName: ${{ matrix.systemNames }}
+      geo: hf
+   

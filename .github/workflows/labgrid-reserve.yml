@@ -1,0 +1,20 @@
+name: labgrid-reserve
+on:
+  workflow_call:
+    inputs:
+      systemName:
+        required: true
+        type: string
+      timeoutSecs:
+        required: true
+        type: number
+        default: 60
+      geo:
+        required: true
+        type: string
+jobs:
+  reserve:
+    name: reserve and acquire
+    runs-on: testhead-${{ inputs.geo }}
+    steps:
+    - run: timeout ${{ inputs.timeoutSecs }} labgrid-client reserve --wait board=${{ inputs.systemName }} && labgrid-client -p ${{ inputs.systemName }} acquire
