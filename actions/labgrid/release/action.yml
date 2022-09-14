@@ -1,0 +1,13 @@
+name: 'labgrid-release'
+description: 'wrapper for labgrid-client ... release'
+inputs:
+  systemName:
+    description: 'labgrid system name'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: labgrid release
+      run: labgrid-client -p ${{ inputs.systemName }} release
+      shell: bash

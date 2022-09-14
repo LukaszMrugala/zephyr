@@ -1,0 +1,15 @@
+name: 'labgrid-power'
+description: 'wrapper for labgrid-client ... power state'
+inputs:
+  systemName:
+    description: 'labgrid system name'
+    required: true
+  powerState:
+    description: 'desired power state for system, either on or off'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: labgrid-client power operation
+      run: labgrid-client -p ${{ inputs.systemName }} power ${{ inputs.powerState }}
+      shell: bash

@@ -1,0 +1,19 @@
+name: 'labgrid-reserve'
+description: 'wrapper for labgrid-client ... reserve'
+inputs:
+  systemName:
+    description: 'labgrid system name'
+    required: true
+  timeoutSecs:
+    description: 'seconds to wait for reservation'
+    required: true
+    type: number
+
+runs:
+  using: "composite"
+  steps:
+    - name: labgrid-client reserve + acquire operations
+      run: |
+        timeout ${{ inputs.timeoutSecs }} labgrid-client reserve --wait board=${{ inputs.systemName }} && \
+          labgrid-client -p ${{ inputs.systemName }} acquire
+      shell: bash
