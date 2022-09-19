@@ -5,10 +5,25 @@ zephyr and zephyr-intel repos for main-intel and main branches, respectively.
 
 Working dir is set to /srv/buid/manifest. Change to your liking.
 
-It takes an argument of the path to your ssh key for git repo access in the
-format of:
+Script takes two arguments. First is the path to your ssh key for git repo
+access in the format of:
 
     python3 tag_manifest.py /path/to/your/key/key_name
+
+The second argument is the rebase branch name, if there is one. There should
+pretty much always be one. The script takes that branch name and extracts the
+date stamp portion for use in creating the tag. This way the tag and the rebase
+branch datestamp match. This will match the PR information for easier
+backtracking should we need to revert. Pass the branch like so....
+
+    python3 tag_manifest.py /path/to/your/key/key_name -b <branch name>
+
+    i.e.
+    python3 tag_manifest.py /path/to/your/key/key_name -b main-intel-20220916
+
+If you do not pass a rebase branch name, the current date will be used. If you
+use this THE SAME DAY as the rebase branch creation, all is well. If the branch
+was created a day or more prior, pass the branch name in.
 
 If the tag already exists on one or both of the remote repos, the script will
 notify and exit.
@@ -27,8 +42,8 @@ great idea.
 
 TODO:
     - Error checking
-    - Better arg parsing
-    - reuse of repos, rather than blind nuke
+    - Find rebase branches, get the most recent, and prompt for use, else generate.
+    - Reuse of repos, rather than blind nuke
     - Deal with corner cases like tag on one repo, but not on other
     - Allow passing in of working dir or use cwd.
 
@@ -82,7 +97,6 @@ def clone_repo(workspace, repo, git_ssh_identity_file):
     print("Done.")
 
 
-
 def tag_repo(tag, repos):
 
     # Note that local_repo here is not the checked out repo dir. It's just
@@ -115,7 +129,6 @@ def tag_repo(tag, repos):
             else:
                 ref_name = "main"
             local_tags = local_repo.tags
-            local_tags = local_repo.tags
             if tag in local_tags:
                 print(f"{repo.name.title()}: {tag} tag exists locally but not on remote. Using it.")
             else:
@@ -125,7 +138,7 @@ def tag_repo(tag, repos):
     return
 
 
-def create_tag(workspace, repo):
+def create_tag(workspace, repo, rebase_branch):
 
     # Tag format:
     # zephyr-3.1.99-intel-yyymmdd
@@ -134,7 +147,17 @@ def create_tag(workspace, repo):
     PREFIX = repo.name + '-'
     SUFFIX = "intel"
 
-    date_stamp = datetime.today().strftime('%Y%m%d')
+    # If we didn't pass in a rebase branch, generate today's date. If we have a
+    # rebase branch already, we take the date_stamp from that so the tag date
+    # matches the branch date. This makes finding correct version easier in
+    # case we have to restore from a tag.
+
+    if rebase_branch  == "":
+        date_stamp = datetime.today().strftime('%Y%m%d')
+    else:
+        date_stamp = rebase_branch.split('-')[2]
+
+    print(f"Date Stamp: {date_stamp}")
 
     repo_dir = os.path.join(workspace, repo.name)
     os.chdir(repo_dir)
@@ -192,12 +215,21 @@ os.system("clear")
 # Create the parser and add arguments
 parser = argparse.ArgumentParser()
 parser.add_argument(dest='key_path', help="/path/to/key/key_name")
+parser.add_argument('-b', '--branch',
+                    required = False , dest='rbranch',
+                    help="i.e. main-intel-20220916")
 
 # Parse and print the results
 args = parser.parse_args()
-print(args.key_path)
+print(f"Key Path: {args.key_path}")
+print(f"Rebase Branch: {args.rbranch}")
 
 git_ssh_identity_file = args.key_path
+
+if args.rbranch:
+    rebase_branch = args.rbranch
+else:
+    rebase_branch = ""
 
 workspace  = "/srv/build/manifest"    # or whatever your workdir is
 
@@ -226,7 +258,7 @@ for repo in repos:
     clone_repo(workspace, repo, git_ssh_identity_file)
 
 # Create the tag
-tag = create_tag(workspace, zephyr_repo)
+tag = create_tag(workspace, zephyr_repo, rebase_branch)
 tag_repo(tag, repos)
 
 # Make this better. Like don't just quit if y/n not selected.
