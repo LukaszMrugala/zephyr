@@ -5,21 +5,30 @@ zephyr and zephyr-intel repos for main-intel and main branches, respectively.
 
 Working dir is set to /srv/buid/manifest. Change to your liking.
 
-Script takes two arguments. First is the path to your ssh key for git repo
-access in the format of:
+Script takes up to three arguments. First, which is required, is the path to y
+our ssh key for git repo access in the format of:
 
     python3 tag_manifest.py /path/to/your/key/key_name
 
-The second argument is the rebase branch name, if there is one. There should
-pretty much always be one. The script takes that branch name and extracts the
-date stamp portion for use in creating the tag. This way the tag and the rebase
-branch datestamp match. This will match the PR information for easier
-backtracking should we need to revert. Pass the branch like so....
+The second (optional) argument is the base branch to be tagged. The default is
+to use main/main-intel. If you wish to tag say, v2.7-branch-intel, you can
+specify that.
 
-    python3 tag_manifest.py /path/to/your/key/key_name -b <branch name>
+    python3 tag_manifest.py /path/to/your/key/key_name -b <branch>
 
     i.e.
-    python3 tag_manifest.py /path/to/your/key/key_name -b main-intel-20220916
+    python3 tag_manifest.py /path/to/your/key/key_name -b v2.7-branch-intel
+
+The third (optional) argument is the rebase branch name, if there is one. There
+should pretty much always be one. The script takes that branch name and
+extracts the date stamp portion for use in creating the tag. This way the tag
+and the rebase branch datestamp match. This will match the PR information for
+easier backtracking should we need to revert. Pass the branch like so....
+
+    python3 tag_manifest.py /path/to/your/key/key_name -b <branch> -r <rebase_branch>
+
+    i.e.
+    python3 tag_manifest.py /path/to/your/key/key_name -b v2.7-branch-intel -r v2.7-branch-intel-20220916
 
 If you do not pass a rebase branch name, the current date will be used. If you
 use this THE SAME DAY as the rebase branch creation, all is well. If the branch
@@ -44,7 +53,7 @@ TODO:
     - Error checking
     - Find rebase branches, get the most recent, and prompt for use, else generate.
     - Reuse of repos, rather than blind nuke
-    - Deal with corner cases like tag on one repo, but not on other
+    - Deal with corner cases like tag on one (remote) repo, but not on other
     - Allow passing in of working dir or use cwd.
 
 """
@@ -124,10 +133,12 @@ def tag_repo(tag, repos):
         print(f"No pre-existing tag exists on either remote repo. Good to go.")
         for repo in repos:
             local_repo = Repo(os.path.join(workspace, repo.name))
+            # Branch name will generally match across both repos, but zephyr has  main-intel and zephyr-intel has main.
+            # So we have to account for that and set accordingly.
             if repo.name == "zephyr":
-                ref_name = "main-intel"
+                ref_name = repo.branch
             else:
-                ref_name = "main"
+                ref_name = repo.branch
             local_tags = local_repo.tags
             if tag in local_tags:
                 print(f"{repo.name.title()}: {tag} tag exists locally but not on remote. Using it.")
@@ -155,7 +166,7 @@ def create_tag(workspace, repo, rebase_branch):
     if rebase_branch  == "":
         date_stamp = datetime.today().strftime('%Y%m%d')
     else:
-        date_stamp = rebase_branch.split('-')[2]
+        date_stamp = rebase_branch.split('-')[-1]
 
     print(f"Date Stamp: {date_stamp}")
 
@@ -216,15 +227,24 @@ os.system("clear")
 parser = argparse.ArgumentParser()
 parser.add_argument(dest='key_path', help="/path/to/key/key_name")
 parser.add_argument('-b', '--branch',
+                    required = False, dest='branch',
+                    help="The base branch to be rebased if not main. i.e. v2.7-branch-intel.")
+parser.add_argument('-r', '--rebase_branch',
                     required = False , dest='rbranch',
-                    help="i.e. main-intel-20220916")
+                    help="i.e. main-intel-20220916 or v2.7-branch-intel-20220921")
 
 # Parse and print the results
 args = parser.parse_args()
 print(f"Key Path: {args.key_path}")
+print(f"Base Branch: {args.branch}")
 print(f"Rebase Branch: {args.rbranch}")
 
 git_ssh_identity_file = args.key_path
+
+if args.branch:
+    base_branch = args.branch
+else:
+    base_branch = "main"
 
 if args.rbranch:
     rebase_branch = args.rbranch
@@ -233,7 +253,13 @@ else:
 
 workspace  = "/srv/build/manifest"    # or whatever your workdir is
 
-repo_list = [['zephyr', 'main-intel'], ['zephyr-intel', 'main']]
+
+if base_branch == "main":
+    repo_list = [['zephyr', 'main-intel'], ['zephyr-intel', 'main']]
+else:
+    repo_list = [['zephyr', base_branch], ['zephyr-intel', base_branch]]
+
+print(f"REPO_LIST: {repo_list}")
 
 # Check workspace exists. Create/Clean it.
 if not os.path.exists(workspace):
