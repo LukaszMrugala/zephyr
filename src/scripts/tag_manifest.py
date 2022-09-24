@@ -11,18 +11,18 @@ our ssh key for git repo access in the format of:
     python3 tag_manifest.py /path/to/your/key/key_name
 
 The second (optional) argument is the base branch to be tagged. The default is
-to use main/main-intel. If you wish to tag say, v2.7-branch-intel, you can
+to use main/main-intel. If you wish to tag say, v2.7-branch-intel, you can 
 specify that.
 
     python3 tag_manifest.py /path/to/your/key/key_name -b <branch>
 
-    i.e.
+    i.e. 
     python3 tag_manifest.py /path/to/your/key/key_name -b v2.7-branch-intel
 
 The third (optional) argument is the rebase branch name, if there is one. There
-should pretty much always be one. The script takes that branch name and
-extracts the date stamp portion for use in creating the tag. This way the tag
-and the rebase branch datestamp match. This will match the PR information for
+should pretty much always be one. The script takes that branch name and 
+extracts the date stamp portion for use in creating the tag. This way the tag 
+and the rebase branch datestamp match. This will match the PR information for 
 easier backtracking should we need to revert. Pass the branch like so....
 
     python3 tag_manifest.py /path/to/your/key/key_name -b <branch> -r <rebase_branch>
@@ -134,9 +134,9 @@ def tag_repo(tag, repos):
         for repo in repos:
             local_repo = Repo(os.path.join(workspace, repo.name))
             # Branch name will generally match across both repos, but zephyr has  main-intel and zephyr-intel has main.
-            # So we have to account for that and set accordingly.
+            # So we have to account for that and set accordingly. 
             if repo.name == "zephyr":
-                ref_name = repo.branch
+                ref_name = repo.branch 
             else:
                 ref_name = repo.branch
             local_tags = local_repo.tags
@@ -254,9 +254,9 @@ else:
 workspace  = "/srv/build/manifest"    # or whatever your workdir is
 
 
-if base_branch == "main":
+if base_branch == "main" or base_branch == "main-intel":
     repo_list = [['zephyr', 'main-intel'], ['zephyr-intel', 'main']]
-else:
+else:    
     repo_list = [['zephyr', base_branch], ['zephyr-intel', base_branch]]
 
 print(f"REPO_LIST: {repo_list}")
