@@ -1,0 +1,26 @@
+name: Git Sync Action
+author: Kumar Gala <kumar.gala@intel.com>
+description: 🔃  Sync between two independent repositories
+branding:
+  icon: 'git-branch'
+  color: 'gray-dark'
+inputs:
+  source_repo:
+    description: GitHub repo slug or full url
+    required: true
+  branch:
+    description: Branch name to sync from
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: power-cycle target
+      shell: bash
+      run: |
+        rm -rf repo-sync
+        git clone ${{ inputs.source_repo }} repo-sync --origin source
+        cd repo-sync
+        git remote add destination ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}
+        git fetch source '+refs/heads/*:refs/heads/*' --update-head-ok
+        git push destination "${{ inputs.branch }}:${{ inputs.branch }}" -f
