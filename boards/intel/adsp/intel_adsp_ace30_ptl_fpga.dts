@@ -1,0 +1,25 @@
+/*
+ * Copyright (c) 2022 Intel Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <intel/intel_adsp_ace30_ptl.dtsi>
+
+/ {
+	model = "intel_adsp_ace30_ptl_fpga";
+	compatible = "intel";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &mem_window3;
+	};
+
+	sysclk: system-clock {
+		compatible = "fixed-clock";
+		clock-frequency = <19200000>;
+		#clock-cells = <0>;
+	};
+};

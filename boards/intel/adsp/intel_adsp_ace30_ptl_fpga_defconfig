@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+
+CONFIG_MAIN_STACK_SIZE=2048
+CONFIG_GEN_ISR_TABLES=y
+CONFIG_GEN_IRQ_VECTOR_TABLE=n
+
+CONFIG_BUILD_OUTPUT_BIN=n
+
+CONFIG_DAI_SSP_HAS_POWER_CONTROL=y
+
+CONFIG_DCACHE_LINE_SIZE=64
+
+# FPGA cpu core clock is much slower (40-50MHz) and therefore
+# needs a lower tick rate to pass tests where the tick rate determines
+# success/failure scenarios
+CONFIG_SYS_CLOCK_TICKS_PER_SEC=10000
