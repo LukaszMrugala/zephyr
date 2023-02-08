@@ -3,10 +3,6 @@
 
 **Contacts: Chris Turner, Connor Graydon, Kumar Gala
 
-## Block Diagram
-
-![Zephyr CI Block Diagram](zephyrCI-block-diagram-WW36-2021.png "zephyr CI block diagram WW36 2021")
-
 ## 1RTOS DevOps Links & Docs
 
 ### [Zephyr DevOps Overview](https://intel-my.sharepoint.com/:p:/p/christopher_g_turner/EfZ2TF9ElydPjpGBEAKiUkwBiFt5LFBZPI2aGO_HZnP7Wg?e=Bxeeho) - Updated frequently... our most-popular slide-deck!
