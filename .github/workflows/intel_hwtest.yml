@@ -183,7 +183,7 @@ jobs:
             --retry-failed 2 \
             --retry-interval 15 \
             --test-config .github/data/test_config.yaml \
-            --plan $TEST_COV \
+            --level $TEST_COV \
             $DEV_TYPE \
             -p ${{ matrix.platform }}
 

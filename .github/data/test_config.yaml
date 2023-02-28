@@ -1,7 +1,7 @@
 platforms:
-  inherit: false
-  build_on_all: false
-  default:
+  override_default_platforms: true
+  increased_platform_scope: false
+  default_platforms:
     - qemu_arc_em
     - qemu_cortex_a53
     - mps2_an385
@@ -10,7 +10,7 @@ platforms:
     - qemu_x86_lakemont
     - qemu_x86
     - qemu_xtensa
-plans:
+levels:
   - name: smoke
     description: >
       A plan to be used verifying basic zephyr features on hardware.

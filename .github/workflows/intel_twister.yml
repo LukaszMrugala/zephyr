@@ -1,0 +1,196 @@
+name: 'Run Twister - Intel'
+on:
+  pull_request:
+    branches:
+      - main-intel
+      - sensor_framework
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run_twister:
+    name: 'Twister on ${{ matrix.platform }} (${{ matrix.subset }})'
+    defaults:
+      run:
+        shell: bash
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.24.14
+      options: "-v /srv/runner/workspace:/runner/workspace"
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        subset: [1, 2, 3, 4]
+        toolchain: [gcc, xcc]
+        include:
+          - toolchain: 'gcc'
+            runner: fmos-guest-ubuntu-24c
+            platform: 'default platforms'
+          - toolchain: 'xcc'
+            platform: 'intel_adsp_ace15_mtpm'
+            toolchain_ver: 'RI-2021.7-linux'
+            xtensa_core: 'ace10_LX7HiFi4'
+            variant: 'xt-clang'
+            subset: 1
+            runner: fmos-guest-ubuntu-12c
+          - toolchain: 'xcc'
+            platform: 'intel_adsp_cavs25'
+            toolchain_ver: 'RG-2017.8-linux'
+            xtensa_core: 'cavs2x_LX6HiFi3_2017_8'
+            variant: 'xcc'
+            subset: 2
+            runner: fmos-guest-ubuntu-12c
+          - toolchain: 'xcc'
+            platform: 'intel_adsp_ace30_ptl'
+            toolchain_ver: 'RI-2022.10-linux'
+            xtensa_core: 'ace30_LX7HiFi4_PIF'
+            variant: 'xt-clang'
+            subset: 3
+            runner: fmos-guest-ubuntu-12c
+          - toolchain: 'xcc'
+            platform: 'intel_adsp_ace20_lnl'
+            toolchain_ver: 'RI-2022.10-linux'
+            xtensa_core: 'ace10_LX7HiFi4_2022_10'
+            variant: 'xt-clang'
+            subset: 4
+            runner: fmos-guest-ubuntu-12c
+
+    env:
+      TWISTER_OPTS: "-v -M -x=USE_CCACHE=0 --inline-logs --retry-failed 3 --retry-interval 60 --force-color --no-skipped-report --integration"
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.15.2
+    steps:
+      - name: Clean
+        shell: bash
+        run: |
+          # set dotglob so rm will remove dot files and dirs - (.west, etc.)
+          shopt -s dotglob
+          pwd
+          ls -la ./
+          rm -rf ./* || true
+          rm -rf ./.??* || true
+          # just to be sure...
+          sudo rm -rf *
+          ls -la ./
+          ls -la /runner/workspace
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+      - name: Environment Setup
+        shell: bash
+        run: |
+          touch $HOME/.git-credentials
+          touch $HOME/.gitconfig
+          git config --global user.email "sys_tmbuild@intel.com"
+          git config --global user.name "Github Builder CI"
+          git config --global credential.helper 'store --file=$HOME/.git-credentials'
+          west init -l . || true
+          west config --global update.narrow true
+          west config --global update.path-cache "/runner/workspace"
+          # we need this here because our local manifest does import this repo
+          echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/drivers.audio.firmware.converged" > $HOME/.git-credentials
+          west update --path-cache /runner/workspace  2>&1 1> west.update.log || ( rm -rf ../intel ../modules ../bootloader ../tools && west update --path-cache /runner/workspace)
+          for r in `west  list -f {url} | grep intel-innersource | sed 's#https://##'`; do
+          echo -e "https://$TOKEN:$TOKEN@$r" >> $HOME/.git-credentials
+          done
+          # debug
+          cat $HOME/.git-credentials
+          git config --global --add safe.directory ${PWD}
+          west update --path-cache /runner/workspace
+          west forall -c 'git reset --hard HEAD'
+
+      - name: Build RIMAGE
+        run: |
+          pushd ../modules/audio/sof/rimage
+          cmake -B build/
+          make  -C build/
+          sudo make -C build/ install
+          popd
+
+      - name: Build
+        run: |
+
+          export PATH=$PATH:/opt/tools/bin/
+          export XTENSA_BUILDS_DIR=/opt/toolchains/xtensa/XtDevTools/install/builds
+          if [ '${{ matrix.twister_options }}x' != 'x' ]; then
+            export EXTRA_TWISTER_OPTS="${{ matrix.twister_options }}"
+          fi
+
+          if [ ${{ matrix.toolchain }} == 'gcc' ]; then
+
+            export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+            ./scripts/twister \
+              ${TWISTER_OPTS} \
+              --quarantine-list .github/data/twister-quarantine-list.yml \
+              --test-config .github/data/test_config.yaml \
+              --subset  ${{matrix.subset}}/4 \
+              -T tests \
+              -e cmsis_dsp
+
+          elif [ ${{ matrix.toolchain }} == 'xcc' ]; then
+
+            export ZEPHYR_TOOLCHAIN_VARIANT=${{ matrix.variant }}
+            export XTENSA_TOOLCHAIN_PATH=/opt/toolchains/xtensa/XtDevTools/install/tools
+            export XTENSA_CORE=${{ matrix.xtensa_core }}
+            export TOOLCHAIN_VER=${{ matrix.toolchain_ver }}
+            ./scripts/twister \
+              ${TWISTER_OPTS} ${EXTRA_TWISTER_OPTS} \
+              --retry-build-errors \
+              --quarantine-list .github/data/xcc-twister-quarantine-list.yml \
+              --disable-warnings-as-errors \
+              -p ${{ matrix.platform }} \
+              --build-only \
+              -T tests \
+              -e cmsis_dsp
+          fi
+
+
+      - name: Save Artifacts
+        if: failure() || success()
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts_${{ matrix.subset }}_${{ matrix.toolchain }}
+          path: |
+            twister-out/twister.log
+            twister-out/twister.xml
+            twister-out/twister.json
+          retention-days: 7
+
+  publish-test-results:
+    name: 'Publish Test Results'
+    needs: [run_twister]
+    runs-on: fmos-guest-ubuntu-12c
+    continue-on-error: true
+    if: success() || failure()
+    steps:
+      - run: env
+      - name: Clean
+        run: |
+          rm -rf artifacts
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      - name: Publish Unit Test Results
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/results-publisher@main
+        with:
+          files: 'artifacts/**/twister.xml'
+          check_name: 'Test Results using twister'
+          comment_mode: off
+          compare_to_earlier_commit: false
+
+  # "Intel-CI-Passed" is our exit job that matches branch-protection status-check
+  # settings for PR workflow. Make sure all required tests are prereqs to this job.
+  # For this build workflow, no actions are taken by Intel-CI-Passed, just status
+  # echo.
+  Intel-CI-Passed:
+    needs: [run_twister]
+    runs-on: fmos-guest-ubuntu-12c
+    steps:
+      - name: Post run steps
+        run: echo "Intel-CI-Passed"
