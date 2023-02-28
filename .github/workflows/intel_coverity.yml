@@ -1,0 +1,124 @@
+name: 'Run Coverity Scan - Intel'
+on:
+  schedule:
+    - cron: 0 5 * * * # At 05:00 Daily
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run_coverity:
+    defaults:
+      run:
+        shell: bash
+    runs-on: fmos-guest-ubuntu-24c
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-coverity:v0.24.14
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+        COV_USR: ${{secrets.COVERITY_USER}}
+        COV_PWD: ${{secrets.COVERITY_PASSWORD}}
+        TWISTER_OPTS: '-v -M -x=USE_CCACHE=0 --inline-logs --force-color --no-skipped-report --build-only -k'
+        ARCHES: "posix"
+    steps:
+      - name: Clean
+        shell: bash
+        run: |
+          # set dotglob so rm will remove dot files and dirs - (.west, etc.)
+          shopt -s dotglob
+          pwd
+          ls -la ./
+          rm -rf ./* || true
+          rm -rf ./.??* || true
+          # just to be sure...
+          sudo rm -rf *
+          echo "Post Clean Below"
+          ls -la ./
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+      - name: Environment Setup
+        shell: bash
+        run: |
+          touch $HOME/.git-credentials
+          touch $HOME/.gitconfig
+          git config --global user.email "sys_tmbuild@intel.com"
+          git config --global user.name "Github Builder CI"
+          git config --global credential.helper 'store --file=$HOME/.git-credentials'
+          west init -l . || true
+          west config --global update.narrow true
+          # we need this here because our local manifest does import this repo
+          echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/drivers.audio.firmware.converged" > $HOME/.git-credentials
+          west update || true
+          for r in `west  list -f {url} | grep intel-innersource | sed 's#https://##'`; do
+            echo $r
+            echo -e "https://$TOKEN:$TOKEN@$r" >> $HOME/.git-credentials
+          done
+          git config --global --add safe.directory ${PWD}
+
+      - name: Run Coverity
+        shell: bash
+        run: |
+          if [ -d "cov-test-build" ]; then rm -rf cov-test-build; fi
+          mkdir cov-test-build
+          COV_BUILD_DIR=cov-test-build
+          COV_INT=${COV_BUILD_DIR}/cov-int
+
+          export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+          export ZEPHYR_BASE=$PWD
+          export CCACHE_DISABLE=1
+
+          for a in ${ARCHES}; do
+            if [ $a = "x86" ]; then
+             COMPILER=x86_64-zephyr-elf-gcc
+             PLATFORM=qemu_x86_64
+            elif [ $a = "arm" ]; then
+             COMPILER=arm-zephyr-eabi-gcc
+             PLATFORM=mps2_an385
+            elif [ $a = "posix" ]; then
+              # posix is not an architecture but needs to run on host compiler
+              COMPILER=gcc
+              PLATFORM=native_posix
+            else
+              COMPILER=${a}-zephyr-elf
+            fi
+
+            cov-configure --comptype gcc \
+                          --compiler ${COMPILER} \
+                          --template
+
+            cov-build --emit-complementary-info \
+                      --dir ${COV_INT} \
+                      ./scripts/twister \
+                        ${TWISTER_OPTS} \
+                        -p ${PLATFORM} -T ./tests/kernel/
+          done
+
+          # Stripping the current directory to keep filepath relative when uploading to cov-connect
+          # Exclude Pattern and files taken for the example run will need to be agreed/finalized checker currently enabled as --all but will need to be modified
+          cov-analyze --strip-path $PWD \
+                      --strip-path $PWD/os.rtos.zephyr.zephyr \
+                      --tu-pattern "! file('.*/samples/.*') && ! file('.*\.cpp') && ! file('.*/tests/.*') && ! file('autoconf.h') && ! file('.*/drivers/*/') && ! file('.*/lib/libc/.*') && ! file('.*/lib/crc/.*') && ! file('.*/subsys/[fb|fs|app_memory|fs|blueooth|console|cpp|debug|dfu|disk|fb|fs|mgmt|net|power|random|settings|shell|stats|storage|usb]/.*')" \
+                      --dir ${COV_INT} \
+                      --all
+
+          cov-format-errors --dir ${COV_INT} \
+                            --json-output-v6 $PWD/errors.json
+
+          cov-commit-defects --dir ${COV_INT} \
+                             --stream main-intel \
+                             --url https://coverityent.devtools.intel.com/prod8 \
+                             --user ${COV_USR} --password ${COV_PWD}
+
+      # Upload Coverity build-log.txt file to workflow run capturing any errors from
+      # the coverity runs
+      - name: Upload Coverity Build Logs
+        if: failure() || success()
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-log.txt
+          path: cov-test-build/cov-int/build-log.txt
+          retention-days: 1
