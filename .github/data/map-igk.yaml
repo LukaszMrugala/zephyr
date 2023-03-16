@@ -1,0 +1,112 @@
+- connected: true
+  id: igk-tgl-2
+  platform: intel_ish_5_4_1
+  product: EIG TGL U RVP DDR4 Alpha/ES Fab1 BRD
+  runner: misc-flasher
+  flash_timeout: 60
+  flash_with_test: false
+  # SSH keyless auth have to be setup on the forwarding NUC
+  serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.212 stty raw 115200 -F /dev/ttyISH && cat /dev/ttyISH"
+  baud: 115200
+  runner_params:
+    - boards/x86/intel_ish/support/tgl_board_flash.sh
+    - 10.123.239.213
+    - /lib/firmware/intel
+    - tglrvp_ish.bin
+    - root
+    - 10.123.239.200
+    - "1"
+    - "6"
+    - sys_fmos_qa_simics
+
+- connected: true
+  id: 02400b0148824e450023700add8900048761000097969900
+  platform: frdm_k64f
+  product: DAPLink CMSIS-DAP
+  runner: pyocd
+  serial: /dev/serial/by-id/usb-ARM_DAPLink_CMSIS-DAP_02400b0148824e450023700add8900048761000097969900-if01
+- connected: true
+  id: 02400b0148824e450029700fdedd005598d1000097969900
+  platform: frdm_k64f
+  product: DAPLink CMSIS-DAP
+  runner: pyocd
+  serial: /dev/serial/by-id/usb-ARM_DAPLink_CMSIS-DAP_02400b0148824e450029700fdedd005598d1000097969900-if01
+- connected: true
+  id: D30CC4MH
+  platform: npcx9m6f_evb
+  product: FT230X Basic UART
+  runner: openocd
+  serial: /dev/serial/by-id/usb-FTDI_FT230X_Basic_UART_D30CC4MH-if00-port0
+
+- connected: true
+  id: "up2"
+  platform: up_squared
+  product: none
+  runner: misc-flasher
+  serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.214 stty raw 115200 -F /dev/ttyUP2 && cat /dev/ttyUP2"
+  baud: 115200
+  runner_params:
+    - boards/x86/up_squared/support/up_squared_efi.sh
+    - 192.168.21.11
+    - /srv/pxe-ansible-cfg/tftpboot/
+    - up_squared.efi
+    - zephyr
+    - 10.123.239.200
+    - "2"
+    - upsq
+
+- connected: true
+  id: "up2_2"
+  platform: up_squared
+  product: none
+  runner: misc-flasher
+  serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.214 stty raw 115200 -F /dev/ttyUP2_2 && cat /dev/ttyUP2_2"
+  baud: 115200
+  runner_params:
+    - boards/x86/up_squared/support/up_squared_efi.sh
+    - 192.168.21.11
+    - /srv/pxe-ansible-cfg/tftpboot/
+    - up_squared-2.efi
+    - zephyr
+    - 10.123.239.200
+    - "3"
+    - upsq
+
+- connected: true
+  fixtures:
+    - gpio-loopback
+  id: FT9FPJYP
+  platform: mec15xxevb_assy6853
+  post_flash_script: boards/arm/mec15xxevb_assy6853/support/igk_ykush_script.sh
+  product: TTL232R-3V3
+  runner: dediprog
+  serial: /dev/ttyUSB0
+
+- connected: true
+  id: 'A10OOKLX'
+  platform: mec172xevb_assy6906
+  product: none
+  runner: dediprog
+  serial: /dev/ttyUSB0
+
+- connected: true
+  fixtures:
+    - gpio_loopback
+  id: A50285BI
+  platform: it8xxx2_evb
+  product: FT232R USB UART
+  runner: misc-flasher
+  serial: /dev/ttyUSB0
+  runner_params:
+    - boards/riscv/it8xxx2_evb/support/loader.sh
+    - /opt/ITE/itedlb4-linux-v106/ite
+
+- connected: true
+  id: "MTL-P"
+  platform: intel_adsp_ace15_mtpm
+  product: none
+  runner: intel_adsp
+  serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,192.168.23.20:12320,-l"
+  runner_params:
+    - --remote-host=192.168.23.20:22320
+    - --key=boards/xtensa/intel_adsp_ace15_mtpm/support/mtl_private_key.pem

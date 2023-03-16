@@ -86,9 +86,99 @@
   product: DAPLink CMSIS-DAP
   runner: pyocd
   serial: /dev/serial/by-id/usb-MBED_MBED_CMSIS-DAP_024002016C951E4A916BE3F2-if01
-- connected: true
+- connected: false
   id: 024002019EAD4E726353B3CA
   platform: frdm_k64f
   product: DAPLink CMSIS-DAP
   runner: pyocd
   serial: /dev/serial/by-id/usb-MBED_MBED_CMSIS-DAP_024002019EAD4E726353B3CA-if01
+- connected: true
+  id: GKFMOSGVSI003.ger.corp.intel.com
+  platform: intel_ish_5_8_0_simics
+  product: None
+  runner: misc-flasher
+  flash_timeout: 60
+  flash_with_test: true
+  serial_pty: "boards/x86/intel_ish/support/get_serial_log.sh GKFMOSGVSI003.ger.corp.intel.com 12345 600 sys_fmos_qa_simics"
+  baud: 1000000000
+  runner_params:
+    - boards/x86/intel_ish/support/simics.sh
+    - GKFMOSGVSI003.ger.corp.intel.com
+    - C:\\SimicsProjects\\ish-lnl-simics-project
+    - ish_fw.bin
+    - targets\\lnl\\lnl-ish-kit_zephyr.simics
+    - boards/x86/intel_ish/simics/lnl-ish-kit_zephyr.simics
+    - test_step_rate=0.075 test_telnet_port=12345 test_telnet_check_delta=30 test_timeout=120 lnl_simics_path=C:\\SimicsKits\\lnl_simics_lite artifactory=FALSE
+    - sys_fmos_qa_simics
+- connected: true
+  id: GKFMOSGVSI011.ger.corp.intel.com
+  platform: intel_ish_5_8_0_simics
+  product: None
+  runner: misc-flasher
+  flash_timeout: 60
+  flash_with_test: true
+  serial_pty: "boards/x86/intel_ish/support/get_serial_log.sh GKFMOSGVSI011.ger.corp.intel.com 12345 600 sys_fmos_qa_simics"
+  baud: 1000000000
+  runner_params:
+    - boards/x86/intel_ish/support/simics.sh
+    - GKFMOSGVSI011.ger.corp.intel.com
+    - C:\\SimicsProjects\\ish-lnl-simics-project
+    - ish_fw.bin
+    - targets\\lnl\\lnl-ish-kit_zephyr.simics
+    - boards/x86/intel_ish/simics/lnl-ish-kit_zephyr.simics
+    - test_step_rate=0.075 test_telnet_port=12345 test_telnet_check_delta=30 test_timeout=120 lnl_simics_path=C:\\SimicsKits\\lnl_simics_lite artifactory=FALSE
+    - sys_fmos_qa_simics
+- connected: true
+  id: GKFMOSGVSI006.ger.corp.intel.com
+  platform: intel_ish_5_4_1_simics
+  product: None
+  runner: misc-flasher
+  flash_timeout: 60
+  flash_with_test: true
+  serial_pty: "boards/x86/intel_ish/support/get_serial_log.sh GKFMOSGVSI006.ger.corp.intel.com 12345 600 sys_fmos_qa_simics"
+  baud: 1000000000
+  runner_params:
+    - boards/x86/intel_ish/support/simics.sh
+    - GKFMOSGVSI006.ger.corp.intel.com
+    - C:\\SimicsProjects\\ish-mtl-simics-project-2023w01
+    - ish_fw.bin
+    - targets\\mtl\\mtl-ish-kit_zephyr.simics
+    - boards/x86/intel_ish/simics/mtl-ish-kit_zephyr.simics
+    - test_step_rate=0.075 test_telnet_port=12345 test_telnet_check_delta=10 test_timeout=30 tools_path=C:\\SimicsKits\\5.6.0.7454 kit_path=C:\\SimicsKits\\ISH_MTL_S_ALL_5.6.1.7553_V1_Release kit_version=5.6.1.7553 artifactory=TRUE
+    - sys_fmos_qa_simics
+- connected: true
+  id: GKFMOSGVSI007.ger.corp.intel.com
+  platform: intel_ish_5_4_1_simics
+  product: None
+  runner: misc-flasher
+  flash_timeout: 60
+  flash_with_test: true
+  serial_pty: "boards/x86/intel_ish/support/get_serial_log.sh GKFMOSGVSI007.ger.corp.intel.com 12345 600 sys_fmos_qa_simics"
+  baud: 1000000000
+  runner_params:
+    - boards/x86/intel_ish/support/simics.sh
+    - GKFMOSGVSI007.ger.corp.intel.com
+    - C:\\SimicsProjects\\ish-mtl-simics-project-2023w01
+    - ish_fw.bin
+    - targets\\mtl\\mtl-ish-kit_zephyr.simics
+    - boards/x86/intel_ish/simics/mtl-ish-kit_zephyr.simics
+    - test_step_rate=0.075 test_telnet_port=12345 test_telnet_check_delta=10 test_timeout=30 tools_path=C:\\SimicsKits\\5.6.0.7454 kit_path=C:\\SimicsKits\\ISH_MTL_S_ALL_5.6.1.7553_V1_Release kit_version=5.6.1.7553 artifactory=TRUE
+    - sys_fmos_qa_simics
+- connected: true
+  id: GKFMOSGVSI008.ger.corp.intel.com
+  platform: intel_ish_5_4_1_simics
+  product: None
+  runner: misc-flasher
+  flash_timeout: 60
+  flash_with_test: true
+  serial_pty: "boards/x86/intel_ish/support/get_serial_log.sh GKFMOSGVSI008.ger.corp.intel.com 12345 600 sys_fmos_qa_simics"
+  baud: 1000000000
+  runner_params:
+    - boards/x86/intel_ish/support/simics.sh
+    - GKFMOSGVSI008.ger.corp.intel.com
+    - C:\\SimicsProjects\\ish-mtl-simics-project-2023w01
+    - ish_fw.bin
+    - targets\\mtl\\mtl-ish-kit_zephyr.simics
+    - boards/x86/intel_ish/simics/mtl-ish-kit_zephyr.simics
+    - test_step_rate=0.075 test_telnet_port=12345 test_telnet_check_delta=10 test_timeout=30 tools_path=C:\\SimicsKits\\5.6.0.7454 kit_path=C:\\SimicsKits\\ISH_MTL_S_ALL_5.6.1.7553_V1_Release kit_version=5.6.1.7553 artifactory=TRUE
+    - sys_fmos_qa_simics

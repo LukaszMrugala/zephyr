@@ -10,13 +10,16 @@ platforms:
     - qemu_x86_lakemont
     - qemu_x86
     - qemu_xtensa
+    - qemu_x86_tiny
+    - intel_ish_5_6_0
 levels:
   - name: smoke
     description: >
       A plan to be used verifying basic zephyr features on hardware.
     adds:
       - kernel.threads.*
-      - kernel.timer.behavior
+      - kernel.memory_protection.*
+      - kernel.timer.*
       - arch.interrupt
       - boards.*
   - name: acceptance
@@ -24,13 +27,19 @@ levels:
       More coverage
     adds:
       - kernel.*
+      - pm.*
+      - system.*
       - arch.*
+      - benchmark.kernel.*
       - boards.*
       - logging.*
       - drivers.*
       - libraries.mem_blocks.*
+      - libraries.data_structures.*
       - libraries.lib.*
+      - libraries.cbprintf.*
       - libraries.p4wq
       - libraries.libc.*
       - libraries.heap
       - libraries.heap_align
+      - libraries.os.*

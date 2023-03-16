@@ -15,13 +15,15 @@ jobs:
         shell: bash
     runs-on: fmos-guest-ubuntu-24c
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-coverity:v0.24.14
+      image: amr-registry.caas.intel.com/zephyrproject/ci-coverity:v0.26.6
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
         COV_USR: ${{secrets.COVERITY_USER}}
         COV_PWD: ${{secrets.COVERITY_PASSWORD}}
         TWISTER_OPTS: '-v -M -x=USE_CCACHE=0 --inline-logs --force-color --no-skipped-report --build-only -k'
-        ARCHES: "posix"
+        ARCHES: "posix x86 xtensa"
+        COVERITY_INSTALLATION_DIR: /opt/coverity/analysis
+        ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.4
     steps:
       - name: Clean
         shell: bash
@@ -48,7 +50,9 @@ jobs:
           git config --global user.email "sys_tmbuild@intel.com"
           git config --global user.name "Github Builder CI"
           git config --global credential.helper 'store --file=$HOME/.git-credentials'
-          west init -l . || true
+          if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
+            west init -l . || true
+          fi
           west config --global update.narrow true
           # we need this here because our local manifest does import this repo
           echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/drivers.audio.firmware.converged" > $HOME/.git-credentials
@@ -62,22 +66,40 @@ jobs:
       - name: Run Coverity
         shell: bash
         run: |
+          # Having the macro nodef's in coverity configuration would exclude these macro from analysis (including where they are used).
+          # This suppresses the `macro compares unsigned to 0(NO_EFFECT)` issues in logging macro's which are due to intentional code.
+          echo -e "#nodef Z_LOG2\n#nodef Z_LOG_HEXDUMP2" \
+                  >> ${COVERITY_INSTALLATION_DIR}/config/user_nodefs.h
           if [ -d "cov-test-build" ]; then rm -rf cov-test-build; fi
           mkdir cov-test-build
           COV_BUILD_DIR=cov-test-build
           COV_INT=${COV_BUILD_DIR}/cov-int
-
-          export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
           export ZEPHYR_BASE=$PWD
           export CCACHE_DISABLE=1
 
+          # The following variable are only used on xtensa but don't hurt
+          # other targets.
+          export TOOLCHAIN_VER=RI-2022.10-linux
+          export XTENSA_CORE=ace30_LX7HiFi4_PIF
+          export XTENSA_TOOLCHAIN_PATH=/opt/toolchains/xtensa/XtDevTools/install/tools
+          export XTENSA_BUILDS_DIR=/opt/toolchains/xtensa/XtDevTools/install/builds
+          export XTENSA_SYSTEM=/opt/toolchains/xtensa/XtDevTools/install/tools/RI-2022.10-linux/XtensaTools/config/
+
           for a in ${ARCHES}; do
+            export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+            COMPTYPE=gcc
+
             if [ $a = "x86" ]; then
              COMPILER=x86_64-zephyr-elf-gcc
              PLATFORM=qemu_x86_64
             elif [ $a = "arm" ]; then
              COMPILER=arm-zephyr-eabi-gcc
              PLATFORM=mps2_an385
+            elif [ $a = "xtensa" ]; then
+             export ZEPHYR_TOOLCHAIN_VARIANT=xt-clang
+             COMPTYPE=xtclang
+             COMPILER=xt-clang
+             PLATFORM=intel_adsp_ace30_ptl_sim
             elif [ $a = "posix" ]; then
               # posix is not an architecture but needs to run on host compiler
               COMPILER=gcc
@@ -86,7 +108,7 @@ jobs:
               COMPILER=${a}-zephyr-elf
             fi
 
-            cov-configure --comptype gcc \
+            cov-configure --comptype ${COMPTYPE} \
                           --compiler ${COMPILER} \
                           --template
 
@@ -94,7 +116,7 @@ jobs:
                       --dir ${COV_INT} \
                       ./scripts/twister \
                         ${TWISTER_OPTS} \
-                        -p ${PLATFORM} -T ./tests/kernel/
+                        -p ${PLATFORM} -T ./tests/
           done
 
           # Stripping the current directory to keep filepath relative when uploading to cov-connect

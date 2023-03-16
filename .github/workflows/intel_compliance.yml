@@ -21,7 +21,7 @@ jobs:
     name: Run compliance checks on patch series (PR)
     runs-on: fmos-guest-ubuntu-12c
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.24.14
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
       options: "-v /srv/runner/workspace:/runner/workspace"
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
@@ -57,7 +57,10 @@ jobs:
           git config --global user.email "sys_tmbuild@intel.com"
           git config --global user.name "Github Builder CI"
           git config --global credential.helper 'store --file=$HOME/.git-credentials'
-          west init -l . || true
+          if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
+            west init -l . || true
+          fi
+          west config manifest.group-filter -- +ci,+optional
           west config --global update.narrow true
           west config --global update.path-cache "/runner/workspace"
           echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/drivers.audio.firmware.converged" > $HOME/.git-credentials
@@ -88,7 +91,7 @@ jobs:
           pip3 install yamllint
           export ZEPHYR_BASE=$PWD
           git log  --pretty=oneline | head -n 10
-          ./scripts/ci/check_compliance.py --annotate -e KconfigBasic -c origin/${BASE_REF}..
+          ./scripts/ci/check_compliance.py --annotate -e ModulesMaintainers -e KconfigBasic -c origin/${BASE_REF}..
 
       # Upload compliance.xml file to workflow run capturing any errors from
       # the compliance check

@@ -1,5 +1,7 @@
 name: 'Run Twister - Intel'
 on:
+  schedule:
+    - cron: '55 5 * * *' # once daily @ 05:55 UTC.
   pull_request:
     branches:
       - main-intel
@@ -12,57 +14,24 @@ concurrency:
 
 jobs:
   run_twister:
-    name: 'Twister on ${{ matrix.platform }} (${{ matrix.subset }})'
+    name: 'Twister subset (${{ matrix.subset }})'
     defaults:
       run:
         shell: bash
-    runs-on: ${{ matrix.runner }}
+    runs-on: fmos-guest-ubuntu-24c
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.24.14
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
       options: "-v /srv/runner/workspace:/runner/workspace"
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
-        subset: [1, 2, 3, 4]
-        toolchain: [gcc, xcc]
-        include:
-          - toolchain: 'gcc'
-            runner: fmos-guest-ubuntu-24c
-            platform: 'default platforms'
-          - toolchain: 'xcc'
-            platform: 'intel_adsp_ace15_mtpm'
-            toolchain_ver: 'RI-2021.7-linux'
-            xtensa_core: 'ace10_LX7HiFi4'
-            variant: 'xt-clang'
-            subset: 1
-            runner: fmos-guest-ubuntu-12c
-          - toolchain: 'xcc'
-            platform: 'intel_adsp_cavs25'
-            toolchain_ver: 'RG-2017.8-linux'
-            xtensa_core: 'cavs2x_LX6HiFi3_2017_8'
-            variant: 'xcc'
-            subset: 2
-            runner: fmos-guest-ubuntu-12c
-          - toolchain: 'xcc'
-            platform: 'intel_adsp_ace30_ptl'
-            toolchain_ver: 'RI-2022.10-linux'
-            xtensa_core: 'ace30_LX7HiFi4_PIF'
-            variant: 'xt-clang'
-            subset: 3
-            runner: fmos-guest-ubuntu-12c
-          - toolchain: 'xcc'
-            platform: 'intel_adsp_ace20_lnl'
-            toolchain_ver: 'RI-2022.10-linux'
-            xtensa_core: 'ace10_LX7HiFi4_2022_10'
-            variant: 'xt-clang'
-            subset: 4
-            runner: fmos-guest-ubuntu-12c
+        subset: [1, 2, 3, 4, 5, 6]
 
     env:
       TWISTER_OPTS: "-v -M -x=USE_CCACHE=0 --inline-logs --retry-failed 3 --retry-interval 60 --force-color --no-skipped-report --integration"
-      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.15.2
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.4
     steps:
       - name: Clean
         shell: bash
@@ -89,7 +58,9 @@ jobs:
           git config --global user.email "sys_tmbuild@intel.com"
           git config --global user.name "Github Builder CI"
           git config --global credential.helper 'store --file=$HOME/.git-credentials'
-          west init -l . || true
+          if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
+            west init -l . || true
+          fi
           west config --global update.narrow true
           west config --global update.path-cache "/runner/workspace"
           # we need this here because our local manifest does import this repo
@@ -104,50 +75,20 @@ jobs:
           west update --path-cache /runner/workspace
           west forall -c 'git reset --hard HEAD'
 
-      - name: Build RIMAGE
-        run: |
-          pushd ../modules/audio/sof/rimage
-          cmake -B build/
-          make  -C build/
-          sudo make -C build/ install
-          popd
-
       - name: Build
         run: |
 
           export PATH=$PATH:/opt/tools/bin/
-          export XTENSA_BUILDS_DIR=/opt/toolchains/xtensa/XtDevTools/install/builds
-          if [ '${{ matrix.twister_options }}x' != 'x' ]; then
-            export EXTRA_TWISTER_OPTS="${{ matrix.twister_options }}"
-          fi
 
-          if [ ${{ matrix.toolchain }} == 'gcc' ]; then
-
-            export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
-            ./scripts/twister \
-              ${TWISTER_OPTS} \
-              --quarantine-list .github/data/twister-quarantine-list.yml \
-              --test-config .github/data/test_config.yaml \
-              --subset  ${{matrix.subset}}/4 \
-              -T tests \
-              -e cmsis_dsp
-
-          elif [ ${{ matrix.toolchain }} == 'xcc' ]; then
-
-            export ZEPHYR_TOOLCHAIN_VARIANT=${{ matrix.variant }}
-            export XTENSA_TOOLCHAIN_PATH=/opt/toolchains/xtensa/XtDevTools/install/tools
-            export XTENSA_CORE=${{ matrix.xtensa_core }}
-            export TOOLCHAIN_VER=${{ matrix.toolchain_ver }}
-            ./scripts/twister \
-              ${TWISTER_OPTS} ${EXTRA_TWISTER_OPTS} \
-              --retry-build-errors \
-              --quarantine-list .github/data/xcc-twister-quarantine-list.yml \
-              --disable-warnings-as-errors \
-              -p ${{ matrix.platform }} \
-              --build-only \
-              -T tests \
-              -e cmsis_dsp
-          fi
+          export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+          ./scripts/twister \
+            ${TWISTER_OPTS} \
+            --quarantine-list .github/data/twister-quarantine-list.yml \
+            --test-config .github/data/test_config.yaml \
+            --subset  ${{matrix.subset}}/${{strategy.job-total}}\
+            -T tests \
+            -e cmsis_dsp \
+            -e mcumgr
 
 
       - name: Save Artifacts
@@ -162,20 +103,45 @@ jobs:
           retention-days: 7
 
   publish-test-results:
-    name: 'Publish Test Results'
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+    env:
+      ELASTICSEARCH_KEY: ${{ secrets.ELASTICSEARCH_KEY }}
+      ELASTICSEARCH_SERVER: 'https://reports-fmos.hf.intel.com:9200'
+    name: 'Publish Twister Results'
     needs: [run_twister]
     runs-on: fmos-guest-ubuntu-12c
     continue-on-error: true
     if: success() || failure()
     steps:
-      - run: env
-      - name: Clean
+      - name: Clean and Pre Environment
         run: |
           rm -rf artifacts
+          pip3 install elasticsearch
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
       - name: Download Artifacts
         uses: actions/download-artifact@v2
         with:
           path: artifacts
+      - name: Upload to ElasticSearch Instance scheduled
+        if: github.event_name == 'schedule'
+        run: |
+          run_date=`date --iso-8601=minutes`
+          echo ${run_date}
+          python3 ./scripts/ci/upload_test_results_es.py -r ${run_date} \
+            -i zephyr-tests-main-intel-daily-1 artifacts/**/twister.json
+      - name: Upload to ElasticSearch Instance on PR
+        if: github.event_name == 'pull_request'
+        run: |
+          run_date=`date --iso-8601=minutes`
+          echo ${run_date}
+          python3 ./scripts/ci/upload_test_results_es.py -r ${run_date} \
+            -i zephyr-tests-staging-1 artifacts/**/twister.json
       - name: Publish Unit Test Results
         uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/results-publisher@main
         with:

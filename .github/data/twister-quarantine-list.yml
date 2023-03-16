@@ -6,41 +6,61 @@
   - mips
   - nios2
 
-- scenarios:
-  - boards.mec172xevb_assy6906.i2c
-  - boards.frdm_k64f.i2c
-- scenarios:
-  - kernel.memory_protection.syscalls
-  platforms:
-  - qemu_arc_em
+- platforms:
+  - nrf.*
+  - stm.*
+  - nucleo.*
   comment: >
-    bug filed: RTOS-7530
+    covered upstream
 
 - scenarios:
-  - kernel.timer.monotonic
-  platforms:
-  - qemu_arc_hs6x
-  - qemu_arc_em
-  comment: >
-    qemu_arc_hs6 tests/kernel/timer/timer_monotonic/kernel.timer.monotonic
-    fails consistently on 0.14.1. This may be failing internally and not upstream
-    because we use --integration for twister checks. Similar to this issue
-    upstream on qemu_arc_hs6: https://github.com/zephyrproject-rtos/zephyr-testing/commit/adf5d791508f5b64bea1431eea54c2ef2add68cb.
-    Now (06/07/22) fails on qemu_arc_em as well.
+  - boards.mec172xevb_assy6906.i2c
+  - boards.mec15xxevb_assy6853.i2c
+  - boards.mec15xxevb_assy6853.qspi
+  - boards.frdm_k64f.i2c
 
 - scenarios:
   - logging.log_link_order
   platforms:
   - nsim_em
   comment: >
-    but reported upstream https://github.com/zephyrproject-rtos/zephyr/issues/51422
+    bug reported upstream https://github.com/zephyrproject-rtos/zephyr/issues/51422
+
 - scenarios:
   - sample.tfm.*
   comment: >
     covered upstream
-- platforms:
-  - nrf.*
-   - stm.*
-   - nucleo.*
+
+- scenarios:
+  - kernel.timer.timer
+  platforms:
+  - intel_ish_5_4_1_simics
+  - intel_ish_5_8_0_simics
   comment: >
-    covered upstream
+    Timing behavior is not sufficiently accurate in Simics.
+
+- scenarios:
+  - libraries.heap
+  platforms:
+  - intel_ish_5_4_1_simics
+  - intel_ish_5_8_0_simics
+  comment: >
+    The test takes more than 30 minutes to run in Simics.
+
+- scenarios:
+  - kernel.tickless.concept
+  - pm.device_runtime.api
+  - kernel.timer.tickless
+  platforms:
+  - npcx9m6f_evb
+  comment: >
+    Bug reported upstream https://github.com/zephyrproject-rtos/zephyr/issues/55085 causes the board to lock up until a manual reset is issued via a JLink.
+
+- scenarios:
+  - pm.device_runtime.api
+  - kernel.tickless.concept
+  - kernel.timer.tickless
+  platforms:
+  - intel_adsp_cavs25
+  comment: >
+    Test is blocking cavs25. Jira to follow : https://jira.devtools.intel.com/browse/RTOS-7919
