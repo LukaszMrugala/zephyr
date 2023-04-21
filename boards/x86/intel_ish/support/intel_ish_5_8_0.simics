@@ -1,0 +1,34 @@
+# Copyright (c) 2023 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+$local_storage = TRUE
+$wb = ish
+
+$os_image=""
+
+if not defined artifactory {
+	$artifactory = FALSE
+}
+
+add-directory $project
+
+run-command-file targets/lnl/lnl-m.simics
+
+script-branch "Wait for ISH enabled" {
+	while (1) {
+		pselect obj = "lnl.mb.south.ish.processor0.core[0][0]"
+		bp.memory.wait-for object = "lnl.mb.south.ish.processor0.mem[0][0]" address = 0xffffd5ba
+		lnl.mb.north.ccp[0].module.core[0][0].disable
+
+		load-binary $zephyr_elf
+		set-pc $zephyr_start_address
+	}
+}
+
+output-radix 16
+
+if defined ish_console_log {
+	echo "Logging ISH console to file %s" % $ish_console_log
+	lnl.mb.south.ish.uconsole0.con.capture-start filename = $ish_console_log -overwrite
+}
