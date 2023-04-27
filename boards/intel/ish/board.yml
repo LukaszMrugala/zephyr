@@ -4,6 +4,8 @@ boards:
     vendor: intel
     socs:
       - name: intel_ish_5_4_1
+        variants:
+          - name: "simics"
 
   - name: intel_ish_5_6_0
     vendor: intel
