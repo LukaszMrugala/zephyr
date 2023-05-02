@@ -1,0 +1,175 @@
+add-directory "%script%/targets/lnl"
+load-module release-helper
+
+$ish_platform  = "mtl"
+$wb="ish"
+
+##########################################################################################
+## For running Zephyr, we do not need to enable ISH sensor simulator, trace or someting,
+## what we need is just IPC simulator.
+
+#-- Download LNL components from artifactory or use what's already in the local storage
+#   Artifactory requires the current user to have access privilegies and it takes some
+#   extra time for each test.
+if not defined artifactory { $artifactory = TRUE }
+$local_storage = TRUE
+
+#-- Simics steps/cycle rate for Zephyr tests.
+# our old 'bare-metal' ISH LNL Simics runner uses 1/8 steps/cycle
+if not defined test_step_rate { $test_step_rate = 0.125 }
+
+#-- Telnet console port.
+if not defined test_telnet_port { $test_telnet_port = 12345 }
+
+# Interval to check for the Telnet console status.
+# Small interval slows down simulation.
+if not defined test_telnet_check_delta { $test_telnet_check_delta = 10 }
+
+#-- IP to check telnet connection from, or NIL for any.
+if not defined test_runner_ip { $test_runner_ip = NIL }
+
+#-- Max time to run the simulation should be enough for a test to execute.
+if not defined test_timeout { $test_timeout = 120 }
+
+# ISH KIT PATH, download link https://ubit-artifactory-sh.intel.com/ui/native/ish-sh-local/releases/Kit
+if not defined lnl_simics_path { $lnl_simics_path = "C:\\SimicsKits\\lnl_simics_lite" }
+$kit_version = "5.8.0.7286"
+$kit_path = $lnl_simics_path + "\\images\\ISH\\" + $kit_version
+
+# IPC simulator path
+$run_tools_path = $kit_path + "\\ISH_FW\\Simics\\simulators"
+
+# Please use the ish_bup.bin in the same kit version package for stability issue.
+# But for lnl, please use the ish_bup.bin in old ISH Kit version 5.8.0.7283
+$ish_bringup = $lnl_simics_path + "\\images\\ISH\\5.8.0.7283\\Simics\\ish_bup.bin"
+
+# bios and os image
+$bios = $lnl_simics_path + "\\images\\configure_files\\LNL_FSPWRAPPER_1174_00_D_Simics.bin"
+$os_image = $lnl_simics_path + "\\images\\configure_files\\busybox.craff"
+
+# ISH Firmware Image built using zephyr code
+if not defined test_image_path { $test_image_path = sim->project }
+$ish_fw_image = $test_image_path + "\\ish_fw.bin"
+$uart_log = $test_image_path + "\\uart.log"
+$output_log = $test_image_path + "\\output.log"
+############################################################################################
+
+$trace_collector_enable = FALSE
+$ishcatalog = FALSE
+$sensor_simulator_enable = FALSE
+$npk_enable=FALSE
+$new_consoles = FALSE
+$force_enable_vmp = FALSE
+$tpm_enable=FALSE
+$load_itpii=FALSE
+
+$no_logs=TRUE
+$ipc_sim_enable = TRUE
+$ipc_ext_host = TRUE
+$por_cpu_config = TRUE
+$no_disks = TRUE
+$ipc_host_port = 10001
+$enabled_n_cores_small_soc=0
+
+log-level 0
+output-radix 16
+
+$script_to_run = sim->project + "\\targets\\lnl\\lnl-m.simics"
+run-command-file $script_to_run
+
+script-branch "main cpu stopped" {
+    bp.log.wait-for "ISH is not in PG now"
+       echo " Disable main CPU"
+       $system.mb.cpu0.core_big[0][0].disable
+       pselect $ish.processor0.core[0][0]
+       $ish.misc->misc_regs_ISH_FUSE=[0x04,0,0]
+       $ish.pmu.reset
+}
+
+# slow down or speed up Simics execution
+lnl.mb.south.ish.processor0.core[0][0].set-step-rate $test_step_rate
+
+# change uart0 stall cycle
+lnl.mb.south.ish.uart[0]->uart_stall_cycle = 200
+
+echo "[test] Connect console0 to telnet port=%d" % [$test_telnet_port]
+# Don't negotiate telnet options in 'raw' mode.
+lnl.mb.south.ish.uconsole0.con.telnet-setup port=$test_telnet_port -raw
+
+# save console output into a file
+lnl.mb.south.ish.uconsole0.con.capture-start $output_log -overwrite
+
+echo "[test] Run with artifactory=%s" % [$artifactory]
+
+echo "[test] Run with test timeout %d sec." % [$test_timeout]
+if ($test_runner_ip != NIL) {
+  echo "[test] Expecting console connection from ip=%s" % [$test_runner_ip]
+  $test_runner_ip = "::ffff:" + $test_runner_ip
+}
+echo "[test] Check telnet connection every %d sec." % [$test_telnet_check_delta]
+
+$test_telnet_check_time = 0  # time point to check for a connection
+$test_telnet_connected = FALSE
+$test_telnet_cnt = 0         # how many telnet connection detected
+
+script-branch "check telnet status" {
+    # wait-for-global-sync
+    echo "[test] Start telnet status check on port=%d" % [$test_telnet_port]
+    local $telnet_status = ""
+    while TRUE {
+      $telnet_status = (lnl.mb.south.ish.uconsole0.con.telnet-status)
+      if ($telnet_status[0] != $test_telnet_port) {
+        echo "[test] ERROR - unexpected telnet port=%d is open." % [$telnet_status[0]]
+        quit
+      }
+      if ($telnet_status[4] != NIL) {
+        if ($test_telnet_connected) {
+          if ($telnet_status[4] == $test_runner_ip) {
+            echo "[test] telnet console port=%d connection %d from %s is up at %d." % [$telnet_status[0], $test_telnet_cnt, $telnet_status[4], $test_telnet_check_time]
+          } else {
+            echo "[test] QUIT telnet console port=%d connection %d from %s disconnects %s at %d." % [$telnet_status[0], $test_telnet_cnt, $telnet_status[4], $test_runner_ip, $test_telnet_check_time]
+            quit
+          }
+        } else {
+          $test_telnet_connected = TRUE
+          $test_telnet_cnt += 1
+          if (($test_runner_ip != NIL) & ($telnet_status[4] != $test_runner_ip)) {
+            echo "[test] QUIT telnet console port=%d connection %d from %s is not expected %s at %d." % [$telnet_status[0], $test_telnet_cnt, $telnet_status[4], $test_runner_ip, $test_telnet_check_time]
+            quit
+          }
+          $test_runner_ip = $telnet_status[4]
+          echo "[test] telnet console port=%d connected %d from %s at %d." % [$telnet_status[0], $test_telnet_cnt, $test_runner_ip, $test_telnet_check_time]
+        }
+      } else {
+        if ($test_telnet_connected) {
+          $test_telnet_connected = FALSE
+          echo "[test] QUIT telnet console disconnected from %s at %d." % [$test_runner_ip, $test_telnet_check_time]
+          quit
+        }
+        echo "[test] waiting for telnet connection %d." % [$test_telnet_check_time]
+      }
+      $test_telnet_check_time += $test_telnet_check_delta
+      wait-for-global-time $test_telnet_check_delta -relative
+    }
+}
+
+script-branch "quit on test_timeout" {
+    # wait-for-global-sync
+    echo "[test] waiting for the test_timeout=%d." % [$test_timeout]
+    wait-for-global-time $test_timeout -relative
+
+    if ($test_telnet_cnt == 0) {
+      echo "[test] WARN - still no telnet connections at %d." % [$test_telnet_check_time]
+    }
+    if ($test_telnet_connected) {
+      echo "[test] WARN - telnet remains connected from %s at %d." % [$test_runner_ip, $test_telnet_check_time]
+    }
+    echo "[test] QUIT on test_timeout=%d at %d." % [$test_timeout, $test_telnet_check_time]
+    quit
+}
+
+echo "[test] RUN"
+run
+# Get here if ISH simulation itself ends
+echo "[test] END console connections detected %d at %d." % [$test_telnet_cnt, $test_telnet_check_time]
+#
