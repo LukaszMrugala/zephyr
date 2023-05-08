@@ -48,6 +48,14 @@
     The test takes more than 30 minutes to run in Simics.
 
 - scenarios:
+  - benchmark.kernel.application
+  - benchmark.kernel.core
+  platforms:
+  - intel_ish_5_4_1_simics
+  comment: >
+    Too slow to execute on MTL Simics.
+
+- scenarios:
   - kernel.tickless.concept
   - pm.device_runtime.api
   - kernel.timer.tickless
