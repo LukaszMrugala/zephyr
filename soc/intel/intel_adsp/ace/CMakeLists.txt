@@ -24,3 +24,12 @@ if (CONFIG_XTENSA_MMU)
 endif()
 
 set(SOC_LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld CACHE INTERNAL "")
+
+if (NOT CONFIG_SOF AND NOT CONFIG_INTEL_ADSP_SIM)
+  # SOF does their own firmware ready message so
+  # there is no need to do it on the Zephyr side.
+  #
+  # And simulator does not understand this message
+  # and will be confused. So skip it on simulator.
+  zephyr_library_sources(fw_ready.c)
+endif()
