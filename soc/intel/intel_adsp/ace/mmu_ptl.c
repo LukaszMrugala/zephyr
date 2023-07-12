@@ -118,6 +118,15 @@ const struct xtensa_mmu_range xtensa_soc_mmu_ranges[] = {
 		.attrs = XTENSA_MMU_PERM_W | XTENSA_MMU_CACHED_WB,
 		.name = "lpsram",
 	},
+#if !defined(CONFIG_SOF) && !defined(CONFIG_INTEL_ADSP_SIM)
+	/* FW Ready */
+	{
+		.start = (uint32_t)(L2_SRAM_BASE + 0x4000),
+		.end   = (uint32_t)(L2_SRAM_BASE + 0x4000 + 0x1000),
+		.attrs = XTENSA_MMU_PERM_W | XTENSA_MMU_CACHED_WB,
+		.name = "fwready",
+	},
+#endif
 	{
 		.start = (uint32_t)(ADSP_L1CC_ADDR),
 		.end   = (uint32_t)(ADSP_L1CC_ADDR + CONFIG_MMU_PAGE_SIZE),
