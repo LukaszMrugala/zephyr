@@ -1,0 +1,109 @@
+# FMOS DevOps Github Actions SSH API
+# - a basic github action wrapper for remote work with ssh and scp
+# 
+# requires:
+#  0. remote host name
+#  1. remote user name
+#  2. content of ssh private key
+#  3. source file or dir for scp
+#  4. destination dir for scp
+
+name: 'fmos-ssh-scp-ssh-pipeline'
+description: 'executes commands and/or transfers files/folder over pre-authorized SSH connection'
+inputs:
+  hostname:
+    description: 'target hostname for command'
+    required: true
+  ssh-user:
+    description: 'user name for remote ssh connection'
+    required: true
+  ssh-key:
+    description: 'content of ssh private key raw content of ~/.ssh/id_rsa'
+    required: true
+  ssh-opts:
+    description: 'ssh connection options'
+    default: '-o "UserKnownHostsFile=/dev/null" -o "LogLevel ERROR" -o "StrictHostKeyChecking no"'
+  connect-timeout:
+    description: 'connection timeout to remote host'
+    default: "5s"
+  scp-src:
+    description: 'file / directory to transfer through scp'
+    required: true
+  scp-dst:
+    description: 'directory where to transfer files'
+    required: true
+  ssh-pre:
+    description: 'execute pre-commands before scp'
+  ssh-post:
+    description: 'execute post-commands after scp'
+  ssh-pre-rollback:
+    description: 'executue if scp or ssh-post steps fail it rollback commands called in a pre-command'
+  scp-rollback:
+    description: 'execute if ssh-post step fails'
+    type: boolean
+    default: false
+runs:
+  using: "composite"
+  steps:
+    - name: Execute ssh pre-commands
+      id: ssh-pre-cmd
+      if: inputs.ssh-pre != ''
+      run: |
+        ssh -i ${{ inputs.ssh-key }} ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} ${{ inputs.ssh-pre }}
+        pre_cmd_state=$?
+        if [ $pre_cmd_state == 2 ]; then
+          echo "SSH connection failed"
+          exit 2
+        elif [ $pre_cmd_state != 0 ]; then
+          echo "SSH pre-cmd return error"
+          exit $pre_cmd_state
+        fi
+      shell: bash
+    - name: Execute scp command
+      id: scp-cmd
+      # execute this step if the previous step passed or did not executed and require inputs are not empty
+      if: inputs.scp-src != '' && inputs.scp-dst != ''
+      run: |
+        if [[ -d "${{ inputs.scp-src }}" || -f "${{ inputs.scp-src }}" ]]; then
+          scp -r -i ${{ inputs.ssh-key }} ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.scp-src }} ${{ inputs.ssh-user }}@${{ inputs.hostname }}:{{ inputs.scp-dst }}
+          scp_cmd_state=$?
+        else
+          echo "Source directory does not exist"
+          scp_cmd_state=1
+        fi
+        exit $scp_cmd_state
+      continue-on-error: true
+      shell: bash
+    - name: Execute ssh post-commands
+      id: ssh-post-cmd
+      # execute this step if the previous steps passed and require input is not empty
+      if: steps.scp-cmd.outcome == 'success' && inputs.ssh-post != ''
+      run: |
+        ssh -i ${{ inputs.ssh-key }} ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} ${{ inputs.ssh-post }}
+        post_cmd_state=$?
+        if [ $post_cmd_state == 2 ]; then
+          echo "SSH connection failed"
+        elif [ $post_cmd_state != 0 ]; then
+          echo "SSH post-cmd return error"
+        fi
+        exit $post_cmd_state
+      continue-on-error: true
+      shell: bash
+    - name: Execute rollback scp if post-command fails
+      id: rollback-scp
+      if: steps.ssh-post-cmd.outcome == 'failure' && steps.scp-cmd.outcome == 'success' && input.scp-rollback
+      run: |
+        scp_dst_rollback=${${{ inputs.scp-src }}%%/}
+        scp_dst_rollback=${scp_dst_rollback##*/}
+        ssh -i ${{ inputs.ssh-key }} ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} "cd ${{ inputs.scp-dst }} && find -maxdepth 1 -name $scp_dst_rollback -exec rm -r {} \;"
+      continue-on-error: true
+      shell: bash
+    - name: Execute rollback ssh-pre-command if scp or ssh-post command fail
+      id: rollback-ssh-pre
+      if: ( steps.scp-cmd.outcome == 'failure' || steps.scp-cmd.outcome == 'skipped' || steps.ssh-post-cmd.outcome == 'failure' ) && input.ssh-pre-rollback != ''
+      run: |
+        ssh -i ${{ inputs.ssh-key }} ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} ${{ inputs.ssh-pre-rollback }}
+      shell: bash
+    - name: Check on failures
+      if: steps.scp-cmd.outcome == 'failure' || steps.scp-cmd.outcome == 'skipped' || steps.ssh-post-cmd.outcome == 'failure'
+      run: exit 1
