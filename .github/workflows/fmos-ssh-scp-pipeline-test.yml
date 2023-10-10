@@ -1,0 +1,46 @@
+name: fmos ssh scp pipeline test
+on:
+  workflow_dispatch:
+jobs:
+  fmos-ssh-scp-pipeline-test:
+    name: 
+    runs-on: fmos-guest-ubuntu-24c
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.4.5
+      options: "-v /srv/runner/workspace:/runner/workspace"
+    env:
+      IGK_PRIVATE_KEY: ${{ secrets.IGK_PRIVATE_KEY }}
+      STATICREPORTING_USER: 'zephyr'
+      STATICREPORTING_SERVER: 'http://zep-fmos-static-reporting.igk.intel.com'
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        scp-src: [ '', 'test/twister.json,test/twister.log' ]
+        scp-dst: [ '', '/home/zephyr/ssh-scp-test/' ]
+        ssh-pre: [ '', 'mkdir ~/ssh-scp-test' ]
+        ssh-post: [ '', 'mv ~/ssh-scp-test ~/ssh-scp-test-post' ]
+        ssh-pre-rollback: [ '', 'rm -rf ~/ssh-scp-test' ]
+        scp-rollback: [ false, true ]
+    steps:
+      - name: Clean
+        run: rm -rf test_ssh_scp
+      - name: Environment Setup
+        if: success()
+        run: |
+          mkdir test_ssh_scp
+          touch twister.log
+          touch twister.json
+          touch twister.xml
+      - name: ssh scp pipeline test
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/scp-ssh-pipeline@main
+        if: success()
+        with:
+          hostname: "$STATICREPORTING_SERVER"
+          ssh-user: "$STATICREPORTING_USER"
+          ssh-key: "$IGK_PRIVATE_KEY"
+      - name: Clean
+        if: success()
+        run: rm -rf test_ssh_scp
