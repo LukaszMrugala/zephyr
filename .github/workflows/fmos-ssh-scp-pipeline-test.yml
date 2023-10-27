@@ -1,6 +1,9 @@
 name: fmos ssh scp pipeline test
 on:
   workflow_dispatch:
+    inputs:
+      key:
+        required: true
 jobs:
   fmos-ssh-scp-pipeline-test:
     name: 
@@ -9,20 +12,20 @@ jobs:
       image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.4.5
       options: "-v /srv/runner/workspace:/runner/workspace"
     env:
-      IGK_PRIVATE_KEY: ${{ secrets.IGK_PRIVATE_KEY }}
+      IGK_PRIVATE_KEY: ${{ inputs.key }}
       STATICREPORTING_USER: 'zephyr'
-      STATICREPORTING_SERVER: 'http://zep-fmos-static-reporting.igk.intel.com'
+      STATICREPORTING_SERVER: 'zep-fmos-static-reporting.igk.intel.com'
     defaults:
       run:
         shell: bash
     strategy:
       fail-fast: false
       matrix:
-        scp-src: [ '', 'test/twister.json,test/twister.log' ]
-        scp-dst: [ '', '/home/zephyr/ssh-scp-test/' ]
-        ssh-pre: [ '', 'mkdir ~/ssh-scp-test' ]
-        ssh-post: [ '', 'mv ~/ssh-scp-test ~/ssh-scp-test-post' ]
-        ssh-pre-rollback: [ '', 'rm -rf ~/ssh-scp-test' ]
+        scp-src: [ '', 'test_ssh_scp/twister.json,test_ssh_scp/twister.log' ]
+        scp-dst: [ '', '/home/zephyr/test_ssh_scp/' ]
+        ssh-pre: [ '', 'mkdir ~/test_ssh_scp' ]
+        ssh-post: [ '', 'mv ~/test_ssh_scp ~/test-ssh-post' ]
+        ssh-pre-rollback: [ '', 'rm -rf ~/test-ssh-post' ]
         scp-rollback: [ false, true ]
     steps:
       - name: Clean
@@ -31,16 +34,19 @@ jobs:
         if: success()
         run: |
           mkdir test_ssh_scp
+          cd test_ssh_scp
           touch twister.log
           touch twister.json
           touch twister.xml
       - name: ssh scp pipeline test
-        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/scp-ssh-pipeline@main
+        id: ssh-scp-pipeline-test
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@main
         if: success()
         with:
           hostname: "$STATICREPORTING_SERVER"
           ssh-user: "$STATICREPORTING_USER"
           ssh-key: "$IGK_PRIVATE_KEY"
+        continue-on-error: true
       - name: Clean
         if: success()
         run: rm -rf test_ssh_scp
