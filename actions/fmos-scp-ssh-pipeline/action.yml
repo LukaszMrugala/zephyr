@@ -45,11 +45,22 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Setup environment
+      id: setup-env
+      run: |
+        if [ ! -f ~/.ssh/id_rsa-temp ]; then
+          if [ ! -d ~/.ssh ]; then
+            mkdir -p ~/.ssh
+          fi
+          echo "${{ env.IGK_PRIVATE_KEY }}" | tr -d '\r' >> ~/.ssh/id_rsa-temp
+        fi
+        chmod 700 ~/.ssh/id_rsa-temp
+      shell: bash
     - name: Execute ssh pre-commands
       id: ssh-pre-cmd
-      if: inputs.ssh-pre != ''
+      if: success() && inputs.ssh-pre != ''
       run: |
-        ssh -i ${{ inputs.ssh-key }} ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} ${{ inputs.ssh-pre }}
+        ssh -i ~/.ssh/id_rsa-temp ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} ${{ inputs.ssh-pre }}
         pre_cmd_state=$?
         if [ $pre_cmd_state == 2 ]; then
           echo "SSH connection failed"
@@ -62,10 +73,10 @@ runs:
     - name: Execute scp command
       id: scp-cmd
       # execute this step if the previous step passed or did not executed and require inputs are not empty
-      if: inputs.scp-src != '' && inputs.scp-dst != ''
+      if: success() && inputs.scp-src != '' && inputs.scp-dst != ''
       run: |
         if [[ -d "${{ inputs.scp-src }}" || -f "${{ inputs.scp-src }}" ]]; then
-          scp -r -i ${{ inputs.ssh-key }} ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.scp-src }} ${{ inputs.ssh-user }}@${{ inputs.hostname }}:{{ inputs.scp-dst }}
+          scp -r -i ~/.ssh/id_rsa-temp ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.scp-src }} ${{ inputs.ssh-user }}@${{ inputs.hostname }}:{{ inputs.scp-dst }}
           scp_cmd_state=$?
         else
           echo "Source directory does not exist"
@@ -79,7 +90,7 @@ runs:
       # execute this step if the previous steps passed and require input is not empty
       if: steps.scp-cmd.outcome == 'success' && inputs.ssh-post != ''
       run: |
-        ssh -i ${{ inputs.ssh-key }} ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} ${{ inputs.ssh-post }}
+        ssh -i ~/.ssh/id_rsa-temp ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} ${{ inputs.ssh-post }}
         post_cmd_state=$?
         if [ $post_cmd_state == 2 ]; then
           echo "SSH connection failed"
@@ -91,19 +102,20 @@ runs:
       shell: bash
     - name: Execute rollback scp if post-command fails
       id: rollback-scp
-      if: steps.ssh-post-cmd.outcome == 'failure' && steps.scp-cmd.outcome == 'success' && input.scp-rollback
+      if: steps.ssh-post-cmd.outcome == 'failure' && steps.scp-cmd.outcome == 'success' && inputs.scp-rollback
       run: |
         scp_dst_rollback=${${{ inputs.scp-src }}%%/}
         scp_dst_rollback=${scp_dst_rollback##*/}
-        ssh -i ${{ inputs.ssh-key }} ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} "cd ${{ inputs.scp-dst }} && find -maxdepth 1 -name $scp_dst_rollback -exec rm -r {} \;"
+        ssh -i ~/.ssh/id_rsa-temp ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} "cd ${{ inputs.scp-dst }} && find -maxdepth 1 -name $scp_dst_rollback -exec rm -r {} \;"
       continue-on-error: true
       shell: bash
     - name: Execute rollback ssh-pre-command if scp or ssh-post command fail
       id: rollback-ssh-pre
-      if: ( steps.scp-cmd.outcome == 'failure' || steps.scp-cmd.outcome == 'skipped' || steps.ssh-post-cmd.outcome == 'failure' ) && input.ssh-pre-rollback != ''
+      if: ( steps.scp-cmd.outcome == 'failure' || steps.scp-cmd.outcome == 'skipped' || steps.ssh-post-cmd.outcome == 'failure' ) && inputs.ssh-pre-rollback != ''
       run: |
-        ssh -i ${{ inputs.ssh-key }} ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} ${{ inputs.ssh-pre-rollback }}
+        ssh -i ~/.ssh/id_rsa-temp ${{ inputs.ssh-opts }} -o "ConnectTimeout"=${{ inputs.connect-timeout }} ${{ inputs.ssh-user }}@${{ inputs.hostname }} ${{ inputs.ssh-pre-rollback }}
       shell: bash
     - name: Check on failures
-      if: steps.scp-cmd.outcome == 'failure' || steps.scp-cmd.outcome == 'skipped' || steps.ssh-post-cmd.outcome == 'failure'
+      if: steps.setup-env.outcome == 'failure' || steps.scp-cmd.outcome == 'failure' || steps.scp-cmd.outcome == 'skipped' || steps.ssh-post-cmd.outcome == 'failure'
       run: exit 1
+      shell: bash
