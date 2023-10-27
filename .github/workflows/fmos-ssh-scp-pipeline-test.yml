@@ -5,14 +5,55 @@ on:
       key:
         required: true
 jobs:
+  fmos-ssh-scp-pipeline-test-connection:
+    name: Test connection to static reporting server
+    runs-on: guest-hv1-fmos-3
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.4.5
+      options: "-v /srv/runner/workspace:/runner/workspace"
+    env:
+      SSH_KEY: ${{ inputs.key }}
+      STATICREPORTING_USER: 'zephyr'
+      STATICREPORTING_SERVER: 'zep-fmos-static-reporting.igk.intel.com'
+      SSH_OPTS: '-o "UserKnownHostsFile=/dev/null" -o "LogLevel ERROR" -o "StrictHostKeyChecking no"'
+      PATH_KEY: "$HOME/.ssh/id_rsa-temp"
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Setup environment
+        run: |
+          if [ ! -f ${{ env.PATH_KEY }} ]; then
+            if [ ! -d "$HOME/.ssh" ]; then
+              mkdir -p $HOME/.ssh
+            fi
+            echo "${{ secrets.IGK_PRIVATE_KEY }}" | tr -d '\r' >> ${{ env.PATH_KEY }}
+          fi
+          chmod 600 ${{ env.PATH_KEY }}
+          ls -la ${{ env.PATH_KEY }}
+        shell: bash
+      - name: Verify connection to static-reporting server
+        id: verify-conn
+        run: |
+          cat ${{ env.PATH_KEY }}
+          ssh -v -i ${{ env.PATH_KEY }} ${{ env.SSH_OPTS }} ${{ env.STATICREPORTING_USER }}@${{ env.STATICREPORTING_SERVER }}
+          if [ $? == 0 ]; then
+            echo "::set-output name=run_job_next::yes"
+          fi
+        shell: bash
+    outputs:
+      run_job_next: ${{ steps.verify-conn.outputs.run_job_next }}
+  
   fmos-ssh-scp-pipeline-test:
-    name: 
+    name: Test ssh scp pipeline
+    needs:
+      - fmos-ssh-scp-pipeline-test-connection
+    if: false && needs.fmos-ssh-scp-pipeline-test-connection.outputs.run_job_next == 'yes'
     runs-on: fmos-guest-ubuntu-24c
     container:
       image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.4.5
       options: "-v /srv/runner/workspace:/runner/workspace"
     env:
-      IGK_PRIVATE_KEY: ${{ inputs.key }}
       STATICREPORTING_USER: 'zephyr'
       STATICREPORTING_SERVER: 'zep-fmos-static-reporting.igk.intel.com'
     defaults:
@@ -40,7 +81,7 @@ jobs:
           touch twister.xml
       - name: ssh scp pipeline test
         id: ssh-scp-pipeline-test
-        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@main
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@awilczax/fix-fmos-ssh-scp-pipeline-test
         if: success()
         with:
           hostname: "$STATICREPORTING_SERVER"
