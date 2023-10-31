@@ -8,25 +8,25 @@ Only support **Linux** container.
 ## Usage
 
 ```yaml
-name: fmos ssh scp pipeline
+name: fmos scp ssh pipeline
 on:
   workflow_dispatch:
 jobs:
   build:
     name: Build
-    runs-on: fmos-guest-ubuntu-24c
+    runs-on: guest-hv1-fmos-3
     container: 
       image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.4.5
       options: "-v /srv/runner/workspace:/runner/workspace"
     steps:
     - uses: actions/checkout@v3
     - name: copy files via ssh
-      uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/scp-ssh-pipeline@main
+      uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@main
       with:
-        hostname: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
+        hostname: your-host-name
+        ssh-user: user-name-for-connect-to-host
         ssh-key: ${{ secrets.SSH-KEY }}
-        scp-src: "actions/test/twister.json,actions/test/twister.log"
+        scp-src: "$HOME/actions/test/twister.json, $HOME/actions/test/twister.log"
         scp-dst: your_server_target_folder_path
         ssh-pre: commands_executing_via_ssh_before_scp
         ssh-post: commands_executing_via_ssh_after_scp
@@ -39,7 +39,7 @@ jobs:
 See the [action.yml](./action.yml) file for more detail information.
 
 * hostname: ssh remote host (**required**)
-* username: ssh username (**required**)
+* ssh-user: user name for connect to host (**required**)
 * ssh-key: content of ssh private key (**required**)
 * ssh-opts: ssh connection options. 
   By default is -o "UserKnownHostsFile=/dev/null" -o "LogLevel ERROR" -o "StrictHostKeyChecking no"
@@ -50,4 +50,4 @@ See the [action.yml](./action.yml) file for more detail information.
 * ssh-post: execute post-commands after scp
 * ssh-pre-rollback: executue if scp or ssh-post steps fail it rollback 
   commands called in a pre-command
-* scp-rollback: true for rollback scp command. Is false by default.
+* scp-rollback: true for rollback scp command. It's false by default.
