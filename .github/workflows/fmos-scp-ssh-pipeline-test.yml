@@ -12,9 +12,9 @@ jobs:
       image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.4.5
       options: "-v /srv/runner/workspace:/runner/workspace"
     env:
-      SSH_KEY: ${{ inputs.key }}
       STATICREPORTING_USER: 'zephyr'
       STATICREPORTING_SERVER: 'zep-fmos-static-reporting.igk.intel.com'
+      SSH_KEY: ${{ secrets.IGK_PRIVATE_KEY }}
       SSH_OPTS: '-o "UserKnownHostsFile=/dev/null" -o "LogLevel ERROR" -o "StrictHostKeyChecking no"'
       PATH_KEY: "$HOME/.ssh/id_rsa-temp"
     defaults:
@@ -45,7 +45,7 @@ jobs:
       run_job_next: ${{ steps.verify-conn.outputs.run_job_next }}
   
   fmos-ssh-scp-pipeline-test:
-    name: Test ssh scp pipeline
+    name: 'Test ssh scp pipeline ${{ matrix.name }}'
     needs:
       - fmos-ssh-scp-pipeline-test-connection
     if: false && needs.fmos-ssh-scp-pipeline-test-connection.outputs.run_job_next == 'yes'
@@ -53,40 +53,74 @@ jobs:
     container:
       image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.4.5
       options: "-v /srv/runner/workspace:/runner/workspace"
-    env:
-      STATICREPORTING_USER: 'zephyr'
-      STATICREPORTING_SERVER: 'zep-fmos-static-reporting.igk.intel.com'
-    defaults:
-      run:
-        shell: bash
     strategy:
       fail-fast: false
       matrix:
-        scp-src: [ '', 'test_ssh_scp/twister.json,test_ssh_scp/twister.log' ]
-        scp-dst: [ '', '/home/zephyr/test_ssh_scp/' ]
-        ssh-pre: [ '', 'mkdir ~/test_ssh_scp' ]
-        ssh-post: [ '', 'mv ~/test_ssh_scp ~/test-ssh-post' ]
-        ssh-pre-rollback: [ '', 'rm -rf ~/test-ssh-post' ]
-        scp-rollback: [ false, true ]
+        subset: [1, 2, 3, 4]
+        include:
+          - subset: 1
+            name: 'SCP only.'
+            scp-src: '$HOME/test_ssh_scp/twister.json $HOME/test_ssh_scp/twister.log'
+            scp-dst: '/tmp/pipeline_test/'
+            ssh-post: 'rm -f /tmp/pipeline_test/*'
+            scp-rollback: false
+          - subset: 2
+            name: 'All steps execute, without rollback.'
+            ssh-pre: 'mkdir -p /tmp/test_ssh_scp_2 && rm -rf /tmp/test_ssh_post_2'
+            scp-src: '$HOME/test_ssh_scp/twister.json $HOME/test_ssh_scp/twister.log'
+            scp-dst: '/tmp/test_ssh_scp_2/'
+            ssh-post: 'mv /tmp/test_ssh_scp_2 /tmp/test_ssh_post_2'
+            scp-rollback: false
+          - subset: 3
+            name: 'Rollback ssh-pre after scp fails.'
+            ssh-pre: 'mkdir -p /tmp/test_ssh_scp_3'
+            scp-src: '$HOME/test_ssh_scp/twister.json $HOME/test_ssh_scp/twister.log'
+            scp-dst: '/tmp/dir_not_exists/'
+            ssh-post: 'mv /tmp/test_ssh_scp_3 /tmp/test_ssh_post_3'
+            ssh-pre-rollback: 'rm -rf /tmp/test_ssh_scp_3'
+            scp-rollback: true
+          - subset: 4
+            name: 'Rollback ssh-pre and scp after ssh-post fails.'
+            ssh-pre: 'mkdir -p /tmp/test_ssh_scp_4 && rm -rf /tmp/test_ssh_post_4'
+            scp-src: '$HOME/test_ssh_scp/twister.json $HOME/test_ssh_scp/twister.log'
+            scp-dst: '/tmp/test_ssh_scp_4/'
+            ssh-post: 'mv /tmp/dir_not_exists /tmp/test_ssh_post_4'
+            ssh-pre-rollback: 'rm -rf /tmp/test_ssh_pre_4'
+            scp-rollback: true
+    env:
+      STATICREPORTING_USER: 'zephyr'
+      STATICREPORTING_SERVER: 'zep-fmos-static-reporting.igk.intel.com'
+      SSH_KEY: ${{ secrets.IGK_PRIVATE_KEY }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Clean
         run: rm -rf test_ssh_scp
-      - name: Environment Setup
+      - name: Prepare Environment
         if: success()
         run: |
+          cd $HOME
           mkdir test_ssh_scp
           cd test_ssh_scp
           touch twister.log
           touch twister.json
           touch twister.xml
+          ls -la
       - name: ssh scp pipeline test
         id: ssh-scp-pipeline-test
-        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@awilczax/fix-fmos-ssh-scp-pipeline-test
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@main
         if: success()
         with:
-          hostname: "$STATICREPORTING_SERVER"
-          ssh-user: "$STATICREPORTING_USER"
-          ssh-key: "$IGK_PRIVATE_KEY"
+          hostname: ${{ env.STATICREPORTING_SERVER }}
+          ssh-user: ${{ env.STATICREPORTING_USER }}
+          ssh-key: ${{ env.SSH_KEY }}
+          scp-src: ${{ matrix.scp-src }}
+          scp-dst: ${{ matrix.scp-dst }}
+          ssh-pre: ${{ matrix.ssh-pre }}
+          ssh-post: ${{ matrix.ssh-post }}
+          ssh-pre-rollback: ${{ matrix.ssh-pre-rollback }}
+          scp-rollback: ${{ matrix.scp-rollback }}
         continue-on-error: true
       - name: Clean
         if: success()
