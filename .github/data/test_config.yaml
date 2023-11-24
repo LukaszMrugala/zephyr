@@ -43,3 +43,8 @@ levels:
       - libraries.heap
       - libraries.heap_align
       - libraries.os.*
+  - name: logic_analyzer
+    description: >
+      Tests using logic analyzer
+    adds:
+      - kernel.timer.timer_behavior_external

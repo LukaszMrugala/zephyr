@@ -1,0 +1,169 @@
+name: Run tests using logic analyzer
+on:
+  schedule:
+    - cron: '15 6 * * *' # once daily @ 06:15 UTC, for now, to avoid conflicts.
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run_twister:
+    name: '[HW] test ${{ matrix.platform }}'
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
+      options: "-v /srv/runner/workspace:/runner/workspace -v /tmp:/tmp ${{ matrix.container_options }}"
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+        IGK_PRIVATE_KEY: ${{ secrets.IGK_PRIVATE_KEY }}
+        HF_PRIVATE_KEY: ${{ secrets.HF_PRIVATE_KEY }}
+        LG_CROSSBAR: "ws://admin-fmos.igk.intel.com:80/lg"
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.5
+    strategy:
+      fail-fast: false
+      matrix:
+        platform_group: [1]
+        include:
+          - platform_group: 1
+            toolchain: 'zephyr'
+            hwtype: device
+            scope: logic_analyzer
+            platform: 'frdm_k64f'
+            variant: 'zephyr'
+            runner: fmos-testhost-nuc-igk-08
+            hwmap: "map-logic-analyzer.yaml"
+            twister_extra_args: "-X gpio_timerout"
+            pytest_args: "--pytest-args='--tool='saleae_logic2  --pytest-args='--tool-options=address=192.168.23.8,\
+              port=10430,\
+              channel=1,\
+              sample-rate=8_000_000,\
+              threshold-volts=0'"
+            container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
+
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: ${{ matrix.timeout || 180 }}
+    steps:
+      - name: Clean Workspace
+        run: |
+          # set dotglob so rm will remove dot files and dirs - (.west, etc.)
+          shopt -s dotglob
+          pwd
+          ls -la ./
+          rm -rf ./* || true
+          rm -rf ./.??* || true
+          ls -la ./
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+      - name: Environment Setup
+        shell: bash
+        run: |
+          touch $HOME/.git-credentials
+          touch $HOME/.gitconfig
+          git config --global user.email "sys_tmbuild@intel.com"
+          git config --global user.name "Github Builder CI"
+          git config --global credential.helper 'store --file=$HOME/.git-credentials'
+
+          mkdir -p /home/user/.ssh
+          echo -e "Host *\n    User zephyr\n    StrictHostKeyChecking no" >> /home/user/.ssh/config
+          if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
+            west init -l . || true
+          fi
+          west config --global update.narrow true
+          #west config --global update.path-cache "/runner/workspace"
+          # we need this here because our local manifest does import this repo
+          echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/drivers.audio.firmware.converged" > $HOME/.git-credentials
+          west update  2>&1 1> west.update.log || ( rm -rf ../intel ../modules ../bootloader ../tools && west update )
+          for r in `west  list -f {url} | grep intel-innersource | sed 's#https://##'`; do
+            echo -e "https://$TOKEN:$TOKEN@$r" >> $HOME/.git-credentials
+          done
+          # debug
+          cat $HOME/.git-credentials
+          git config --global --add safe.directory ${PWD}
+          west update
+          west forall -c 'git reset --hard HEAD'
+          pip install -r tests/kernel/timer/timer_behavior/pytest/requirements-saleae.txt
+
+      - name: Reset platform with pyocd
+        if: ${{ matrix.pyocd_board_id }}
+        shell: bash
+        run: |
+            echo "Resetting ${{ matrix.platform }} with pyocd"
+            python3 scripts/support/prepare_platform.py --pyocd-board-id "${{ matrix.pyocd_board_id }}" --pyocd-timeout $PYOCD_TIMEOUT
+        env:
+          PYOCD_TIMEOUT: ${{ matrix.pyocd_timeout || 5 }}
+
+      - name: Reset platform with labgrid
+        if: ${{ matrix.labgrid_place }}
+        shell: bash
+        run: |
+          echo "Resetting ${{ matrix.platform }} with labgrid, labgrid-crossbar: $LG_CROSSBAR"
+          eval $(ssh-agent -s) && echo "$IGK_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+          python3 scripts/support/prepare_platform.py --labgrid-place "${{ matrix.labgrid_place }}" --labgrid-crossbar "$LG_CROSSBAR" --labgrid-timeout $LG_TIMEOUT
+        env:
+          LG_TIMEOUT: ${{ matrix.labgrid_timeout || 5 }}
+
+      - name: Execute Tests
+        run: |
+          export PATH=/opt/tools/bin:$PATH
+          HW_MAP="map.yaml"
+          if [ ${{ matrix.hwmap }} ]; then
+            HW_MAP=${{ matrix.hwmap }}
+          fi
+          export DEV_TYPE="-x=CONFIG_BOOT_DELAY=500 --device-testing --hardware-map .github/data/${HW_MAP}"
+          export TWISTER_QUARANTINE_LIST=.github/data/twister-quarantine-list.yml
+
+          export PATH=$PATH:/opt/tools/bin
+          TEST_COV=${{ matrix.scope }}
+
+          # Ensure local network is not accessed via proxy
+          export no_proxy=$no_proxy,192.168.0.0/16
+
+          eval $(ssh-agent -s)
+          # faceless key used to access platforms located in IGK
+          echo "$IGK_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+
+          ./scripts/twister -M -x=USE_CCACHE=0 --inline-logs \
+            --force-color -v \
+            --quarantine-list $TWISTER_QUARANTINE_LIST \
+            --retry-failed 2 \
+            --retry-interval 15 \
+            --test-config .github/data/test_config.yaml \
+            --level $TEST_COV \
+            ${{ matrix.twister_extra_args }} \
+            ${{ matrix.pytest_args }} \
+            $DEV_TYPE \
+            -p ${{ matrix.platform }}
+
+      - name: Archive twister-out directory
+        id: tar-twister-out
+        if: (success() || failure() || cancelled())
+        run: |
+         # Give some time to Twister processes to close logs on cancel.
+         [ $(ps -ef | grep twister | wc -l) -ge 2 ] && sleep 60s
+         [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" | tar -czf subset-${{ strategy.job-index }}-${{ matrix.platform }}-twister-out.tar.gz -T -
+      - name: Upload twister-out.tar.gz archive per subset
+        if: (steps.tar-twister-out.outcome == 'success') && (success() || failure() || cancelled())
+        uses: actions/upload-artifact@v2
+        with:
+          name: subset-${{ strategy.job-index }}-${{ matrix.platform }}-twister-out archive in .tar.gz format
+          path: |
+            subset-${{ strategy.job-index }}-${{ matrix.platform }}-twister-out.tar.gz
+          retention-days: 5
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Unit Test Results (Subset ${{ strategy.job-index }})
+          path: |
+            twister-out/twister.log
+            twister-out/twister.xml
+            twister-out/twister.json
+          retention-days: 14
