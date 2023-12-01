@@ -1,0 +1,25 @@
+[Unit]
+Description=Static Reports Web Service
+After=syslog.target network.target
+
+[Service]
+Type=idle
+#User=root
+#PermissionsStartOnly=true
+WorkingDirectory=/var/www/static-reports
+#ExecStartPre=source /var/www/static-reports/.venv_sr_prod/bin/activate
+ExecStart=flask run
+#ExecStart=pwd
+#ExecReload=/bin/kill -HUP $MAINPID
+RuntimeDirectoryMode=755
+#Restart=always
+Restart=on-failure
+#Restart=on-abort
+StartLimitBurst=5
+# Restart, but not more than once every 10 minutes
+#StartLimitInterval=600
+# Restart, but not more than once every 30s (for testing purposes)
+StartLimitInterval=30
+
+[Install]
+WantedBy=multi-user.target
