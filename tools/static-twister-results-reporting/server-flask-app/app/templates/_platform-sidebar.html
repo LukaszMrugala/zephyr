@@ -1,0 +1,31 @@
+<nav class="col-md-2 d-none d-md-block bg-light sidebar">
+    <div class="sidebar-sticky pt-3">
+        <ul class="nav flex-column">
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Platforms
+            </div>
+
+            <li class="nav-item">
+                {% if self._TemplateReference__context.name == '/platform' %}
+                    {% for item in branch %}
+                        <a class="platform nav-link py-1 active" href="#" data-target="{{ item['name'] }}">
+                            <i class="fas fa-fw fa-cog"></i>
+                            <span>{{ item['name'] }}</span>
+                        </a>
+                    {% endfor %}
+                {% else %}
+                    {% for key, val in platforms.items() %}
+                        <a class="platform nav-link py-1 text-gray-800 font-weight-bold" href="/platform?p={{ key }}&run-date={{ run_date }}&branch={{ branch }}" data-target="{{ val }}">
+                            <i class="fas fa-fw fa-cog"></i>
+                            <span>{{ key }}</span>
+                        </a>
+                    {% endfor %}
+                {% endif %}
+            </li>
+        </ul>
+    </div>
+</nav>

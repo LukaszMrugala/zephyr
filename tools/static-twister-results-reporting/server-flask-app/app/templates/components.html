@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %} Components {% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <!-- <link href="{{ url_for('static', filename='vendor/datatables/Buttons-2.4.2/css/buttons.dataTables.min.css') }}" rel="stylesheet"> -->
+{% endblock %}
+
+{% block group_menu %}
+<div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="runDateMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Run date
+    </button>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        {% for item in date_runs %}
+            <a class="dropdown-item run_date" href="?run-date={{ item['path'] }}" data-target="{{ item['path'] }}">{{ item['date'] }}</a>
+        {% endfor %}
+    </div>
+</div>
+<div class="dropdown ml-3">
+    <button class="btn btn-secondary dropdown-toggle hi" disabled type="button" id="branchMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Branch
+    </button>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        {% for name, path in branch_list.items() %}
+            <a class="dropdown-item branch" href="/?branch={{ path }}" data-target="{{ path }}">{{ name }}</a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block app_content %}
+<main role="main" class="col pt-3 px-4">
+{#
+    <div class="d-flex flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <!-- Page Heading -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+            <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
+        </div>
+    </div>
+#}
+    <!-- Tabs navs -->
+    <ul class="nav nav-tabs mb-3" id="comp" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="comp-tab-1" data-toggle="tab" href="#comp-tabs-1" role="tab" aria-controls="comp-tabs-1" aria-selected="true">
+                Test suites results</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="comp-tab-2" data-toggle="tab" href="#comp-tabs-2" role="tab" aria-controls="comp-tabs-2" aria-selected="false">
+                Test cases results</a>
+        </li>
+    </ul>
+  <!-- Tabs navs -->
+  
+  <!-- Tabs content -->
+  <div class="tab-content" id="comp-content">
+    <div class="tab-pane fade show active" id="comp-tabs-1" role="tabpanel">
+        <div class="row card shadow mb-4 px-3">
+            <div class="card-body">
+                <div class="table-responsive">
+                    {{ table_comp_s | safe }}
+                </div>
+            </div>
+        </div>
+        <h4>List of test suites fail or error</h4>
+        <div class="row card shadow mb-4 px-3">
+            <div class="card-body">
+                <div class="table-responsive">
+                    {{ table_failures_s | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="comp-tabs-2" role="tabpanel">
+        <div class="row card shadow mb-4 px-3">
+            <div class="card-body">
+                <div class="table-responsive">
+                    {{ table_comp_c | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block modal %}
+    {{ super() }}
+    <!-- Modal Failures -->
+    <div class="modal fade" id="failuresModal" tabindex="-1" role="dialog" aria-labelledby="failuresModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                ...
+                </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+                </div>
+            </div>
+        </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    
+    <!-- Page level custom scripts -->
+    <script src="{{ url_for('static', filename='js/datatables-components.js') }}"></script>
+{% endblock %}

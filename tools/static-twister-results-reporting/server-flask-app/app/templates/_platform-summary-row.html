@@ -1,0 +1,164 @@
+<div class="row p-3">
+    <!-- Platform Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Platform</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ arch }} / {{ platform }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-gears fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Test Pass Rate Card -->
+    <div class="col-xl-2 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Pass rate
+                        </div>
+                        <div class="row no-gutters align-items-center">
+                            <div class="col-auto">
+                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ tests_result.pass_rate }}%</div>
+                            </div>
+                            <div class="col text-right">
+                                <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                        <div class="row no-gutters align-items-center">
+                            <div class="col">
+                                <div class="progress progress-sm mr-2">
+                                    {% set bg_color = 'bg-success' %}
+                                    {% if tests_result.pass_rate < 97 %}
+                                        {% set bg_color = 'bg-warning' %}
+                                    {% endif %}
+                                    {% if tests_result.pass_rate < 90 %}
+                                        {% set bg_color = 'bg-danger' %}
+                                    {% endif %}
+                                    <div class="progress-bar {{ bg_color }}" role="progressbar"
+                                        style="width: {{ tests_result.pass_rate }}%;" aria-valuenow="50" aria-valuemin="0"
+                                        aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Cases Card -->
+    <div class="col-xl-auto col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Test cases</div>
+                        <div class="h5 mb-0 mr-2 font-weight-bold text-gray-800">{{ tests_result.test_cases }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Passed Card -->
+    <div class="col-xl-auto col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Passes</div>
+                        <div class="h5 mb-0 mr-2 font-weight-bold text-gray-800">{{ tests_result.passed }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Failures Card -->
+    <div class="col-xl-auto col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Failures</div>
+                        <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ tests_result.failed }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Blocked Card -->
+    <div class="col-xl-auto col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Blocked</div>
+                        <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ tests_result.blocked }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Blocked Card -->
+    <!-- <div class="col-xl-1 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Error</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ tests_result.error }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+    <!-- Test Skipped Card -->
+    <div class="col-xl-auto col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Skipped</div>
+                        <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ tests_result.skipped }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

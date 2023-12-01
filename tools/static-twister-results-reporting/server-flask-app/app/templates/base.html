@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <!-- Custom fonts for this template -->
+    {{ fontawesome_html() }}
+    <!-- <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet"> -->
+
+    <link href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('static', filename='css/sb-admin-2.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    
+    <title>{% block title %}{% endblock %} - Static Reporting Server</title>
+    {% endblock %}
+</head>
+<body id="page-top">
+    <nav class="navbar sticky-top navbar-light flex-md-nowrap p-0 shadow bg-zephyr">
+        <div class="navbar-brand col-xl-auto col-md-2">
+            <a class="mr-0" href="/">
+                <div class="sidebar-brand-icon"><img src="{{ url_for('static', filename='img/logo.svg') }}" class="logo" alt="Logo" width="210px"></div>
+                <div class="mx-3 align-items-center justify-content-center bg-zephyr">Daily Testing Reports</div>
+            </a>
+        </div>
+        <div class="menu col-xl-2 col-md-2">
+            <div class="row mt-3">
+                <div class="btn-group btn-group-toggle mx-auto">
+                    <a class="btn btn-outline-secondary {%+ if not table_comp_s %}active{% endif %}" id="nav-platforms" href="/" role="button">Platforms</a>
+                    <a class="btn btn-outline-secondary {%+ if table_comp_s %}active{% endif %}" id="nav-components" href="/components" role="button">Components</a>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="btn-group btn-group-toggle mx-auto">
+                    {% block group_menu %}{% endblock %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-6 mb-2 mt-2">
+            <div class="card border-left-primary shadow h-50 py-1">
+                <div class="card-body py-2">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col-auto">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
+                                Branch</div>
+                            <div class="h6 mb-0 font-weight-bold text-gray-800">{{ branch }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-6 mb-2 mt-2">
+            <div class="card border-left-primary shadow h-50 py-1">
+                <div class="card-body py-2">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col-auto">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
+                                Run date</div>
+                            <div class="h6 mb-0 font-weight-bold text-gray-800">{{ run_date_time }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-6 mb-2 mt-2">
+            <div class="card border-left-primary shadow h-50 py-1">
+                <div class="card-body py-2">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col-auto">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
+                                Commit date</div>
+                            <div class="h6 mb-0 font-weight-bold text-gray-800">{{ commit_date }}
+                            <!-- <i class="fas fa-calendar fa-2x text-gray-300"></i> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-6 mb-2 mt-2">
+            <div class="card border-left-primary shadow h-50 py-1">
+                <div class="card-body py-2">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
+                                Zephyr version</div>
+                            <div class="h6 mb-0 font-weight-bold text-gray-800">{{ zephyr_version }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- End of Topbar -->
+    <div class="container-fluid">
+        <div class="row">
+            {% block sidebar %}{% endblock %}
+            {% block app_summary %}{% endblock %}
+            <!-- Begin Page Content -->
+            {% block app_content %}{% endblock %}
+        </div>
+    </div>
+    <!-- /.container-fluid -->
+    <!-- Footer -->
+    <footer class="sticky-footer bg-white">
+        <div class="container my-auto">
+            <div class="copyright text-center my-auto">
+                <span>Copyright &copy; CI Test Results Report 2023</span>
+            </div>
+        </div>
+    </footer>
+    <!-- End of Footer -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+{% block modal %}
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                    <a class="btn btn-primary" href="login.html">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+<!-- All scripts will go here -->
+{% block scripts %}
+	{{ bootstrap.load_js() }}
+    
+    <script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script>
+
+{% endblock %}
+    <!-- Custom scripts for all pages-->
+    <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+</body>
+</html>
