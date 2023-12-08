@@ -6,7 +6,6 @@
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59145,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50145
-    - --rimage-tool=/usr/local/bin/rimage
 - connected: false
   id: whl1
   platform: intel_adsp_cavs18
@@ -15,7 +14,6 @@
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59143,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50143
-    - --rimage-tool=/usr/local/bin/rimage
 - connected: true
   id: whl2
   platform: intel_adsp_cavs18
@@ -24,7 +22,6 @@
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59144,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50144
-    - --rimage-tool=/usr/local/bin/rimage
 - connected: false
   id: tgl1
   platform: intel_adsp_cavs25
@@ -33,7 +30,6 @@
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59141,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50141
-    - --rimage-tool=/usr/local/bin/rimage
 - connected: false
   id: tgl2
   platform: intel_adsp_cavs25
@@ -42,7 +38,6 @@
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59142,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50142
-    - --rimage-tool=/usr/local/bin/rimage
 - connected: true
   id: tgl3
   platform: intel_adsp_cavs25
@@ -51,7 +46,6 @@
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59146,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50146
-    - --rimage-tool=/usr/local/bin/rimage
 - connected: true
   id: tgl4
   platform: intel_adsp_cavs25
@@ -60,7 +54,6 @@
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59147,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50147
-    - --rimage-tool=/usr/local/bin/rimage
 - connected: true
   available: true
   id: '0002451700'
