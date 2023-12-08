@@ -7,29 +7,6 @@
   <!-- <link href="{{ url_for('static', filename='vendor/datatables/Buttons-2.4.2/css/buttons.dataTables.min.css') }}" rel="stylesheet"> -->
 {% endblock %}
 
-{% block group_menu %}
-<div class="dropdown">
-    <button class="btn btn-secondary dropdown-toggle" type="button" id="runDateMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Run date
-    </button>
-    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-        {% for item in date_runs %}
-            <a class="dropdown-item run_date" href="?run-date={{ item['path'] }}" data-target="{{ item['path'] }}">{{ item['date'] }}</a>
-        {% endfor %}
-    </div>
-</div>
-<div class="dropdown ml-3">
-    <button class="btn btn-secondary dropdown-toggle hi" disabled type="button" id="branchMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Branch
-    </button>
-    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-        {% for name, path in branch_list.items() %}
-            <a class="dropdown-item branch" href="/?branch={{ path }}" data-target="{{ path }}">{{ name }}</a>
-        {% endfor %}
-    </div>
-</div>
-{% endblock %}
-
 {% block app_content %}
 <main role="main" class="col pt-3 px-4">
 {#
@@ -82,33 +59,23 @@
                 </div>
             </div>
         </div>
+        <h4>List of test cases fail or error</h4>
+        <div class="row card shadow mb-4 px-3">
+            <div class="card-body">
+                <div class="table-responsive">
+                    {{ table_failures_c | safe }}
+                </div>
+            </div>
+        </div>
     </div>
   </div>
 </main>
 {% endblock %}
 
-{% block modal %}
-    {{ super() }}
-    <!-- Modal Failures -->
-    <div class="modal fade" id="failuresModal" tabindex="-1" role="dialog" aria-labelledby="failuresModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Modal title</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                ...
-                </div>
-                    <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
-                </div>
-            </div>
-        </div>
-  </div>
+{% block date_runs_menu %}            
+    {% for item in date_runs %}
+        <a class="dropdown-item run_date" href="?run-date={{ item }}" data-target="{{ item }}">{{ item }}</a>
+    {% endfor %}
 {% endblock %}
 
 {% block scripts %}

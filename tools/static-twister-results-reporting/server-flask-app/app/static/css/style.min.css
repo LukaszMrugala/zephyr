@@ -5,3 +5,4 @@
  * Licensed under MIT
  */
  .bg-zephyr{background-color:#333f67;color:#fff!important}#failuresModal .close,.sidebar.sidebar-zephyr a{color:#fff}#dataTableFailures th{white-space:nowrap!important}table.dataTable{border-collapse:unset}table.dataTable>thead>tr>th{border-bottom:2px solid #e3e6f0}table.dataTable>thead>tr>td,table.dataTable>thead>tr>th{padding:8px 16px}@media (min-width:768px){.sidebar{width:17rem!important}}.dataTable.dt-components tr.even>td:first-child,.dataTable.dt-components tr.odd>td:first-child{text-align:center}.dataTable.dt-components tr>td:last-child,tr.dtrg-group.dtrg-start>td{text-align:right}tr.dtrg-group.dtrg-start{background-color:#f6f8ff}tr.dtrg-group.dtrg-start>td:first-child{text-align:left}#failuresModal .modal-header,tr.dtrg-group.dtrg-start.collapsed{font-weight:700}#failuresModal .modal-body{background-color:#333;color:#f0f8ff}#failuresModal .modal-footer,#failuresModal .modal-header{color:#9b9b9b;background:#343131}
+ 

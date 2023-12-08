@@ -39,7 +39,24 @@
             </div>
             <div class="row mt-3">
                 <div class="btn-group btn-group-toggle mx-auto">
-                    {% block group_menu %}{% endblock %}
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="runDateMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Run date
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            {% block date_runs_menu %}{% endblock %}
+                        </div>
+                    </div>
+                    <div class="dropdown ml-3">
+                        <button class="btn btn-secondary dropdown-toggle hi" disabled type="button" id="branchMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Branch
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            {% for name, path in branch_list.items() %}
+                                <a class="dropdown-item branch" href="/?branch={{ path }}" data-target="{{ path }}">{{ name }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -129,25 +146,25 @@
     </a>
 
 {% block modal %}
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
+    <!-- Modal Failures -->
+    <div class="modal fade" id="failuresModal" tabindex="-1" role="dialog" aria-labelledby="failuresModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
+                    <h5 class="modal-title">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="login.html">Logout</a>
+                <div class="modal-body">
+                ...
+                </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
-    </div>
+  </div>
 {% endblock %}
 
 <!-- All scripts will go here -->

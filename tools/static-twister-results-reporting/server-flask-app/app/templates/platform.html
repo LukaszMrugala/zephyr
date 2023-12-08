@@ -8,29 +8,6 @@
     <!-- End of Sidebar -->
 {% endblock %}
 
-{% block group_menu %}
-<div class="dropdown">
-    <button class="btn btn-secondary dropdown-toggle" type="button" id="runDateMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Run date
-    </button>
-    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-        {% for item in date_runs %}
-            <a class="dropdown-item run_date" href="?run-date={{ item['path'] }}&p={{ platform }}" data-target="{{ item['path'] }}">{{ item['date'] }}</a>
-        {% endfor %}
-    </div>
-</div>
-<div class="dropdown ml-3">
-    <button class="btn btn-secondary dropdown-toggle hi" disabled type="button" id="branchMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Branch
-    </button>
-    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-        {% for name, path in branch_list.items() %}
-            <a class="dropdown-item branch" href="?branch={{ path }}&p={{ platform }}" data-target="{{ path }}">{{ name }}</a>
-        {% endfor %}
-    </div>
-</div>
-{% endblock %}
-
 {% block app_summary %}
     <!-- Content Summary Row -->
 {% endblock %}
@@ -39,14 +16,27 @@
 <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-3 pt-3">
     <div class="d-flex flex-wrap flex-md-nowrap align-items-center border-bottom"></div>
     {% include "_platform-summary-row.html" %}
+    <div class="row card shadow mb-4 px-3">
     <!-- Content Table Row -->
-    {% include "_tables.html" %} 
+        {% include "_tables.html" %}
+
+        <ul>
+            <li>TS - test suite</li>
+            <li>TC - test case</li>
+        </ul>
+    </div>
 </main>
+{% endblock %}
+
+{% block date_runs_menu %}
+    {% for item in date_runs %}
+        <a class="dropdown-item run_date" href="?run-date={{ item }}&p={{ platform }}" data-target="{{ item }}">{{ item }}</a>
+    {% endfor %}
 {% endblock %}
 
 {% block scripts %}
     {{ super() }}
-    
+
     <!-- Page level custom scripts -->
     <script src="{{ url_for('static', filename='js/datatables-failures.js') }}"></script>
 {% endblock %}
