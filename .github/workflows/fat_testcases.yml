@@ -1,0 +1,180 @@
+name: 'Run FAT testcases'
+on:
+  schedule:
+    - cron: '55 5 * * *' # once daily @ 05:55 UTC, to avoid conflicts.
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run_fat_testcases:
+    defaults:
+      run:
+        shell: bash
+    runs-on: fmos-guest-ubuntu-24c
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
+      env:
+        ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+        ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.4
+        ZEPHYR_TOOLCHAIN_VARIANT: xt-clang
+        XTENSA_TOOLCHAIN_PATH: /opt/toolchains/xtensa/XtDevTools/install/tools
+        XTENSA_CORE: ace10_LX7HiFi4_2022_10
+        TOOLCHAIN_VER: RI-2022.10-linux
+        XTENSA_BUILDS_DIR: /opt/toolchains/xtensa/XtDevTools/install/builds
+        XTENSAD_LICENSE_FILE: 84300@xtensa01p.elic.intel.com
+        XTENSA_SYSTEM: /opt/toolchains/xtensa/XtDevTools/install/tools/RI-2022.10-linux/XtensaTools/config/
+    steps:
+      - name: Clean
+        shell: bash
+        run: |
+          # set dotglob so rm will remove dot files and dirs - (.west, etc.)
+          shopt -s dotglob
+          ls -la ./
+          rm -rf ./* || true
+          rm -rf ./.??* || true
+          rm -rf ../build-mtl || true
+          # just to be sure...
+          sudo rm -rf *
+          echo "Post Clean Below"
+          ls -la ./
+
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Environment Setup
+        shell: bash
+        run: |
+          touch $HOME/.git-credentials
+          touch $HOME/.gitconfig
+          git config --global user.email "sys_tmbuild@intel.com"
+          git config --global user.name "Github Builder CI"
+          git config --global credential.helper 'store --file=$HOME/.git-credentials'
+          if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
+            west init -l . || true
+          fi
+          west config --global update.narrow true
+          west config --global update.path-cache "/runner/workspace"
+          echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/frameworks.validation.firmware-automated-testing.fat" > $HOME/.git-credentials
+          echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/applications.audio.simulator.std-sim" > $HOME/.git-credentials
+
+          west update  2>&1 1> west.update.log || ( rm -rf ../intel ../modules ../bootloader ../tools && west update )
+          for r in `west  list -f {url} | grep intel-innersource | sed 's#https://##'`; do
+            echo -e "https://$TOKEN:$TOKEN@$r" >> $HOME/.git-credentials
+          done
+          # debug
+          cat $HOME/.git-credentials
+          git config --global --add safe.directory ${PWD}
+          west update --path-cache /runner/workspace
+          west forall -c 'git reset --hard HEAD'
+
+          sudo apt-get update
+          export PYTHONPATH="${PYTHONPATH}:/github/home/.local/bin"
+          sudo apt-get -y install cifs-utils curl make zlib1g-dev libsqlite3-dev libbz2-dev zlib1g-dev libreadline-dev libffi-dev libkrb5-dev libasound-dev libportaudio2 libportaudiocpp0 portaudio19-dev
+          python3.10 -m pip install --upgrade pip
+          python3.10 -m pip install meson ninja
+          python3.10 -m pip install -r ${GITHUB_WORKSPACE}/../intel/frameworks.validation.firmware-automated-testing.fat/requirements.txt
+
+          cp ${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/config.ini ${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/configfat.ini
+          sed -i '/GLOBAL/d' ${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/configfat.ini
+
+      - name: Build RIMAGE
+        run: |
+          pushd ../modules/audio/sof/tools/rimage
+          cmake -B build/
+          make  -C build/
+          sudo cp build/rimage /usr/local/bin/
+          popd
+
+      - name: Build SOF Image
+        run: |
+          export ZEPHYR_BASE=${GITHUB_WORKSPACE}
+          cd ${GITHUB_WORKSPACE}/..
+          west build --build-dir build-mtl -p always -b intel_adsp_ace15_mtpm ./modules/audio/sof/app
+          cp ${GITHUB_WORKSPACE}/../build-mtl/zephyr/zephyr.ri ${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm
+
+      - name: Run FAT testcases
+        shell: bash
+        run: |
+          cd ${GITHUB_WORKSPACE}/../intel/frameworks.validation.firmware-automated-testing.fat
+          git submodule update --init --recursive
+
+          mtl_test_list=( "tests/ace/fw_100_base_fw/test_17_fw_manifest.py::TestFwManifest::test_100_17_verify_core_type_field"
+                          "tests/avs/fw_00_basic/test_00_load_fw_basic.py::TestLoadFwBasic::test_00_00_load_fw_default"
+                          "tests/avs/fw_02_base_fw_api/test_01_fw_large_config_get.py::TestFwLargeConfigGet::test_02_01_fw_config"
+                          "tests/avs/fw_00_basic/test_01_load_fw_extended.py::TestLoadFwExtended::test_00_01_load_fw_and_check_responsiveness"
+                          "tests/avs/fw_02_base_fw_api/test_02_mem_reclaim_no.py::TestMemReclaimNo::test_02_02_memory_reclaim"
+                          "tests/avs/fw_02_base_fw_api/test_09_memory_state_info.py::TestMemoryStateInfoGet::test_02_09_memory_state_after_load_fw"
+                          "tests/ace/fw_100_base_fw/test_00_enable_logs.py::TestFwEnableLogs::test_100_00_enable_logs_memory_window"
+                          "tests/ace/fw_100_base_fw/test_02_memory_window.py::TestMemoryWindow::test_100_02_memory_window_ipc_communication"
+                          "tests/ace/fw_102_base_fw_api/test_18_pipeline_negative_tests.py::TestPplCustomFlows::test_102_18_ppl_create_after_create"
+                          "tests/ace/fw_102_base_fw_api/test_18_pipeline_negative_tests.py::TestPplCustomFlows::test_102_18_ppl_pause_after_delete"
+                          "tests/ace/fw_102_base_fw_api/test_18_pipeline_negative_tests.py::TestPplCustomFlows::test_102_18_ppl_reset_after_delete"
+                          "tests/ace/fw_102_base_fw_api/test_18_pipeline_negative_tests.py::TestPplCustomFlows::test_102_18_ppl_reset_before_create"
+                          "tests/ace/fw_102_base_fw_api/test_18_pipeline_negative_tests.py::TestPplCustomFlows::test_102_18_ppl_run_after_delete"
+                          "tests/avs/sim_00_basic/test_01_iface_hda_host_dma.py::TestIfaceHdaHostDma::test_hda_dma_loopack"
+                          "tests/avs/fw_00_basic/test_01_load_fw_extended.py::TestLoadFwExtended::test_00_01_load_fw_custom_dma[12]"
+                          "tests/ace/fw_107_dmic/test_01_ace_dmic_basic.py::TestDmicBasic::test_107_01_ace_raw_capture[16000Hz_16in16bit_4ch_1200000]"
+                          "tests/avs/fw_02_base_fw_api/test_01_fw_large_config_get.py::TestFwLargeConfigGet::test_02_01_hw_config"
+                          "tests/avs/fw_00_basic/test_01_load_fw_extended.py::TestLoadFwExtended::test_00_01_check_dma_configuration")
+
+          #dont exit or error
+          set +e
+          for test in ${mtl_test_list[@]}; do
+            python3.10 -m pytest -p no:labgrid --iterations=1 -sv --platform=mtl \
+            --pnp-sim --pnp-sim-path=${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/ \
+            --pnp-sim-params="config=${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/configfat.ini" \
+            --fw=${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/zephyr.ri \
+            $test
+          done
+
+      - name: Upload FAT Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test_results
+          path: |
+            /tmp/history/cAVS/*
+          retention-days: 14
+
+  publish-test-results:
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+    env:
+      ELASTICSEARCH_KEY: ${{ secrets.ELASTICSEARCH_KEY }}
+      ELASTICSEARCH_SERVER: 'https://reports-fmos.hf.intel.com:9200'
+    name: '[FAT] Publish Test Results'
+    needs: [run_fat_testcases]
+    runs-on: fmos-guest-ubuntu-24c
+    continue-on-error: true
+    if: success() || failure()
+    steps:
+      - name: Clean and Pre Environment
+        run: |
+          rm -rf artifacts
+          pip3 install elasticsearch
+
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: Upload to ElasticSearch Instance scheduled
+        if: github.event_name == 'schedule'
+        run: |
+          run_date=`date --iso-8601=minutes`
+          echo ${run_date}
+          python3 ./scripts/ci/upload_test_results_fat.py -r ${run_date} \
+            -i zephyr-tests-fat artifacts/**
