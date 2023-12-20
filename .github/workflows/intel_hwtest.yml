@@ -98,7 +98,7 @@ jobs:
             runner: fmos-testhost-nuc-igk-02
             hwmap: "map-igk.yaml"
             container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
-            pyocd_board_id: "02400b0148824e450023700add8900048761000097969900,02400b0148824e450029700fdedd005598d1000097969900"
+            pyocd_board_id: "02400b0150234e45003600045f780029b931000197969900,02400b0150234e45005200045f780021b931000197969900"
             pyocd_timeout: 10
           - platform_group: 8
             toolchain: 'zephyr'
