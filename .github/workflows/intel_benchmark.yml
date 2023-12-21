@@ -1,0 +1,422 @@
+name: 'Run benchmarks (Intel)'
+on:
+  # TODO: execute conditionally on push requests if needed
+  # push:
+  #  branches:
+  #    - main-intel
+  #
+  # Assigh time window to execute benchmarks at the less busy hours.
+  schedule:
+    - cron: '15 1 * * *' # once daily @ 01:15 UTC
+  #
+  # TODO: execute conditionally from PR if needed
+  # pull_request:
+  #  branches:
+  #    - main-intel
+  #
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target'
+        type: choice
+        required: true
+        default: 'all'
+        options:
+          - all
+          - intel_adsp/cavs25
+          - intel_adsp/ace15_mtpm/sim
+          - intel_adsp/ace20_lnl/sim
+          - intel_adsp/ace30_ptl/sim
+          - nsim/nsim_em
+          - mec172xevb_assy6906
+          - mec15xxevb_assy6853
+          - frdm_k64f
+          - intel_adsp/ace15_mtpm
+          - intel_adsp/ace20_lnl
+          - intel_ish_5_8_0/intel_ish_5_8_0/simics
+          - intel_ish_5_4_1/intel_ish_5_8_0/simics
+          - intel_ish_5_4_1
+          - npcx9m6f_evb
+          - up_squared
+          - it8xxx2_evb
+      scope:
+        description: 'Benchmark Scope'
+        type: choice
+        required: true
+        options:
+          - benchmark_latency
+      debug:
+        description: 'Debug'
+        type: choice
+        required: true
+        default: 'none'
+        options:
+          - none
+          - twister-debug
+
+
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && github.run_id || github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  setup:
+    name: Setup
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    runs-on: fmos-guest-ubuntu-12c
+    outputs:
+      targets: ${{ steps.generate-matrix.outputs.targets }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+      - name: Packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+      - name: Generate matrix
+        id: generate-matrix
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # pull request
+            build_target_all="y"
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # dispatch
+            target=${{ github.event.inputs.target }}
+            target=${target//\//_}
+            eval build_target_$target="y"
+          else
+            # push / schedule
+            build_target_all="y"
+          fi
+
+
+          if [ "${build_target_all}" == "y" ]; then
+            for target in `jq -r '.[].platform' .github/data/targets.json`; do
+              eval build_target_${target//\//_}="y"
+            done
+          fi
+
+          MATRIX_TARGETS='['
+          for target in `jq -r '.[].platform' .github/data/targets.json`; do
+            eval check='$'build_target_${target//\//_}
+            if [ "${check}" == "y" ]; then
+              MATRIX_TARGETS+=$(jq --arg target "$target" '.[] | select(.platform == $target)' .github/data/targets.json),
+            fi
+          done
+          MATRIX_TARGETS+=']'
+
+          # Escape control characters because GitHub Actions
+          MATRIX_TARGETS="${MATRIX_TARGETS//'%'/''}"
+          MATRIX_TARGETS="${MATRIX_TARGETS//$'\n'/''}"
+          MATRIX_TARGETS="${MATRIX_TARGETS//$'\r'/''}"
+
+          MATRIX_TARGETS=$(echo "${MATRIX_TARGETS}" | sed -zr 's/,([^,]*$)/\1/')
+
+          echo "targets=${MATRIX_TARGETS}" >> $GITHUB_OUTPUT
+
+  run_twister:
+    name: '[HW] test ${{ matrix.target.platform }}'
+    needs: setup
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
+      options: "-v /srv/runner/workspace:/runner/workspace ${{ matrix.target.container_options }}"
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+        SSH_KEY_FMOS_DEV_SIMICS: ${{ secrets.ISH_SIMICS_NUC_HWTEST_SSH_KEY }}
+        SSH_KEY_FMOS_QA_SIMICS: ${{ secrets.ISH_SIMICS_FMOS_QA_SSH }}
+        IGK_PRIVATE_KEY: ${{ secrets.IGK_PRIVATE_KEY }}
+        HF_PRIVATE_KEY: ${{ secrets.HF_PRIVATE_KEY }}
+        LG_CROSSBAR: "ws://admin-fmos.igk.intel.com:80/lg"
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.5
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.setup.outputs.targets) }}
+
+    runs-on: ${{ matrix.target.runner }}
+    timeout-minutes: ${{ matrix.target.timeout || 180 }}
+    steps:
+      - name: Clean Workspace
+        run: |
+          # set dotglob so rm will remove dot files and dirs - (.west, etc.)
+          shopt -s dotglob
+          pwd
+          ls -la ./
+          rm -rf ./* || true
+          rm -rf ./.??* || true
+          ls -la ./
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+      - name: Environment Setup
+        shell: bash
+        run: |
+          touch $HOME/.git-credentials
+          touch $HOME/.gitconfig
+          git config --global user.email "sys_tmbuild@intel.com"
+          git config --global user.name "Github Builder CI"
+          git config --global credential.helper 'store --file=$HOME/.git-credentials'
+
+          mkdir -p /home/user/.ssh
+          echo -e "Host *\n    User zephyr\n    StrictHostKeyChecking no" >> /home/user/.ssh/config
+          if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
+            west init -l . || true
+          fi
+          west config manifest.group-filter -- -fat
+          if [ ${{ matrix.target.west_project_filter }} ]; then
+            west config manifest.project-filter -- ${{ matrix.target.west_project_filter }}
+          fi
+          west config --global update.narrow true
+          #west config --global update.path-cache "/runner/workspace"
+          # we need this here because our local manifest does import this repo
+          echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/drivers.audio.firmware.converged" > $HOME/.git-credentials
+          west update  2>&1 1> west.update.log || ( rm -rf ../intel ../modules ../bootloader ../tools && west update )
+          for r in `west  list -f {url} | grep intel-innersource | sed 's#https://##'`; do
+            echo -e "https://$TOKEN:$TOKEN@$r" >> $HOME/.git-credentials
+          done
+          # debug
+          cat $HOME/.git-credentials
+          git config --global --add safe.directory ${PWD}
+          west update  2>&1 1> west.update.log || ( rm -rf ../intel ../modules ../bootloader ../tools && west update )
+          west forall -c 'git reset --hard HEAD'
+
+      - name: Reset platform with pyocd
+        if: ${{ matrix.target.pyocd_board_id }}
+        shell: bash
+        run: |
+            echo "Resetting ${{ matrix.target.platform }} with pyocd"
+            python3 scripts/support/prepare_platform.py --pyocd-board-id "${{ matrix.target.pyocd_board_id }}" --pyocd-timeout $PYOCD_TIMEOUT
+        env:
+          PYOCD_TIMEOUT: ${{ matrix.target.pyocd_timeout || 5 }}
+
+      - name: Reset platform with labgrid
+        if: ${{ matrix.target.labgrid_place }}
+        shell: bash
+        run: |
+          echo "Resetting ${{ matrix.target.platform }} with labgrid, labgrid-crossbar: $LG_CROSSBAR"
+          eval $(ssh-agent -s) && echo "$IGK_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+          python3 scripts/support/prepare_platform.py --labgrid-place "${{ matrix.target.labgrid_place }}" --labgrid-crossbar "$LG_CROSSBAR" --labgrid-timeout $LG_TIMEOUT --dpcmd-erase $DPCMD_ERASE --dpcmd-place $DPCMD_PLACE
+        env:
+          LG_TIMEOUT: ${{ matrix.target.labgrid_timeout || 5 }}
+          DPCMD_ERASE: ${{ matrix.target.dpcmd_erase || 'False' }}
+          DPCMD_PLACE: ${{matrix.target.dpcmd_place || 'None' }}
+
+      - name: Build RIMAGE
+        if: ${{ contains(matrix.target.platform, 'intel_adsp') }}
+        run: |
+          pushd ../modules/audio/sof/tools/rimage
+          cmake -B build/
+          make  -C build/
+          sudo cp build/rimage /usr/local/bin/
+          popd
+      - name: Execute Tests
+        run: |
+          export MEC172X_SPI_GEN=/opt/tools/bin/mec172x_spi_gen_lin_x86_64
+          export EVERGLADES_SPI_GEN=/opt/tools/bin/everglades_spi_gen_lin64
+          export PATH=/opt/tools/bin:$PATH
+          # device vs sim
+          HW_MAP="map.yaml"
+          if [ ${{ matrix.target.hwmap }} ]; then
+            HW_MAP=${{ matrix.target.hwmap }}
+          fi
+          if [ ${{ matrix.target.hwtype }} == 'device' ]; then
+            export DEV_TYPE="-x=CONFIG_BOOT_DELAY=500 --device-testing --hardware-map .github/data/${HW_MAP}"
+          fi
+          # toolchain
+          if [ ${{ matrix.target.toolchain }} == 'xcc' ]; then
+            export ZEPHYR_TOOLCHAIN_VARIANT=${{ matrix.target.variant }}
+            export XTENSA_TOOLCHAIN_PATH=/opt/toolchains/xtensa/XtDevTools/install/tools
+            export XTENSA_CORE=${{ matrix.target.xtensa_core }}
+            export TOOLCHAIN_VER=${{ matrix.target.toolchain_ver }}
+            export XTENSA_BUILDS_DIR=/opt/toolchains/xtensa/XtDevTools/install/builds
+            export TWISTER_QUARANTINE_LIST=.github/data/xcc-twister-quarantine-list.yml
+            export XTENSA_SYSTEM=/opt/toolchains/xtensa/XtDevTools/install/tools/${{ matrix.target.toolchain_ver }}/XtensaTools/config/
+          else
+            export TWISTER_QUARANTINE_LIST=.github/data/twister-quarantine-list.yml
+          fi
+
+          export PATH=$PATH:/opt/tools/bin
+          EXTRA_TWISTER_OPTS=""
+          if [ "${{github.event_name}}" = "pull_request" ]; then
+            TEST_COV=benchmark_latency
+            export TWISTER_QUARANTINE_LIST=.github/data/pr-quarantine-list.yml
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            TEST_COV=${{ github.event.inputs.scope }}
+            if [ "${{ github.event.inputs.debug }}" == "twister-debug" ]; then
+              EXTRA_TWISTER_OPTS="-v"
+            fi
+          else
+            TEST_COV=benchmark_latency
+          fi
+
+          # Ensure local network is not accessed via proxy
+          export no_proxy=$no_proxy,192.168.0.0/16
+
+          eval $(ssh-agent -s)
+          echo "$SSH_KEY_FMOS_DEV_SIMICS" | tr -d '\r' | ssh-add -
+          echo "$SSH_KEY_FMOS_QA_SIMICS" | tr -d '\r' | ssh-add -
+          # faceless key used to access platforms located in IGK
+          echo "$IGK_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+
+          ./scripts/twister -M -x=USE_CCACHE=0 --inline-logs \
+            --force-color -v \
+            ${EXTRA_TWISTER_OPTS} \
+            --quarantine-list $TWISTER_QUARANTINE_LIST \
+            --retry-build-errors \
+            --retry-failed 2 \
+            --retry-interval 15 \
+            --test-config .github/data/test_config.yaml \
+            --level $TEST_COV \
+            $DEV_TYPE \
+            -p ${{ matrix.target.platform }}
+
+      - name: Archive twister-out directory
+        id: tar-twister-benchmarks
+        if: (success() || failure() || cancelled())
+        run: |
+         # Give some time to Twister processes to close logs on cancel.
+         [ $(ps -ef | grep twister | wc -l) -ge 2 ] && sleep 60s
+         [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" -o -name "*.csv" | tar -czf subset-${{ strategy.job-index }}-${{ matrix.target.identifier }}-twister-benchmarks.tar.gz -T -
+      - name: Upload twister-benchmarks.tar.gz archive per subset
+        if: (steps.tar-twister-benchmarks.outcome == 'success') && (success() || failure() || cancelled())
+        uses: actions/upload-artifact@v2
+        with:
+          name: subset-${{ strategy.job-index }}-${{ matrix.target.identifier }}-twister-benchmarks archive in .tar.gz format
+          path: |
+            subset-${{ strategy.job-index }}-${{ matrix.target.identifier }}-twister-benchmarks.tar.gz
+          retention-days: 5
+
+      - name: Upload Unit Test Results
+        if: (success() || failure() || cancelled())
+        uses: actions/upload-artifact@v2
+        with:
+          name: Unit Test Results (Subset ${{ strategy.job-index }})
+          path: |
+            twister-out/twister.log
+            twister-out/twister.xml
+            twister-out/twister.json
+          retention-days: 14
+
+  publish-test-results:
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+    env:
+      ELASTICSEARCH_KEY: ${{ secrets.ELASTICSEARCH_KEY }}
+      ELASTICSEARCH_SERVER: 'https://reports-fmos.hf.intel.com:9200'
+      BRANCH_NAME: ${{ github.event_name == 'schedule' && 'master' || 'test_branch' }}
+    name: '[HW] Publish Test Results'
+    needs: [run_twister]
+    runs-on: fmos-guest-ubuntu-12c
+    continue-on-error: true
+    if: success() || failure()
+    steps:
+      - name: Get current date
+        id: run_date
+        run: |
+          echo "run_date=$(date --iso-8601=minutes)" >> "$GITHUB_OUTPUT"
+          echo "run_date_short=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Clean and Pre Environment
+        run: |
+          rm -rf artifacts
+          pip3 install elasticsearch
+
+      - name: Checkout
+        # if: github.event_name == 'schedule' || github.event_name == 'push'
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: Upload to ElasticSearch Instance (Schedule)
+        if: github.event_name == 'schedule'
+        run: |
+          echo "${{ steps.run_date.outputs.run_date }} (${{ github.run_id }},${{ github.run_attempt }})"
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            --map-file ./scripts/ci/zephyr_twister_flat_recording_index.json \
+            --flatten recording --exclude path run_id \
+            --transform "{ 'recording_metric': '(?P<recording_metric_object>[^\.]+)\.(?P<recording_metric_action>[^\.]+)\.(?P<recording_metric_details>[^ -]+)' }" \
+            --run-id "${{ github.run_id }}" --run-attempt "${{ github.run_attempt }}" \
+            -i zephyr-tests-recording artifacts/**/twister.json
+
+
+      - name: Upload to ElasticSearch Instance (Push)
+        if: github.event_name == 'push' && false
+        # TODO: enable if needed; select index.
+        run: |
+          echo "${{ steps.run_date.outputs.run_date }} (${{ github.run_id }},${{ github.run_attempt }})"
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            --map-file ./scripts/ci/zephyr_twister_flat_recording_index.json \
+            --flatten recording --exclude path run_id \
+            --transform "{ 'recording_metric': '(?P<recording_metric_object>[^\.]+)\.(?P<recording_metric_action>[^\.]+)\.(?P<recording_metric_details>[^ -]+)' }" \
+            --run-id "${{ github.run_id }}" --run-attempt "${{ github.run_attempt }}" \
+            -i zephyr-tests-recording artifacts/**/twister.json
+
+      - name: Upload to ElasticSearch Instance (Pull Request)
+        if: github.event_name == 'pull_request' && false
+        # TODO: enable if needed; select index.
+        run: |
+          echo "${{ steps.run_date.outputs.run_date }} (${{ github.run_id }},${{ github.run_attempt }})"
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            --map-file ./scripts/ci/zephyr_twister_flat_recording_index.json \
+            --flatten recording --exclude path run_id \
+            --transform "{ 'recording_metric': '(?P<recording_metric_object>[^\.]+)\.(?P<recording_metric_action>[^\.]+)\.(?P<recording_metric_details>[^ -]+)' }" \
+            --run-id "${{ github.run_id }}" --run-attempt "${{ github.run_attempt }}" \
+            -i zephyr-tests-recording artifacts/**/twister.json
+
+      - name: Upload to Static Report Server - Clean and Pre Environment
+        if: false
+        # if: github.event_name == 'schedule' || github.event_name == 'push'
+        # TODO: enable if needed; select index.
+        id: srs-prep-data
+        run: |
+          rm -rf ${{ steps.run_date.outputs.run_date_short }}
+          cp -r artifacts ${{ steps.run_date.outputs.run_date_short }}
+
+      - name: Upload to Static Report Server - Upload
+        if: false
+        # if: ( github.event_name == 'schedule' || github.event_name == 'push') && steps.srs-prep-data.outcome == 'success'
+        # TODO: enable if needed; select index.
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@main
+        with:
+          hostname: 'zep-fmos-static-reporting.igk.intel.com'
+          ssh-user: 'zephyr'
+          ssh-key: ${{ secrets.IGK_PRIVATE_KEY }}
+          ssh-pre: |
+            'if [[ ! -d "/media/dskpool/ws-ztest/zephyrproject/daily_report/sumreport/${{ env.BRANCH_NAME }}/" ]]; then \
+            mkdir -p /media/dskpool/ws-ztest/zephyrproject/daily_report/sumreport/${{ env.BRANCH_NAME }}/; fi'
+          scp-src: '${{ steps.run_date.outputs.run_date_short }}/'
+          scp-dst: '/media/dskpool/ws-ztest/zephyrproject/daily_report/sumreport/${{ env.BRANCH_NAME }}/'
+
+      - name: Upload to Static Report Server - Clean
+        if: false
+        # if: ( github.event_name == 'schedule' || github.event_name == 'push') && steps.srs-prep-data.outcome == 'success'
+        run: |
+          rm -rf ${{ steps.run_date.outputs.run_date_short }}
+
+      - name: Publish Benchmark Results
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/results-publisher@main
+        with:
+          files: 'artifacts/**/twister.xml'
+          check_name: 'Benchmark Results'
+          comment_mode: off
+          compare_to_earlier_commit: false

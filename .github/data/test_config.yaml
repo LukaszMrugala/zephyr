@@ -30,7 +30,11 @@ levels:
       - pm.*
       - system.*
       - arch.*
-      - benchmark.kernel.*
+      - benchmark.kernel.application.*
+      - benchmark.kernel.core
+      - benchmark.kernel.footprints.*
+      - benchmark.kernel.scheduler.*
+      - benchmark.kernel.scheduler_userspace.*
       - boards.*
       - logging.*
       - drivers.*
@@ -43,6 +47,12 @@ levels:
       - libraries.heap
       - libraries.heap_align
       - libraries.os.*
+  - name: benchmark_latency
+    description: >
+      Execute only latency benchmarks.
+    adds:
+      - benchmark.kernel.latency.*
+      - benchmark.user.latency.*
   - name: logic_analyzer
     description: >
       Tests using logic analyzer
