@@ -109,4 +109,3 @@
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,192.168.23.20:12320,-l"
   runner_params:
     - --remote-host=192.168.23.20:22320
-    - --key=boards/xtensa/intel_adsp_ace15_mtpm/support/mtl_private_key.pem
