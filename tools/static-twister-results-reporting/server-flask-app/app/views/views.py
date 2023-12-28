@@ -1,10 +1,13 @@
 #!/usr/bin/python
 
-from flask import Blueprint, render_template, request, abort
+import os
+from datetime import datetime
+from flask import Blueprint, render_template, request, abort, send_file
 from jinja2 import TemplateNotFound
 from app.models.platform import Daily_Platforms_Report, Platform_Report
 from app.models.component import ComponentStatus
 from app.config import *
+from app.config_local import *
 
 main_blueprint = Blueprint('main', __name__, template_folder='templates')
 
@@ -66,6 +69,7 @@ def platform():
                 , run_date = results.run_date
                 , branch = results.branch_name
                 , platform = results.platform
+                , platform_path = results.platforms[results.platform]
                 , run_date_time = results.environment['run_date']
                 , commit_date = results.environment['commit_date']
                 , zephyr_version = results.environment['zephyr_version']
@@ -125,3 +129,16 @@ def components():
     except Exception as err:
         print(f"Unexpected {err=}, {type(err)=}")
         raise
+
+
+# download function for download files
+# <a href="{{ url_for('download', filename="downloadFile.txt") }}">File</a>
+@main_blueprint.route('/download/<path:filename>', methods=['GET', 'POST'])
+def twister_out(filename):
+    run_date = datetime.strptime(request.args.get('run_date'), DATE_FORMAT_LONG).strftime(DATE_FORMAT_SHORT)
+    branch = BRANCH_DICT[request.args.get('branch')]
+    subset_name = request.args.get('subset_name')
+    platform = request.args.get('platform')
+    path = os.path.join(DATA_PATH, branch, run_date, subset_name, filename)
+    # Returning file from appended path
+    return send_file(path_or_file=path, as_attachment=True, download_name=f'{platform}-{filename}')

@@ -17,13 +17,34 @@
     <div class="d-flex flex-wrap flex-md-nowrap align-items-center border-bottom"></div>
     {% include "_platform-summary-row.html" %}
     <div class="row card shadow mb-4 px-3">
-    <!-- Content Table Row -->
-        {% include "_tables.html" %}
-
-        <ul>
-            <li>TS - test suite</li>
-            <li>TC - test case</li>
-        </ul>
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">List of fail tests</h6>
+        </div>
+        <!-- Content Table Row -->
+        <div class="card-body">
+            {% include "_tables.html" %}
+            <ul>
+                <li>[TS] - test suite</li>
+                <li>[TC] - test case</li>
+            </ul>
+        </div>
+    </div>
+    <div class="row card shadow mb-4 px-3">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Source files for {{platform}}</h6>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <i class="fas fa-fw fa-cog"></i>
+                    <a href='{{ url_for(".twister_out", branch=branch, run_date=run_date_time, subset_name=platform_path, platform=platform, filename="twister.log") }}'>twister.log</a>
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-fw fa-cog"></i>
+                    <a href='{{ url_for(".twister_out", branch=branch, run_date=run_date_time, subset_name=platform_path, platform=platform, filename="twister.json") }}'>twister.json</a>
+                </li>
+            </ul>
+        </div>
     </div>
 </main>
 {% endblock %}

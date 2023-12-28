@@ -50,8 +50,8 @@ class Platform_Report:
                 data = json.load(read_file)
 
                 self.environment = data['environment']
-                self.environment['run_date'] = datetime.strptime(self.environment['run_date'], r"%Y-%m-%dT%H:%M:%S%z").strftime(DATE_FORMAT)
-                self.environment['commit_date'] = datetime.strptime(self.environment['commit_date'], r"%Y-%m-%dT%H:%M:%S%z").strftime(DATE_FORMAT)
+                self.environment['run_date'] = datetime.strptime(self.environment['run_date'], DATE_FORMAT_TWISTER).strftime(DATE_FORMAT_LONG)
+                self.environment['commit_date'] = datetime.strptime(self.environment['commit_date'], DATE_FORMAT_TWISTER).strftime(DATE_FORMAT_LONG)
 
                 test_suites_df = pd.json_normalize(data["testsuites"], record_path=['testcases'], record_prefix=prefix
                                                , meta=['name', 'arch', 'platform', 'runnable', 'status', 'reason', 'log', 'execution_time']

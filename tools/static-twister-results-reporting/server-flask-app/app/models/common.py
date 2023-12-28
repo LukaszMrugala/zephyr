@@ -85,9 +85,9 @@ class DirectoryParser:
                                 self.run_date = run_date
                                 self.environment = data['environment']
                                 self.environment['run_date'] = datetime.strptime(self.environment['run_date']
-                                                                                , r"%Y-%m-%dT%H:%M:%S%z").strftime(DATE_FORMAT)
+                                                                                , DATE_FORMAT_TWISTER).strftime(DATE_FORMAT_LONG)
                                 self.environment['commit_date'] = datetime.strptime(self.environment['commit_date']
-                                                                                    , r"%Y-%m-%dT%H:%M:%S%z").strftime(DATE_FORMAT)
+                                                                                    , DATE_FORMAT_TWISTER).strftime(DATE_FORMAT_LONG)
 
                             for item in data['testsuites']:
                                 if item['runnable'] and not item['platform'] in self.platforms.keys() and os.path.exists(source):
