@@ -134,7 +134,7 @@
     <footer class="sticky-footer bg-white">
         <div class="container my-auto">
             <div class="copyright text-center my-auto">
-                <span>Copyright &copy; CI Test Results Report 2023</span>
+                <span>Copyright &copy; RTOS Zephyr IGK Team - 2023</span>
             </div>
         </div>
     </footer>
@@ -177,6 +177,11 @@
     <!-- Custom scripts for all pages-->
     <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    <script>
+        localStorage.setItem("branch", "{{branch}}");
+        localStorage.setItem("run_date_time", "{{run_date_time}}");
+    </script>
 
 </body>
 </html>

@@ -16,9 +16,10 @@
 <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-3 pt-3">
     <div class="d-flex flex-wrap flex-md-nowrap align-items-center border-bottom"></div>
     {% include "_platform-summary-row.html" %}
+    {% if tests_result.pass_rate != 100 %}
     <div class="row card shadow mb-4 px-3">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">List of fail tests</h6>
+            <h5 class="m-0 font-weight-bold text-primary">List of fails test cases</h5>
         </div>
         <!-- Content Table Row -->
         <div class="card-body">
@@ -28,7 +29,14 @@
                 <li>[TC] - test case</li>
             </ul>
         </div>
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong>Important!</strong> Log files are available for hardware runs only.
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
     </div>
+    {% endif %}
     <div class="row card shadow mb-4 px-3">
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">Source files for {{platform}}</h6>
@@ -37,11 +45,11 @@
             <ul class="list-group">
                 <li class="list-group-item">
                     <i class="fas fa-fw fa-cog"></i>
-                    <a href='{{ url_for(".twister_out", branch=branch, run_date=run_date_time, subset_name=platform_path, platform=platform, filename="twister.log") }}'>twister.log</a>
+                    <a href='{{ url_for(".download_logs", branch=branch, run_date=run_date_time, subset_name=platform_path, platform=platform, filename="twister.log") }}'>twister.log</a>
                 </li>
                 <li class="list-group-item">
                     <i class="fas fa-fw fa-cog"></i>
-                    <a href='{{ url_for(".twister_out", branch=branch, run_date=run_date_time, subset_name=platform_path, platform=platform, filename="twister.json") }}'>twister.json</a>
+                    <a href='{{ url_for(".download_logs", branch=branch, run_date=run_date_time, subset_name=platform_path, platform=platform, filename="twister.json") }}'>twister.json</a>
                 </li>
             </ul>
         </div>
@@ -57,6 +65,10 @@
 
 {% block scripts %}
     {{ super() }}
+
+    <script>
+        localStorage.setItem("platform", "{{platform}}");
+    </script>
 
     <!-- Page level custom scripts -->
     <script src="{{ url_for('static', filename='js/datatables-failures.js') }}"></script>

@@ -36,11 +36,11 @@ class ComponentStatus:
     def get_test_cases_data(self, data):
         component_summary = pd.DataFrame()
         components_list_df = pd.DataFrame()
-        failures_df = pd.DataFrame(columns=['component', 'sub_comp', f'{TESTCASE_PREFIX}identifier', f'{TESTCASE_PREFIX}reason'
+        failures_df = pd.DataFrame(columns=['component', 'sub_comp', 'name', f'{TESTCASE_PREFIX}identifier', f'{TESTCASE_PREFIX}reason'
                                                            , f'{TESTCASE_PREFIX}log', 'platform', f'{TESTCASE_PREFIX}status'])
 
         try:
-            tests_df = pd.json_normalize(data, record_path=['testcases'], record_prefix=TESTCASE_PREFIX, meta=['run_id', 'component', 'sub_comp', 'platform'])
+            tests_df = pd.json_normalize(data, record_path=['testcases'], record_prefix=TESTCASE_PREFIX, meta=['run_id', 'component', 'sub_comp', 'name', 'platform'])
 
             # get failures of test case from data
             # get test case with status equal `failed` or `None`
@@ -101,8 +101,8 @@ class ComponentStatus:
                 component_summary = component_summary[['component', 'sub_comp', 'pass_rate', 'uniqe_suites', 'unique_cases', 'tests_count', 'passed', 'failed', 'error'
                                                    , 'blocked', 'skipped', 'started']]
 
-                failures_df = failures_df[['component', 'sub_comp', f'{TESTCASE_PREFIX}identifier', f'{TESTCASE_PREFIX}reason'
-                                                        , f'{TESTCASE_PREFIX}log', 'platform', f'{TESTCASE_PREFIX}status']]
+                failures_df = failures_df[['component', 'sub_comp', 'name', f'{TESTCASE_PREFIX}identifier', f'{TESTCASE_PREFIX}reason'
+                                                        , 'platform', f'{TESTCASE_PREFIX}status', f'{TESTCASE_PREFIX}log']]
                 self.tc_failures = failures_df.sort_values(by=['component', 'sub_comp'])
 
             return component_summary
@@ -114,7 +114,7 @@ class ComponentStatus:
     def get_test_suites_data(self, data):
         component_summary = pd.DataFrame()
         components_list_df = pd.DataFrame()
-        failures_df = pd.DataFrame()
+        failures_df = pd.DataFrame(columns=['component', 'sub_comp', 'name', 'reason', 'platform', 'status', 'log'])
 
         try:
             tests_df = pd.json_normalize(data, meta=['component', 'sub_comp', 'status'])
@@ -123,7 +123,7 @@ class ComponentStatus:
             # get test suites with status equal `failed` or `None`
             df2 = tests_df[(tests_df['status'] == 'failed') | (tests_df['status'].isna())]
             if not df2.empty:
-                failures_df = pd.concat([failures_df, df2[['component', 'sub_comp', 'name', 'reason', 'log', 'platform', 'status']]])
+                failures_df = pd.concat([failures_df, df2[['component', 'sub_comp', 'name', 'reason', 'platform', 'status', 'log']]])
 
             df1 = pd.DataFrame(tests_df, columns=['component', 'sub_comp', 'name'])
 

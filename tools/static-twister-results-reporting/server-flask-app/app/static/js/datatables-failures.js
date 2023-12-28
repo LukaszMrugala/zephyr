@@ -42,28 +42,57 @@ $(document).ready(function() {
         data: 'reason'
         , title: 'TS fail reason'
         , className: 'text-nowrap'
-        , render: function(data, type, row) {
-            if (row.log != 'NaN')
-              return `<div class="float-left">${row.reason}</div><div class="float-right"><button type="button" class="btn btn-primary" \
-                data-toggle="modal" data-target="#failuresModal" \
-                data-suite="${row.name}" \
-                data-reason="${row.reason}" \
-                data-platform="" \
-                data-body="${row.log}"> \
-                <span data-toggle="tooltip" title="Test suite log">log</span></button> \
-                <button type="button" class="btn btn-primary"> \
-                <span data-toggle="tooltip" title="Handlers log">H</span></button></div>`;
-            else
-              return row.reason;
-        }
       }
       , {
         data: 'log'
-        , visible: false
+        , title: 'logs'
+        , className: 'text-center text-nowrap'
+        , render: function(data, type, row) {
+            let response = `<span data-toggle="tooltip" title="Download handler log"> \
+                <button type="button" class="btn btn-primary download-btn"
+                data-suite="${row.name}" \
+                data-platform="${localStorage.getItem('platform')}" \
+                data-filename="handler.log"><i class="fas fa-solid fa-download"></i>
+                H</button></span> \
+              <span data-toggle="tooltip" title="Download device log"> \
+                <button type="button" class="btn btn-primary download-btn"
+                data-suite="${row.name}" \
+                data-platform="${localStorage.getItem('platform')}" \
+                data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
+                D</button></span> \
+              <span data-toggle="tooltip" title="Download build log"> \
+                <button type="button" class="btn btn-primary download-btn"
+                data-suite="${row.name}" \
+                data-platform="${localStorage.getItem('platform')}" \
+                data-filename="build.log"><i class="fas fa-solid fa-download"></i> \
+                B</button></span>`;
+      
+            if (data != 'NaN') {
+              return `<button type="button" id="" class="btn btn-primary twister-log-btn" \
+                  data-toggle="modal" data-target="#failuresModal" \
+                  data-suite="${row.name}" \
+                  data-reason="${row.reason}" \
+                  data-platform="${localStorage.getItem('platform')}" \
+                  data-body="${data}"> \
+                  <span data-toggle="tooltip" title="Test suite log">TS</span></button>` + response;
+            } 
+            else {
+              return response;
+            }
+        }
       }
     ]
     , "language": {
       "emptyTable": "No fails, pass rate 100%"
     }
   } );
+
+  $('.download-btn').on('click', function () {
+    var filename = $(this).data('filename');
+    var test = $(this).data('suite');
+    var platform = $(this).data('platform');
+    
+    window.location = `/download/${filename}?branch=${localStorage.getItem('branch')}&run_date=${localStorage.getItem('run_date_time')}&test_suite=${test}&platform=${platform}`;
+  } );
+
 } );

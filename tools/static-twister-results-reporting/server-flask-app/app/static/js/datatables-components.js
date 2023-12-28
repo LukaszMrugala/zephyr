@@ -4,7 +4,6 @@ $(document).ready(function() {
 // Datatables Components in Suites - Begin
   var collapsedSuiteGroups = {};
   let compCount = 0;
-  let coverage = '';
 
   var oSuitesTable = $('#dTComponentSuites').DataTable( {
     dom: 'Bfrtip'
@@ -14,12 +13,12 @@ $(document).ready(function() {
     , buttons: [
       { extend: 'print',
         exportOptions: {
-          columns: ':visible'
+          columns: '.printable'
         }
       },
       { extend: 'csv'
         , exportOptions: {
-          columns: ':visible'
+          columns: '.printable'
         }
       }
       // , 'colvis'
@@ -37,18 +36,17 @@ $(document).ready(function() {
       , {
         data: 'component'
         , title: 'component'
-        // , className: 'comp-suites-th'
-        , visible: true
+        , className: 'printable'
       }
       , {
         data: 'sub_comp'
         , title: 'sub component'
-        // , className: 'subcomp-suites-th'
-        , visible: true
+        , className: 'printable'
       }
       , {
         data: 'pass_rate'
         , title: 'pass rate'
+        , className: 'printable'
         , width: '20%'
         , searchable: false
         , render: function(data) {
@@ -65,7 +63,7 @@ $(document).ready(function() {
       , {
         data: 'uniqe_suites'
         , title: 'unique suites'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
         , render: function(data) {
@@ -75,7 +73,7 @@ $(document).ready(function() {
       , {
         data: 'tests_count'
         , title: 'suite runs'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '10%'
         , searchable: false
         , render: function(data) {
@@ -84,25 +82,25 @@ $(document).ready(function() {
       }
       , {
         data: 'passed'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
       , {
         data: 'failed'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
       , {
         data: 'error'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
       , {
         data: 'skipped'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
@@ -187,19 +185,13 @@ $(document).ready(function() {
       {
         extend: 'print'
         , exportOptions: {
-          columns: ':visible'
+            columns: '.printable'
         }
       }
       , {
         extend: 'csv'
         , exportOptions: {
-          columns: ':visible'
-        }
-      }
-      , {
-        extend: 'excel'
-        , exportOptions: {
-          columns: ':visible'
+            columns: '.printable'
         }
       }
       // , 'colvis'
@@ -215,16 +207,17 @@ $(document).ready(function() {
       , {
         data: 'component'
         , title: 'component'
-        , className: 'comp-cases-th'
+        , className: 'comp-cases-th printable'
       }
       , {
         data: 'sub_comp'
         , title: 'sub component'
-        // , className: 'subcomp-cases-th'
+        , className: 'printable'
       }
       , {
         data: 'pass_rate'
         , title: 'pass rate'
+        , className: 'printable'
         , width: '15%'
         , searchable: false
         , render: function(data) {
@@ -241,7 +234,7 @@ $(document).ready(function() {
       , {
         data: 'uniqe_suites'
         , title: 'unique suites'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
         , render: function(data) {
@@ -251,14 +244,14 @@ $(document).ready(function() {
       , {
         data: 'unique_cases'
         , title: 'unique cases'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
       , {
         data: 'tests_count'
         , title: 'case runs'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
         , render: function(data) {
@@ -267,37 +260,37 @@ $(document).ready(function() {
       }
       , {
         data: 'passed'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
       , {
         data: 'failed'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
       , {
         data: 'error'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
       , {
         data: 'blocked'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
       , {
         data: 'skipped'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
       , {
         data: 'started'
-        , className: 'text-right'
+        , className: 'text-right printable'
         , width: '7%'
         , searchable: false
       }
@@ -383,21 +376,21 @@ $(document).ready(function() {
       {
         extend: 'print'
         , exportOptions: {
-          columns: ':visible'
+            columns: '.printable'
         }
       }
       , {
         extend: 'csv'
         , exportOptions: {
-          columns: ':visible'
+            columns: '.printable'
         }
       }
-      , {
-        extend: 'excel'
-        , exportOptions: {
-          columns: ':visible'
-        }
-      }
+      // , {
+      //   extend: 'excel'
+      //   , exportOptions: {
+      //      columns: ':visible'
+      //   }
+      // }
       // , 'colvis'
     ]
     , order: [[0, 'asc']]
@@ -405,49 +398,72 @@ $(document).ready(function() {
       {
         data: 'component'
         , title: 'component'
-        // , className: 'comp-cases-th'
+        , className: 'printable'
       }
       , {
         data: 'sub_comp'
         , title: 'sub component'
+        , className: 'printable'
       }
       , {
         data: 'name'
         , title: 'test suite name'
+        , className: 'printable'
       }
       , {
         data: 'reason'
         , title: 'status - reason'
+        , className: 'printable'
         , render: function(data, type, row) {
-          return `${row.testcases_status} - ${row.reason}`;
-        }
-      }
-      , {
-        data: 'log'
-        , visible: false
+            return `${row.status} - ${data}`;
+          }
       }
       , {
         data: 'platform'
+        , className: 'printable'
       }
       , {
-        data: 'testcases_status'
+        data: 'status'
+        , visible: false
+      }
+      , {
+        data: 'log'
         , title: 'logs'
         , class: 'text-center'
         , orderable: false
         , render: function(data, type, row) {
-            if (row.log != 'NaN')
-              return `<button type="button" id="" class="btn btn-primary" \
+          let response = `<span data-toggle="tooltip" title="Download handler log"> \
+            <button type="button" class="btn btn-primary download-btn"
+            data-suite="${row.name}" \
+            data-platform="${row.platform}" \
+            data-filename="handler.log"><i class="fas fa-solid fa-download"></i>
+            H</button></span> \
+          <span data-toggle="tooltip" title="Download device log"> \
+            <button type="button" class="btn btn-primary download-btn"
+            data-suite="${row.name}" \
+            data-platform="${row.platform}" \
+            data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
+            D</button></span> \
+          <span data-toggle="tooltip" title="Download build log"> \
+            <button type="button" class="btn btn-primary download-btn"
+            data-suite="${row.name}" \
+            data-platform="${row.platform}" \
+            data-filename="build.log"><i class="fas fa-solid fa-download"></i> \
+            B</button></span>`;
+      
+          if (data != 'NaN') {
+            return `<button type="button" id="" class="btn btn-primary twister-log-btn" \
                 data-toggle="modal" data-target="#failuresModal" \
                 data-suite="${row.name}" \
                 data-reason="${row.reason}" \
                 data-platform="${row.platform}" \
-                data-body="${row.log}"> \
-                <span data-toggle="tooltip" title="Test suite log">TS</span></button> \
-                <button type="button" id="" class="btn btn-primary"> \
-                <span data-toggle="tooltip" title="Handlers log">H</span></button>`;
-            else
-              return 'NaN';
+                data-body="${data}"> \
+                <span data-toggle="tooltip" title="Test suite log">TS</span></button>` + response;
+          } 
+          else {
+            return response;
           }
+        }
       }
     ]
     , rowGroup: {
@@ -492,19 +508,13 @@ $(document).ready(function() {
       {
         extend: 'print'
         , exportOptions: {
-          columns: ':visible'
+            columns: '.printable'
         }
       }
       , {
         extend: 'csv'
         , exportOptions: {
-          columns: ':visible'
-        }
-      }
-      , {
-        extend: 'excel'
-        , exportOptions: {
-          columns: ':visible'
+            columns: '.printable'
         }
       }
       // , 'colvis'
@@ -514,50 +524,79 @@ $(document).ready(function() {
       {
         data: 'component'
         , title: 'component'
-        // , className: 'comp-cases-th'
+        , className: 'printable'
       }
       , {
         data: 'sub_comp'
         , title: 'sub component'
+        , className: 'printable'
       }
       , {
         data: 'name'
-        , title: 'test case name'
-      }
-      , {
-        data: 'reason'
-        , title: 'status - reason'
-        , render: function(data, type, row) {
-          return `${row.testcases_status} - ${row.reason}`;
-        }
-      }
-      , {
-        data: 'log'
         , visible: false
       }
       , {
+        data: 'testcases_identifier'
+        , title: 'test case name'
+        , className: 'printable'
+      }
+      , {
+        data: 'testcases_reason'
+        , title: 'status - reason'
+        , className: 'printable'
+        , render: function(data, type, row) {
+          return `${row.testcases_status} - ${data}`;
+        }
+      }
+      , {
         data: 'platform'
+        , title: 'platform'
+        , className: 'printable'
       }
       , {
         data: 'testcases_status'
+        , visible: false
+      }
+      , {
+        data: 'testcases_log'
         , title: 'logs'
         , class: 'text-center'
         , orderable: false
         , render: function(data, type, row) {
-            if (row.log != 'NaN')
-              return `<button type="button" id="" class="btn btn-primary twister-log-btn" \
-                data-toggle="modal" data-target="#failuresModal" \
+            let = response = `<span data-toggle="tooltip" title="Download handler log"> \
+                <button type="button" class="btn btn-primary download-btn"
                 data-suite="${row.name}" \
-                data-reason="${row.reason}" \
                 data-platform="${row.platform}" \
-                data-body="${row.log}"> \
-                <span data-toggle="tooltip" title="Test suite log">TS</span></button> \
-                <button type="button" class="btn btn-primary handlers-log-btn"> \
-                <span data-toggle="tooltip" title="Handlers log">H</span></button>`;
-            else
-              return 'NaN';
+                data-filename="handler.log"><i class="fas fa-solid fa-download"></i>
+                H</button></span> \
+              <span data-toggle="tooltip" title="Download device log"> \
+                <button type="button" class="btn btn-primary download-btn"
+                data-suite="${row.name}" \
+                data-platform="${row.platform}" \
+                data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
+                D</button></span> \
+              <span data-toggle="tooltip" title="Download build log"> \
+                <button type="button" class="btn btn-primary download-btn"
+                data-suite="${row.name}" \
+                data-platform="${row.platform}" \
+                data-filename="build.log"><i class="fas fa-solid fa-download"></i> \
+                B</button></span>`;
+          
+            if (data != 'NaN') {
+              return `<button type="button" id="" class="btn btn-primary twister-log-btn" \
+                  data-toggle="modal" data-target="#failuresModal" \
+                  data-suite="${row.name}" \
+                  data-reason="${row.testcases_reason}" \
+                  data-platform="${row.platform}" \
+                  data-body="${data}"> \
+                  <span data-toggle="tooltip" title="Test suite log">TS</span></button>` + response;
+            } 
+            else {
+              return response;
+            }
           }
       }
+      
     ]
     , rowGroup: {
       dataSrc: 'component'
@@ -585,6 +624,14 @@ $(document).ready(function() {
     var name = $(this).data('name');
     collapsedFailuresGroups[name] = !collapsedFailuresGroups[name];
     oFailuresCasesTable.draw(false);
+  } );
+
+  $('.download-btn').on('click', function () {
+    var filename = $(this).data('filename');
+    var test = $(this).data('suite');
+    var platform = $(this).data('platform');
+    
+    window.location = `/download/${filename}?branch=${localStorage.getItem('branch')}&run_date=${localStorage.getItem('run_date_time')}&test_suite=${test}&platform=${platform}`;
   } );
 
 } );

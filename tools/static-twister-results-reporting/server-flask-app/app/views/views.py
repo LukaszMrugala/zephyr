@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os
+import os, glob, tarfile
 from datetime import datetime
 from flask import Blueprint, render_template, request, abort, send_file
 from jinja2 import TemplateNotFound
@@ -134,11 +134,46 @@ def components():
 # download function for download files
 # <a href="{{ url_for('download', filename="downloadFile.txt") }}">File</a>
 @main_blueprint.route('/download/<path:filename>', methods=['GET', 'POST'])
-def twister_out(filename):
+def download_logs(filename):
     run_date = datetime.strptime(request.args.get('run_date'), DATE_FORMAT_LONG).strftime(DATE_FORMAT_SHORT)
     branch = BRANCH_DICT[request.args.get('branch')]
     subset_name = request.args.get('subset_name')
     platform = request.args.get('platform')
-    path = os.path.join(DATA_PATH, branch, run_date, subset_name, filename)
+
+    if filename in ['twister.log', 'twister.json']:
+        # twister.log || twister.json
+        path = os.path.join(DATA_PATH, branch, run_date, subset_name, filename)
+    else:
+        # build.log || device.log || handler.log
+        test = request.args.get('test_suite')
+        path = os.path.join(DATA_PATH, branch, run_date)
+
+        # search for filename.log file
+        file = glob.glob(f"{path}/*{platform}-twister-out*/**/{test}/{filename}", recursive=True)
+
+        if not file:
+            # filename.log does not exist, then search twister-out archives
+            # search for twister-out tar.gz archive
+            file = glob.glob(f"{path}/*{platform}-twister-out*/*.tar.gz", recursive=True)
+
+            if file:
+                # unzip twister-out archive
+                with tarfile.open(file[0], 'r') as tar:
+                    file = glob.glob(f"{path}/*{platform}-twister-out*/", recursive=True)
+                    tar.extractall(file[0])
+            
+            # search for filename.log file
+            file = glob.glob(f"{path}/*{platform}-twister-out*/**/{test}/{filename}", recursive=True)
+        
+        if file:
+            # handler.log exists
+            path = file[0]
+        else:
+            # handler.log does not exist
+            abort(404)
+    
     # Returning file from appended path
     return send_file(path_or_file=path, as_attachment=True, download_name=f'{platform}-{filename}')
+
+
+# subset-11-intel_ish_5_4_1-twister-out archive in .tar.gz format/twister-out/intel_ish_5_4_1/tests/benchmarks/app_kernel/benchmark.kernel.application.timeslicing/handler.log

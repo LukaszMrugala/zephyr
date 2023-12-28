@@ -1,6 +1,6 @@
 // Call the dataTables jQuery plugin
 $(document).ready(function() {
-  var oPlatformsTable = $('#dataTablePlatforms').DataTable( {
+  $('#dataTablePlatforms').DataTable( {
     pageLength: 50
     , scrollCollapse: true
     , scrollY: '700px'
@@ -9,19 +9,13 @@ $(document).ready(function() {
       {
         extend: 'print'
         , exportOptions: {
-          columns: ':visible'
+            columns: ':visible'
         }
       }
       , {
         extend: 'csv'
         , exportOptions: {
-          columns: ':visible'
-        }
-      }
-      , {
-        extend: 'excel'
-        , exportOptions: {
-          columns: ':visible'
+            columns: ':visible'
         }
       }
       // , 'colvis'
@@ -108,19 +102,13 @@ $(document).ready(function() {
       {
         extend: 'print'
         , exportOptions: {
-          columns: ':visible'
+            columns: '.printable'
         }
       }
       , {
         extend: 'csv'
         , exportOptions: {
-          columns: ':visible'
-        }
-      }
-      , {
-        extend: 'excel'
-        , exportOptions: {
-          columns: ':visible'
+            columns: '.printable'
         }
       }
       // , 'colvis'
@@ -129,18 +117,22 @@ $(document).ready(function() {
     , columns: [
       {
         data: 'platform'
+        , className: 'printable'
       }
       , {
         data: 'name'
         , title: 'test suite name'
+        , className: 'printable'
       }
       , {
         data: 'testcases_identifier'
         , title: 'test case name'
+        , className: 'printable'
       }
       , {
         data: 'reason'
         , title: 'status'
+        , className: 'printable'
         , render: function(data, type, row) {
             return `${row.testcases_status} - ${row.reason}`;
           }
@@ -152,19 +144,33 @@ $(document).ready(function() {
       , {
         data: 'testcases_status'
         , title: 'logs'
-        , class: 'text-center'
+        , className: 'text-center no-wrap'
         , orderable: false
         , render: function(data, type, row) {
             if (row.log != 'NaN')
               return `<button type="button" id="" class="btn btn-primary" \
-                data-toggle="modal" data-target="#failuresModal" \
-                data-suite="${row.name}" \
-                data-reason="${row.reason}" \
-                data-platform="${row.platform}" \
-                data-body="${row.log}"> \
-                <span data-toggle="tooltip" title="Test suite log">TS</span></button> \
-                <button type="button" id="" class="btn btn-primary"> \
-                <span data-toggle="tooltip" title="Handlers log">H</span></button>`;
+                  data-toggle="modal" data-target="#failuresModal" \
+                  data-suite="${row.name}" \
+                  data-reason="${row.reason}" \
+                  data-platform="${row.platform}" \
+                  data-body="${row.log}"> \
+                  <span data-toggle="tooltip" title="Test suite log">TS</span></button> \
+                  <button type="button" class="btn btn-primary download-btn"
+                  data-suite="${row.name}" \
+                  data-platform="${row.platform}" \
+                  data-filename="handler.log"><i class="fas fa-solid fa-download"></i> \
+                  <span data-toggle="tooltip" title="Download handler log">H</span></button> \
+                  <button type="button" class="btn btn-primary download-btn"
+                  data-suite="${row.name}" \
+                  data-platform="${row.platform}" \
+                  data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
+                  <span data-toggle="tooltip" title="Download device log">D</span></button> \
+                  <button type="button" class="btn btn-primary download-btn"
+                  data-suite="${row.name}" \
+                  data-platform="${row.platform}" \
+                  data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
+                  <span data-toggle="tooltip" title="Download build log">B</span></button> \
+                `;
             else
               return 'NaN';
           }
@@ -196,5 +202,13 @@ $(document).ready(function() {
     var name = $(this).data('name');
     collapsedFailuresGroups[name] = !collapsedFailuresGroups[name];
     oFailuresTable.draw(false);
+  } );
+
+  $('.download-btn').on('click', function () {
+    var filename = $(this).data('filename');
+    var test = $(this).data('suite');
+    var platform = $(this).data('platform');
+    
+    window.location = `/download/${filename}?branch=${localStorage.getItem('branch')}&run_date=${localStorage.getItem('run_date_time')}&test_suite=${test}&platform=${platform}`;
   } );
 } );
