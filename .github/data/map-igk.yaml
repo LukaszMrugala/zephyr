@@ -109,3 +109,21 @@
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,192.168.23.20:12320,-l"
   runner_params:
     - --remote-host=192.168.23.20:22320
+
+- connected: true
+  id: "LNL-RVP-03"
+  platform: intel_adsp_ace20_lnl
+  product: none
+  runner: intel_adsp
+  serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,192.168.23.23:12320,-l"
+  runner_params:
+    - --remote-host=192.168.23.23:22320
+
+- connected: true
+  id: "LNL-RVP-04"
+  platform: intel_adsp_ace20_lnl
+  product: none
+  runner: intel_adsp
+  serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,192.168.23.24:12320,-l"
+  runner_params:
+    - --remote-host=192.168.23.24:22320

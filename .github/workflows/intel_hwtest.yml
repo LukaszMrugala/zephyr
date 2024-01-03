@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform_group: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        platform_group: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
         include:
           - platform_group: 1
             toolchain: 'zephyr'
@@ -178,6 +178,16 @@ jobs:
             xtensa_core: 'ace10_LX7HiFi4_2022_10'
             variant: 'xt-clang'
             runner: fmos-mtl-igk
+            hwmap: "map-igk.yaml"
+          - platform_group: 16
+            toolchain: 'zephyr'
+            scope: acceptance
+            hwtype: device
+            platform: 'intel_adsp_ace20_lnl'
+            toolchain_ver: 'RI-2022.10-linux'
+            xtensa_core: 'ace10_LX7HiFi4_2022_10'
+            variant: 'xt-clang'
+            runner: fmos-guest-ubuntu-12c-igk
             hwmap: "map-igk.yaml"
 
     runs-on: ${{ matrix.runner }}
