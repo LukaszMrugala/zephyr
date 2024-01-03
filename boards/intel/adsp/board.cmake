@@ -42,8 +42,16 @@ elseif(CONFIG_BOARD_INTEL_ADSP_ACE20_LNL OR CONFIG_BOARD_INTEL_ADSP_ACE20_LNL_SI
   set(SUPPORTED_EMU_PLATFORMS acesim)
 
   board_set_rimage_target(lnl)
+  board_set_flasher_ifnset(intel_adsp)
 
-  set(RIMAGE_SIGN_KEY "otc_private_key_3k.pem" CACHE STRING "default in ace20_lnl/board.cmake")
+  if(CONFIG_BOARD_INTEL_ADSP_ACE20_LNL)
+  # lnl private key is absent in repo: https://github.com/intel-innersource/drivers.audio.firmware.converged/tree/embargo/keys
+  # MTL key is used instead as lnl_private_key.pem
+    set(RIMAGE_SIGN_KEY ${CMAKE_CURRENT_LIST_DIR}/support/lnl_private_key.pem CACHE STRING "default in ace20_lnl/board.cmake")
+  else()
+    set(RIMAGE_SIGN_KEY "otc_private_key_3k.pem" CACHE STRING "default in ace20_lnl/board.cmake")
+  endif()
+  board_finalize_runner_args(intel_adsp)
 
 elseif(CONFIG_BOARD_INTEL_ADSP_ACE30_PTL OR CONFIG_BOARD_INTEL_ADSP_ACE30_PTL_SIM)
 
