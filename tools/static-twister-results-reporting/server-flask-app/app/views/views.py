@@ -25,7 +25,6 @@ def index():
         data = render_template('index.html'
                 , date_runs = results.date_runs[:n]
                 , branch_list = results.branch_dict
-                , platforms = results.platforms
                 , run_date_time = results.environment['run_date']
                 , branch = results.branch_name
                 , commit_date = results.environment['commit_date']
@@ -161,17 +160,17 @@ def download_logs(filename):
                 with tarfile.open(file[0], 'r') as tar:
                     file = glob.glob(f"{path}/*{platform}-twister-out*/", recursive=True)
                     tar.extractall(file[0])
-            
+
             # search for filename.log file
             file = glob.glob(f"{path}/*{platform}-twister-out*/**/{test}/{filename}", recursive=True)
-        
+
         if file:
             # handler.log exists
             path = file[0]
         else:
             # handler.log does not exist
             abort(404)
-    
+
     # Returning file from appended path
     return send_file(path_or_file=path, as_attachment=True, download_name=f'{platform}-{filename}')
 

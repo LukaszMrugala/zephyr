@@ -21,7 +21,7 @@ $(document).ready(function() {
       // , 'colvis'
     ]
     , order: [
-      [4, 'desc']
+      [1, 'asc']
     ]
     , columns: [
       {

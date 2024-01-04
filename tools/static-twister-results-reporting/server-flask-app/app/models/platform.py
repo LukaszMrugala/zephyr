@@ -8,11 +8,7 @@ from app.config_local import *
 from app.config import *
 
 class Platform_Report:
-    tests_result = {}
-
     date_runs = []
-
-    branch_name = None
 
     def __init__(self, branch=None, run=None, platform=None):
         try:
@@ -98,15 +94,11 @@ class Platform_Report:
 
 
 class Daily_Platforms_Report:
-    data_for_www = pd.DataFrame()
-
     date_runs = []
-    platforms = {}
-    environment = []
-    run_date = None
-    branch_name = None
 
     def __init__(self, branch:str=None, run:str=None):
+        self.data_for_www = pd.DataFrame()
+
         try:
             self.failures_df = pd.DataFrame()
 

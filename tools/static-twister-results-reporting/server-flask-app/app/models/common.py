@@ -6,16 +6,15 @@ from app.config import *
 from app.config_local import *
 
 class DirectoryParser:
-    environment = None
-    branch = None
-    run_date = None
     date_runs = []
-    platforms = {}
     branch_dict = BRANCH_DICT
 
     def __init__(self, branch, run_date:str=None):
         run_dir = None
         self.branch = 'n/a'
+        self.environment = None
+        self.run_date = None
+        self.platforms = {}
 
         try:
             source = os.path.join('./', DEFAULT_DATA_PATH, TESTS_RESULT_FILE)
