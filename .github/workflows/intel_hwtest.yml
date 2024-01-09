@@ -10,20 +10,121 @@ on:
     branches:
       - main-intel
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target'
+        type: choice
+        required: true
+        options:
+          - all
+          - intel_adsp_cavs25
+          - intel_adsp_ace15_mtpm_sim
+          - intel_adsp_ace20_lnl_sim
+          - intel_adsp_ace30_ptl_sim
+          - nsim_em
+          - mec172xevb_assy6906
+          - mec15xxevb_assy6853
+          - frdm_k64f
+          - intel_adsp_ace15_mtpm
+          - intel_adsp_ace20_lnl
+          - intel_ish_5_8_0_simics
+          - intel_ish_5_4_1_simics
+          - intel_ish_5_4_1
+          - npcx9m6f_evb
+          - up_squared
+          - it8xxx2_evb
+      scope:
+        description: 'Test Scope'
+        type: choice
+        required: true
+        options:
+          - acceptance
+          - smoke
+      debug:
+        description: 'Debug'
+        type: choice
+        required: true
+        options:
+          - none
+          - twister-debug
+
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.event_name == 'workflow_dispatch' && github.run_id || github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
+  setup:
+    name: Setup
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    runs-on: fmos-guest-ubuntu-12c
+    outputs:
+      targets: ${{ steps.generate-matrix.outputs.targets }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+      - name: Packages
+        run: |
+          sudo apt-get install -y jq
+      - name: Generate matrix
+        id: generate-matrix
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # pull request
+            build_target_all="y"
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # dispatch
+            case '${{ github.event.inputs.target }}' in
+              all)  build_target_all="y";;
+              *)    eval build_${{ github.events.input.target }}="y";;
+            esac
+          else
+            # push / schedule
+            build_target_all="y"
+          fi
+
+
+          if [ "${build_target_all}" == "y" ]; then
+            for target in `jq -r '.[].platform' .github/data/targets.json`; do
+              eval build_target_$target="y"
+            done
+          fi
+
+          MATRIX_TARGETS='['
+          for target in `jq -r '.[].platform' .github/data/targets.json`; do
+            eval check='$'build_target_$target
+            if [ "${check}" == "y" ]; then
+              MATRIX_TARGETS+=$(jq --arg target "$target" '.[] | select(.platform == $target)' .github/data/targets.json),
+            fi
+          done
+          MATRIX_TARGETS+=']'
+
+          # Escape control characters because GitHub Actions
+          MATRIX_TARGETS="${MATRIX_TARGETS//'%'/''}"
+          MATRIX_TARGETS="${MATRIX_TARGETS//$'\n'/''}"
+          MATRIX_TARGETS="${MATRIX_TARGETS//$'\r'/''}"
+
+          MATRIX_TARGETS=$(echo "${MATRIX_TARGETS}" | sed -zr 's/,([^,]*$)/\1/')
+
+          echo "targets=${MATRIX_TARGETS}" >> $GITHUB_OUTPUT
+
   run_twister:
-    name: '[HW] test ${{ matrix.platform }}'
+    name: '[HW] test ${{ matrix.target.platform }}'
+    needs: setup
     defaults:
       run:
         shell: bash
     container:
       image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
-      options: "-v /srv/runner/workspace:/runner/workspace ${{ matrix.container_options }}"
+      options: "-v /srv/runner/workspace:/runner/workspace ${{ matrix.target.container_options }}"
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
         SSH_KEY_FMOS_DEV_SIMICS: ${{ secrets.ISH_SIMICS_NUC_HWTEST_SSH_KEY }}
@@ -36,162 +137,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform_group: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-        include:
-          - platform_group: 1
-            toolchain: 'zephyr'
-            platform: "intel_adsp_cavs25"
-            scope: acceptance
-            hwtype: device
-            runner: guest-thor3-5
-          - platform_group: 2
-            scope: acceptance
-            hwtype: simulator
-            toolchain: 'xcc'
-            platform: 'intel_adsp_ace15_mtpm_sim'
-            toolchain_ver: 'RI-2022.10-linux'
-            xtensa_core: 'ace10_LX7HiFi4_2022_10'
-            variant: 'xt-clang'
-            runner: fmos-guest-ubuntu-12c
-          - platform_group: 3
-            scope: acceptance
-            hwtype: simulator
-            toolchain: 'xcc'
-            platform: 'intel_adsp_ace30_ptl_sim'
-            toolchain_ver: 'RI-2022.10-linux'
-            xtensa_core: 'ace30_LX7HiFi4_PIF'
-            variant: 'xt-clang'
-            runner: fmos-guest-ubuntu-12c
-          - platform_group: 4
-            scope: acceptance
-            hwtype: simulator
-            toolchain: 'xcc'
-            platform: 'intel_adsp_ace20_lnl_sim'
-            toolchain_ver: 'RI-2022.10-linux'
-            xtensa_core: 'ace10_LX7HiFi4_2022_10'
-            variant: 'xt-clang'
-            runner: fmos-guest-ubuntu-12c
-          - platform_group: 5
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: simulator
-            platform: 'nsim_em'
-            variant: 'zephyr'
-            runner: fmos-guest-ubuntu-24c
-          - platform_group: 6
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: 'mec172xevb_assy6906'
-            variant: 'zephyr'
-            runner: fmos-testhost-nuc-igk-mec17
-            hwmap: "map-igk.yaml"
-            container_options: '--privileged --device /dev/ttyUSB0:/dev/ttyUSB0 -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
-            labgrid_place: "mec17-igk,mec17-igk-dediprog"
-            labgrid_timeout: 3
-          - platform_group: 7
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: 'frdm_k64f'
-            variant: 'zephyr'
-            runner: fmos-testhost-nuc-igk-02
-            hwmap: "map-igk.yaml"
-            container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
-            pyocd_board_id: "02400b0150234e45003600045f780029b931000197969900,02400b0150234e45005200045f780021b931000197969900"
-            pyocd_timeout: 10
-          - platform_group: 8
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: 'mec15xxevb_assy6853'
-            variant: 'zephyr'
-            runner: fmos-testhost-nuc-igk-mec15
-            hwmap: "map-igk.yaml"
-            container_options: '--privileged --device /dev/ttyUSB0:/dev/ttyUSB0 -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
-            labgrid_place: "mec15-igk,mec15-igk-dediprog"
-            labgrid_timeout: 5
-          - platform_group: 9
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: "intel_ish_5_8_0_simics"
-            variant: 'zephyr'
-            runner: fmos-ish-5-8-lnl-igk
-            timeout: 120
-            container_options: '--cpus="8"'
-          - platform_group: 10
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: "intel_ish_5_4_1_simics"
-            variant: 'zephyr'
-            runner: fmos-ish-5-4-mtl-igk
-            timeout: 240
-            container_options: '--cpus="8"'
-          - platform_group: 11
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: "intel_ish_5_4_1"
-            # Use this map until we have the same platform id for Simics and HW boards.
-            hwmap: "map-igk.yaml"
-            variant: 'zephyr'
-            runner: fmos-ish-5-4-tgl-igk
-            timeout: 240
-            container_options: '--cpus="8"'
-          - platform_group: 12
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: 'npcx9m6f_evb'
-            variant: 'zephyr'
-            runner: fmos-testhost-nuc-igk-03
-            hwmap: "map-igk.yaml"
-            container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
-          - platform_group: 13
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: 'up_squared'
-            variant: 'zephyr'
-            timeout: 120
-            runner: fmos-up_squared-igk
-            hwmap: "map-igk.yaml"
-          - platform_group: 14
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: "it8xxx2_evb"
-            hwmap: "map-igk.yaml"
-            container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
-            variant: 'zephyr'
-            runner: fmos-testhost-nuc-igk-04
-            labgrid_place: "ite-board-ci_01,ite-board-dbg_01"
-            labgrid_timeout: 10
-          - platform_group: 15
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: 'intel_adsp_ace15_mtpm'
-            toolchain_ver: 'RI-2022.10-linux'
-            xtensa_core: 'ace10_LX7HiFi4_2022_10'
-            variant: 'xt-clang'
-            runner: fmos-mtl-igk
-            hwmap: "map-igk.yaml"
-          - platform_group: 16
-            toolchain: 'zephyr'
-            scope: acceptance
-            hwtype: device
-            platform: 'intel_adsp_ace20_lnl'
-            toolchain_ver: 'RI-2022.10-linux'
-            xtensa_core: 'ace10_LX7HiFi4_2022_10'
-            variant: 'xt-clang'
-            runner: fmos-guest-ubuntu-12c-igk
-            hwmap: "map-igk.yaml"
+        target: ${{ fromJSON(needs.setup.outputs.targets) }}
 
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: ${{ matrix.timeout || 180 }}
+    runs-on: ${{ matrix.target.runner }}
+    timeout-minutes: ${{ matrix.target.timeout || 180 }}
     steps:
       - name: Clean Workspace
         run: |
@@ -235,23 +184,23 @@ jobs:
           west forall -c 'git reset --hard HEAD'
 
       - name: Reset platform with pyocd
-        if: ${{ matrix.pyocd_board_id }}
+        if: ${{ matrix.target.pyocd_board_id }}
         shell: bash
         run: |
-            echo "Resetting ${{ matrix.platform }} with pyocd"
-            python3 scripts/support/prepare_platform.py --pyocd-board-id "${{ matrix.pyocd_board_id }}" --pyocd-timeout $PYOCD_TIMEOUT
+            echo "Resetting ${{ matrix.target.platform }} with pyocd"
+            python3 scripts/support/prepare_platform.py --pyocd-board-id "${{ matrix.target.pyocd_board_id }}" --pyocd-timeout $PYOCD_TIMEOUT
         env:
-          PYOCD_TIMEOUT: ${{ matrix.pyocd_timeout || 5 }}
+          PYOCD_TIMEOUT: ${{ matrix.target.pyocd_timeout || 5 }}
 
       - name: Reset platform with labgrid
-        if: ${{ matrix.labgrid_place }}
+        if: ${{ matrix.target.labgrid_place }}
         shell: bash
         run: |
-          echo "Resetting ${{ matrix.platform }} with labgrid, labgrid-crossbar: $LG_CROSSBAR"
+          echo "Resetting ${{ matrix.target.platform }} with labgrid, labgrid-crossbar: $LG_CROSSBAR"
           eval $(ssh-agent -s) && echo "$IGK_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-          python3 scripts/support/prepare_platform.py --labgrid-place "${{ matrix.labgrid_place }}" --labgrid-crossbar "$LG_CROSSBAR" --labgrid-timeout $LG_TIMEOUT
+          python3 scripts/support/prepare_platform.py --labgrid-place "${{ matrix.target.labgrid_place }}" --labgrid-crossbar "$LG_CROSSBAR" --labgrid-timeout $LG_TIMEOUT
         env:
-          LG_TIMEOUT: ${{ matrix.labgrid_timeout || 5 }}
+          LG_TIMEOUT: ${{ matrix.target.labgrid_timeout || 5 }}
 
       - name: Build RIMAGE
         run: |
@@ -267,30 +216,36 @@ jobs:
           export PATH=/opt/tools/bin:$PATH
           # device vs sim
           HW_MAP="map.yaml"
-          if [ ${{ matrix.hwmap }} ]; then
-            HW_MAP=${{ matrix.hwmap }}
+          if [ ${{ matrix.target.hwmap }} ]; then
+            HW_MAP=${{ matrix.target.hwmap }}
           fi
-          if [ ${{ matrix.hwtype }} == 'device' ]; then
+          if [ ${{ matrix.target.hwtype }} == 'device' ]; then
             export DEV_TYPE="-x=CONFIG_BOOT_DELAY=500 --device-testing --hardware-map .github/data/${HW_MAP}"
           fi
           # toolchain
-          if [ ${{ matrix.toolchain }} == 'xcc' ]; then
-            export ZEPHYR_TOOLCHAIN_VARIANT=${{ matrix.variant }}
+          if [ ${{ matrix.target.toolchain }} == 'xcc' ]; then
+            export ZEPHYR_TOOLCHAIN_VARIANT=${{ matrix.target.variant }}
             export XTENSA_TOOLCHAIN_PATH=/opt/toolchains/xtensa/XtDevTools/install/tools
-            export XTENSA_CORE=${{ matrix.xtensa_core }}
-            export TOOLCHAIN_VER=${{ matrix.toolchain_ver }}
+            export XTENSA_CORE=${{ matrix.target.xtensa_core }}
+            export TOOLCHAIN_VER=${{ matrix.target.toolchain_ver }}
             export XTENSA_BUILDS_DIR=/opt/toolchains/xtensa/XtDevTools/install/builds
             export TWISTER_QUARANTINE_LIST=.github/data/xcc-twister-quarantine-list.yml
-            export XTENSA_SYSTEM=/opt/toolchains/xtensa/XtDevTools/install/tools/${{ matrix.toolchain_ver }}/XtensaTools/config/
+            export XTENSA_SYSTEM=/opt/toolchains/xtensa/XtDevTools/install/tools/${{ matrix.target.toolchain_ver }}/XtensaTools/config/
           else
             export TWISTER_QUARANTINE_LIST=.github/data/twister-quarantine-list.yml
           fi
 
           export PATH=$PATH:/opt/tools/bin
+          EXTRA_TWISTER_OPTS=""
           if [ "${{github.event_name}}" = "pull_request" ]; then
             TEST_COV=smoke
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            TEST_COV=${{ github.event.inputs.scope }}
+            if [ "${{ github.event.inputs.debug }}" == "twister-debug" ]; then
+              EXTRA_TWISTER_OPTS="-v"
+            fi
           else
-            TEST_COV=${{ matrix.scope }}
+            TEST_COV=acceptance
           fi
 
           # Ensure local network is not accessed via proxy
@@ -304,6 +259,7 @@ jobs:
 
           ./scripts/twister -M -x=USE_CCACHE=0 --inline-logs \
             --force-color -v \
+            ${EXTRA_TWISTER_OPTS} \
             --quarantine-list $TWISTER_QUARANTINE_LIST \
             --disable-suite-name-check \
             --retry-build-errors \
@@ -312,7 +268,7 @@ jobs:
             --test-config .github/data/test_config.yaml \
             --level $TEST_COV \
             $DEV_TYPE \
-            -p ${{ matrix.platform }}
+            -p ${{ matrix.target.platform }}
 
       - name: Archive twister-out directory
         id: tar-twister-out
@@ -320,21 +276,21 @@ jobs:
         run: |
          # Give some time to Twister processes to close logs on cancel.
          [ $(ps -ef | grep twister | wc -l) -ge 2 ] && sleep 60s
-         [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" | tar -czf subset-${{ matrix.platform_group }}-${{ matrix.platform }}-twister-out.tar.gz -T -
+         [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" | tar -czf subset-${{ matrix.target.job-index }}-${{ matrix.platform }}-twister-out.tar.gz -T -
       - name: Upload twister-out.tar.gz archive per subset
         if: (steps.tar-twister-out.outcome == 'success') && (success() || failure() || cancelled())
         uses: actions/upload-artifact@v2
         with:
-          name: subset-${{ matrix.platform_group }}-${{ matrix.platform }}-twister-out archive in .tar.gz format
+          name: subset-${{ matrix.target.job-index }}-${{ matrix.platform }}-twister-out archive in .tar.gz format
           path: |
-            subset-${{ matrix.platform_group }}-${{ matrix.platform }}-twister-out.tar.gz
+            subset-${{ matrix.target.job-index }}-${{ matrix.platform }}-twister-out.tar.gz
           retention-days: 5
 
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: Unit Test Results (Subset ${{ matrix.platform_group }})
+          name: Unit Test Results (Subset ${{ matrix.target.job-index }})
           path: |
             twister-out/twister.log
             twister-out/twister.xml
