@@ -18,6 +18,26 @@
     - "1"
     - "6"
     - sys_fmos_qa_simics
+- connected: true
+  id: igk-tgl-1
+  platform: intel_ish_5_4_1
+  product: EIG TGL U RVP DDR4 Alpha/ES Fab1 BRD
+  runner: misc-flasher
+  flash_timeout: 60
+  flash_with_test: false
+  # SSH keyless auth have to be setup on the forwarding NUC
+  serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.212 stty raw 115200 -F /dev/ttyISH1 && cat /dev/ttyISH1"
+  baud: 115200
+  runner_params:
+    - boards/x86/intel_ish/support/tgl_board_flash.sh
+    - 10.123.239.216
+    - /lib/firmware/intel
+    - tglrvp_ish.bin
+    - root
+    - 10.123.239.200
+    - "5"
+    - "6"
+    - sys_fmos_qa_simics
 
 - connected: true
   id: 02400b0150234e45003600045f780029b931000197969900
