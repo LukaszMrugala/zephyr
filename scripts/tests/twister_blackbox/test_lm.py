@@ -173,3 +173,46 @@ class TestReport:
         assert len(filtered_j) == expected_test_count
 
         assert str(sys_exit.value) == '0'
+
+    @pytest.mark.usefixtures("clear_log")
+    @pytest.mark.parametrize(
+        'seed, expected_order',
+        [
+            ('123', []),   # dummy.agnostic.group1.subgroup1.assert
+                             # dummy.agnostic.group1.subgroup2.assert
+                             # dummy.agnostic.group2.assert1
+                             # dummy.agnostic.group2.assert2
+                             # dummy.agnostic.group2.assert3
+            ('321', [])  # dummy.device.group.assert
+        ],
+        ids=['no device', 'no agnostic']
+    )
+
+    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+    def test_shuffle_tests(self, out_path, seed, expected_order):
+        test_platforms = ['qemu_x86', 'frdm_k64f']
+        path = os.path.join(TEST_DATA, 'tests', 'dummy')
+        args = ['-i', '--outdir', out_path, '-T', path, '-y'] + \
+               ['--shuffle-tests', '--shuffle-tests-seed', seed] + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        with open(os.path.join(out_path, 'testplan.json')) as f:
+            j = json.load(f)
+        filtered_j = [
+            (ts['platform'], ts['name'], tc['identifier']) \
+                for ts in j['testsuites'] \
+                for tc in ts['testcases'] if 'reason' not in tc
+        ]
+
+        print(filtered_j)
+        print([j[2] for j in filtered_j])
+
+        #assert len(filtered_j) == expected_test_count
+
+        assert str(sys_exit.value) == '0'
