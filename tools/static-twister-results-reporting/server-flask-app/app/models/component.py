@@ -37,7 +37,7 @@ class ComponentStatus:
         component_summary = pd.DataFrame()
         components_list_df = pd.DataFrame()
         failures_df = pd.DataFrame(columns=['component', 'sub_comp', 'name', f'{TESTCASE_PREFIX}identifier', f'{TESTCASE_PREFIX}reason'
-                                                           , f'{TESTCASE_PREFIX}log', 'platform', f'{TESTCASE_PREFIX}status'])
+                                        , f'{TESTCASE_PREFIX}log', 'platform', f'{TESTCASE_PREFIX}status'])
 
         try:
             tests_df = pd.json_normalize(data, record_path=['testcases'], record_prefix=TESTCASE_PREFIX, meta=['run_id', 'component', 'sub_comp', 'name', 'platform'])

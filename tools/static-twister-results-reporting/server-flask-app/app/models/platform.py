@@ -30,7 +30,7 @@ class Platform_Report:
 
             self.platform = platform[0][0] if platform else next(iter(self.platforms))
 
-            self.platform_path = os.path.join(self.run_path, self.platforms[self.platform])
+            self.platform_path = self.run_path if self.run_path == self.platforms[self.platform] else os.path.join(self.run_path, self.platforms[self.platform])
 
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
@@ -49,19 +49,19 @@ class Platform_Report:
                 self.environment['run_date'] = datetime.strptime(self.environment['run_date'], DATE_FORMAT_TWISTER).strftime(DATE_FORMAT_LONG)
                 self.environment['commit_date'] = datetime.strptime(self.environment['commit_date'], DATE_FORMAT_TWISTER).strftime(DATE_FORMAT_LONG)
 
-                test_suites_df = pd.json_normalize(data["testsuites"], record_path=['testcases'], record_prefix=prefix
+                df = pd.json_normalize(data["testsuites"], record_path=['testcases'], record_prefix=prefix
                                                , meta=['name', 'arch', 'platform', 'runnable', 'status', 'reason', 'log', 'execution_time']
                                                , errors='ignore')
 
-                test_suites_df = test_suites_df.drop(test_suites_df[test_suites_df['runnable'] == False].index)
-                test_suites_df = test_suites_df[test_suites_df['platform'] == self.platform]
+                # remove not runnable test suites and filter by current platform
+                df = df.drop(df[df['runnable'] == False].index)
+                df = df[df['platform'] == self.platform]
 
                 # add arch value to environment
-                self.environment['arch'] = test_suites_df['arch'].iloc[0]
+                self.environment['arch'] = df['arch'].iloc[0]
 
-                # reorder columns
-                test_suites_df = test_suites_df[['name', 'testcases_identifier', 'testcases_status', 'testcases_reason'
-                                                , 'execution_time', 'status', 'reason', 'log']]
+                test_suites_df = pd.DataFrame(df, columns=['name', 'testcases_identifier', 'testcases_status', 'testcases_reason'
+                                                , 'execution_time', 'status', 'reason', 'log'])
 
                 test_summary = test_suites_df[['name', prefix+"status"]].groupby(prefix+"status").count()
 
@@ -87,7 +87,7 @@ class Platform_Report:
         except FileNotFoundError:
             print("%s: File %s doesn't exist"%(__name__, data_path))
         except LookupError:
-            print("%s: File %s is not a valid twister.json format "%(__name__, data_path))
+            print("%s: File %s is not a valid %s format "%(__name__, data_path, TESTS_RESULT_FILE))
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
             raise
@@ -95,6 +95,7 @@ class Platform_Report:
 
 class Daily_Platforms_Report:
     date_runs = []
+    hide_downloading = False
 
     def __init__(self, branch:str=None, run:str=None):
         self.data_for_www = pd.DataFrame()
@@ -104,6 +105,7 @@ class Daily_Platforms_Report:
 
             source_data = DirectoryParser(branch, run)
 
+            self.hide_downloading = not source_data.server_mode
             self.date_runs = source_data.date_runs
             self.branch_name = source_data.branch
             self.run_path = source_data.run_path

@@ -1,5 +1,7 @@
 // Call the dataTables jQuery plugin
 $(document).ready(function() {
+  let show_download_btn = Boolean(parseInt(localStorage.getItem('show_download_btn')));
+
   $('#dataTablePlatforms').DataTable( {
     pageLength: 50
     , scrollCollapse: true
@@ -147,32 +149,36 @@ $(document).ready(function() {
         , className: 'text-center no-wrap'
         , orderable: false
         , render: function(data, type, row) {
-            if (row.log != 'NaN')
-              return `<button type="button" id="" class="btn btn-primary" \
+            let response = ''
+            if (show_download_btn) {
+              response = `<button type="button" class="btn btn-primary download-btn"
+                data-suite="${row.name}" \
+                data-platform="${row.platform}" \
+                data-filename="handler.log"><i class="fas fa-solid fa-download"></i> \
+                <span data-toggle="tooltip" title="Download handler log">H</span></button> \
+                <button type="button" class="btn btn-primary download-btn"
+                data-suite="${row.name}" \
+                data-platform="${row.platform}" \
+                data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
+                <span data-toggle="tooltip" title="Download device log">D</span></button> \
+                <button type="button" class="btn btn-primary download-btn"
+                data-suite="${row.name}" \
+                data-platform="${row.platform}" \
+                data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
+                <span data-toggle="tooltip" title="Download build log">B</span></button>`;
+            }
+
+            if (row.log != 'NaN') {
+              return `<button type="button" id="" class="btn btn-primary twister-log-btn" \
                   data-toggle="modal" data-target="#failuresModal" \
                   data-suite="${row.name}" \
                   data-reason="${row.reason}" \
                   data-platform="${row.platform}" \
                   data-body="${row.log}"> \
-                  <span data-toggle="tooltip" title="Test suite log">TS</span></button> \
-                  <button type="button" class="btn btn-primary download-btn"
-                  data-suite="${row.name}" \
-                  data-platform="${row.platform}" \
-                  data-filename="handler.log"><i class="fas fa-solid fa-download"></i> \
-                  <span data-toggle="tooltip" title="Download handler log">H</span></button> \
-                  <button type="button" class="btn btn-primary download-btn"
-                  data-suite="${row.name}" \
-                  data-platform="${row.platform}" \
-                  data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
-                  <span data-toggle="tooltip" title="Download device log">D</span></button> \
-                  <button type="button" class="btn btn-primary download-btn"
-                  data-suite="${row.name}" \
-                  data-platform="${row.platform}" \
-                  data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
-                  <span data-toggle="tooltip" title="Download build log">B</span></button> \
-                `;
-            else
-              return 'NaN';
+                  <span data-toggle="tooltip" title="Test suite log">TS</span></button>` + response;
+            }
+
+            return '';
           }
       }
     ]
@@ -208,7 +214,7 @@ $(document).ready(function() {
     var filename = $(this).data('filename');
     var test = $(this).data('suite');
     var platform = $(this).data('platform');
-    
+
     window.location = `/download/${filename}?branch=${localStorage.getItem('branch')}&run_date=${localStorage.getItem('run_date_time')}&test_suite=${test}&platform=${platform}`;
   } );
 } );

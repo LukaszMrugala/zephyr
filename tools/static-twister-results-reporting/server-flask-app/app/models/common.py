@@ -8,26 +8,28 @@ from app.config_local import *
 class DirectoryParser:
     date_runs = []
     branch_dict = BRANCH_DICT
+    # server_mode is used to hide downloading logs options when we use this app locally
+    server_mode = False
 
     def __init__(self, branch, run_date:str=None):
         run_dir = None
         self.branch = 'n/a'
         self.environment = None
-        self.run_date = None
+        self.run_date = run_date
         self.platforms = {}
 
         try:
-            source = os.path.join('./', DEFAULT_DATA_PATH, TESTS_RESULT_FILE)
+            source = os.path.join(os.path.curdir, DEFAULT_DATA_PATH, TESTS_RESULT_FILE)
 
             if os.path.exists(source):
-                self.run_path = './'
-                self.branch = 'Source data: %s'%(os.path.join('./', DEFAULT_DATA_PATH))
-                print("Open twister.json from local twister-out directory: %s"%(self.run_path))
+                self.run_path = os.path.join(os.path.curdir, DEFAULT_DATA_PATH)
+                self.branch = 'Source data: %s'%(self.run_path)
+                print("Open twister.json from local %s directory: %s"%(DEFAULT_DATA_PATH, self.run_path))
 
-            elif os.path.exists(os.path.join(TWISTER_OUT_PATH, DEFAULT_DATA_PATH, TESTS_RESULT_FILE)):
+            elif os.path.exists(os.path.join(TWISTER_OUT_PATH, TESTS_RESULT_FILE)):
                 self.run_path = TWISTER_OUT_PATH
-                self.branch = 'Source data: %s'%(os.path.join(TWISTER_OUT_PATH, DEFAULT_DATA_PATH))
-                print("Open twister.json from twister-out directory: %s"%(self.run_path))
+                self.branch = 'Source data: %s'%(self.run_path)
+                print("Open twister.json from %s directory: %s"%(DEFAULT_DATA_PATH, self.run_path))
 
             else:
                 if not os.path.exists(DATA_PATH):
@@ -70,30 +72,17 @@ class DirectoryParser:
 
                         self.run_path = os.path.join(branch_path, run_dir)
 
+                        self.server_mode = True
+
             if not os.path.exists(self.run_path):
                 raise Exception("Source directory: %s doesn't exist"%self.run_path)
 
             for subset_dir in os.scandir(self.run_path):
-                source = os.path.join(subset_dir.path, TESTS_RESULT_FILE)
-
-                if os.path.exists(source):
-                    try:
-                        with open(source, "r") as f:
-                            data = json.load(f)
-                            if self.environment is None:
-                                self.run_date = run_date
-                                self.environment = data['environment']
-                                self.environment['run_date'] = datetime.strptime(self.environment['run_date']
-                                                                                , DATE_FORMAT_TWISTER).strftime(DATE_FORMAT_LONG)
-                                self.environment['commit_date'] = datetime.strptime(self.environment['commit_date']
-                                                                                    , DATE_FORMAT_TWISTER).strftime(DATE_FORMAT_LONG)
-
-                            for item in data['testsuites']:
-                                if item['runnable'] and not item['platform'] in self.platforms.keys() and os.path.exists(source):
-                                    self.platforms[item['platform']] = subset_dir.name
-
-                    except LookupError:
-                        print("%s: File %s is not a valid twister.json format "%(__name__, source))
+                if subset_dir.name == TESTS_RESULT_FILE:
+                    self.read_source_file(self.run_path)
+                    break
+                else:
+                    self.read_source_file(os.path.join(subset_dir.path))
 
             if self.environment is None:
                 raise Exception("Not found a %s file in source the directory: %s"%(TESTS_RESULT_FILE, self.run_path))
@@ -101,6 +90,29 @@ class DirectoryParser:
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
             raise
+
+
+    def read_source_file(self, twister_json_path: str):
+        twister_json_file = os.path.join(twister_json_path, TESTS_RESULT_FILE)
+
+        if os.path.exists(twister_json_file):
+            try:
+                with open(twister_json_file, "r") as f:
+                    data = json.load(f)
+                    if self.environment is None:
+                        self.environment = data['environment']
+                        self.environment['run_date'] = datetime.strptime(self.environment['run_date']
+                                                                        , DATE_FORMAT_TWISTER).strftime(DATE_FORMAT_LONG)
+                        self.environment['commit_date'] = datetime.strptime(self.environment['commit_date']
+                                                                            , DATE_FORMAT_TWISTER).strftime(DATE_FORMAT_LONG)
+
+                    for item in data['testsuites']:
+                        if item['runnable'] and not item['platform'] in self.platforms.keys() and os.path.exists(twister_json_file):
+                            self.platforms[item['platform']] = twister_json_path
+
+            except LookupError:
+                print("%s: File %s is not a valid twister.json format "%(__name__, twister_json_file))
+
 
     def get_data(self):
         test_dict = []

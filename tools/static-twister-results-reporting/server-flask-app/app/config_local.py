@@ -9,10 +9,10 @@ DEBUG = False
 
 # Paths settings
 ## Only for server version. Path to all branches.
-DATA_PATH = r'/media/dskpool/ws-ztest/zephyrproject/daily_report/sumreport'
-## For standalone version. Path to the twister-out directory.
-## Example: /home/zephyr/zephyrproject/
-TWISTER_OUT_PATH = r'/home/zephyr/zephyrproject'
+DATA_PATH = r'/path-to-directory-with-branches'
+## For desktop version. Path to the twister-out directory.
+## Example: /home/user/zephyrproject/twister-out.1
+TWISTER_OUT_PATH = r'/home/user/zephyrproject/twister-out.1'
 
 # Branch settings
 ## branch dictionary for matching branch name to his directory name

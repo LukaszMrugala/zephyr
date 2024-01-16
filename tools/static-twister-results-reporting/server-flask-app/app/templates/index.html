@@ -30,7 +30,7 @@
 </main>
 {% endblock %}
 
-{% block date_runs_menu %}            
+{% block date_runs_menu %}
     {% for item in date_runs %}
         <a class="dropdown-item run_date" href="?run-date={{ item }}" data-target="{{ item }}">{{ item }}</a>
     {% endfor %}
@@ -38,7 +38,7 @@
 
 {% block scripts %}
     {{ super() }}
-    
+
     <!-- Page level custom scripts -->
     <script src="{{ url_for('static', filename='js/datatables-platforms.js') }}"></script>
 {% endblock %}

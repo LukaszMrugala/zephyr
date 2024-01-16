@@ -1,4 +1,4 @@
-FLASK_APP=static_reports.py
+FLASK_APP=main.py
 FLASK_ENV=development
 FLASK_DEBUG=True
 

@@ -6,6 +6,7 @@ from flask import Blueprint, render_template, request, abort, send_file
 from jinja2 import TemplateNotFound
 from app.models.platform import Daily_Platforms_Report, Platform_Report
 from app.models.component import ComponentStatus
+from app.models.common import DirectoryParser
 from app.config import *
 from app.config_local import *
 
@@ -32,6 +33,7 @@ def index():
                 , table = results.data_for_www.to_html(index=False, table_id='dataTablePlatforms', classes='table table-bordered')
                 , table_failures_s = results.failures_df.to_html(index=False, table_id='dTFailuresSuites'
                                                                     , classes='table table-bordered display nowrap w-100')
+                , show_download_btn = 1 if DirectoryParser.server_mode else 0
                 )
 
         del results
@@ -74,6 +76,7 @@ def platform():
                 , zephyr_version = results.environment['zephyr_version']
                 , arch = results.environment['arch']
                 , table = results.test_failed.to_html(index=False, table_id='dataTableFailures', classes='table table-bordered')
+                , show_download_btn = 1 if DirectoryParser.server_mode else 0
                 )
 
         del results
@@ -115,6 +118,7 @@ def components():
                 , run_date_time = results.environment['run_date']
                 , commit_date = results.environment['commit_date']
                 , zephyr_version = results.environment['zephyr_version']
+                , show_download_btn = 1 if DirectoryParser.server_mode else 0
                )
 
         del results
@@ -134,45 +138,45 @@ def components():
 # <a href="{{ url_for('download', filename="downloadFile.txt") }}">File</a>
 @main_blueprint.route('/download/<path:filename>', methods=['GET', 'POST'])
 def download_logs(filename):
-    run_date = datetime.strptime(request.args.get('run_date'), DATE_FORMAT_LONG).strftime(DATE_FORMAT_SHORT)
-    branch = BRANCH_DICT[request.args.get('branch')]
-    subset_name = request.args.get('subset_name')
-    platform = request.args.get('platform')
+    if DirectoryParser.server_mode:
+        run_date = datetime.strptime(request.args.get('run_date'), DATE_FORMAT_LONG).strftime(DATE_FORMAT_SHORT)
+        branch = BRANCH_DICT[request.args.get('branch')]
+        subset_name = request.args.get('subset_name')
+        platform = request.args.get('platform')
 
-    if filename in ['twister.log', 'twister.json']:
-        # twister.log || twister.json
-        path = os.path.join(DATA_PATH, branch, run_date, subset_name, filename)
-    else:
-        # build.log || device.log || handler.log
-        test = request.args.get('test_suite')
-        path = os.path.join(DATA_PATH, branch, run_date)
-
-        # search for filename.log file
-        file = glob.glob(f"{path}/*{platform}-twister-out*/**/{test}/{filename}", recursive=True)
-
-        if not file:
-            # filename.log does not exist, then search twister-out archives
-            # search for twister-out tar.gz archive
-            file = glob.glob(f"{path}/*{platform}-twister-out*/*.tar.gz", recursive=True)
-
-            if file:
-                # unzip twister-out archive
-                with tarfile.open(file[0], 'r') as tar:
-                    file = glob.glob(f"{path}/*{platform}-twister-out*/", recursive=True)
-                    tar.extractall(file[0])
+        if filename in ['twister.log', 'twister.json']:
+            # twister.log || twister.json
+            path = os.path.join(DATA_PATH, branch, run_date, subset_name, filename)
+        else:
+            # build.log || device.log || handler.log
+            test = request.args.get('test_suite')
+            path = os.path.join(DATA_PATH, branch, run_date)
 
             # search for filename.log file
             file = glob.glob(f"{path}/*{platform}-twister-out*/**/{test}/{filename}", recursive=True)
 
-        if file:
-            # handler.log exists
-            path = file[0]
-        else:
-            # handler.log does not exist
-            abort(404)
+            if not file:
+                # filename.log does not exist, then search twister-out archives
+                # search for twister-out tar.gz archive
+                file = glob.glob(f"{path}/*{platform}-twister-out*/*.tar.gz", recursive=True)
 
-    # Returning file from appended path
-    return send_file(path_or_file=path, as_attachment=True, download_name=f'{platform}-{filename}')
+                if file:
+                    # unzip twister-out archive
+                    with tarfile.open(file[0], 'r') as tar:
+                        file = glob.glob(f"{path}/*{platform}-twister-out*/", recursive=True)
+                        tar.extractall(file[0])
 
+                # search for filename.log file
+                file = glob.glob(f"{path}/*{platform}-twister-out*/**/{test}/{filename}", recursive=True)
 
-# subset-11-intel_ish_5_4_1-twister-out archive in .tar.gz format/twister-out/intel_ish_5_4_1/tests/benchmarks/app_kernel/benchmark.kernel.application.timeslicing/handler.log
+            if file:
+                # handler.log exists
+                path = file[0]
+            else:
+                # handler.log does not exist
+                abort(404)
+
+        # Returning file from appended path
+        return send_file(path_or_file=path, as_attachment=True, download_name=f'{platform}-{filename}')
+    else:
+        abort(404)
