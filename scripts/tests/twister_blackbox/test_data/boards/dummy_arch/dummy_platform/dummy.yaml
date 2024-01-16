@@ -1,0 +1,4 @@
+identifier: dummy
+name: A dummy platform
+arch: dummy_arch
+vendor: dummy_vendor

@@ -7,6 +7,7 @@ Blackbox tests for twister's command line functions
 """
 
 import importlib
+import re
 import mock
 import os
 import shutil
@@ -176,24 +177,30 @@ class TestReport:
 
     @pytest.mark.usefixtures("clear_log")
     @pytest.mark.parametrize(
-        'seed, expected_order',
+        'seed, ratio, expected_order',
         [
-            ('123', []),   # dummy.agnostic.group1.subgroup1.assert
-                             # dummy.agnostic.group1.subgroup2.assert
-                             # dummy.agnostic.group2.assert1
-                             # dummy.agnostic.group2.assert2
-                             # dummy.agnostic.group2.assert3
-            ('321', [])  # dummy.device.group.assert
+            ('123', '1/2', ['dummy.agnostic.group1.subgroup1', 'dummy.agnostic.group1.subgroup2']),
+            ('123', '2/2', ['dummy.agnostic.group2', 'dummy.device.group']),
+            ('321', '1/2', ['dummy.agnostic.group1.subgroup1', 'dummy.agnostic.group2']),
+            ('321', '2/2', ['dummy.device.group', 'dummy.agnostic.group1.subgroup2']),
+            ('123', '1/3', ['dummy.agnostic.group1.subgroup1', 'dummy.agnostic.group1.subgroup2']),
+            ('123', '2/3', ['dummy.agnostic.group2']),
+            ('123', '3/3', ['dummy.device.group']),
+            ('321', '1/3', ['dummy.agnostic.group1.subgroup1', 'dummy.agnostic.group2']),
+            ('321', '2/3', ['dummy.device.group']),
+            ('321', '3/3', ['dummy.agnostic.group1.subgroup2'])
         ],
-        ids=['no device', 'no agnostic']
+        ids=['first half, 123', 'second half, 123', 'first half, 321', 'second half, 321',
+             'first third, 123', 'middle third, 123', 'last third, 123',
+             'first third, 321', 'middle third, 321', 'last third, 321']
     )
-
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
-    def test_shuffle_tests(self, out_path, seed, expected_order):
+    def test_shuffle_tests(self, out_path, seed, ratio, expected_order):
         test_platforms = ['qemu_x86', 'frdm_k64f']
         path = os.path.join(TEST_DATA, 'tests', 'dummy')
         args = ['-i', '--outdir', out_path, '-T', path, '-y'] + \
                ['--shuffle-tests', '--shuffle-tests-seed', seed] + \
+               ['--subset', ratio] + \
                [val for pair in zip(
                    ['-p'] * len(test_platforms), test_platforms
                ) for val in pair]
@@ -210,9 +217,41 @@ class TestReport:
                 for tc in ts['testcases'] if 'reason' not in tc
         ]
 
-        print(filtered_j)
-        print([j[2] for j in filtered_j])
+        testcases = [re.sub(r'\.assert[^\.]*?$', '', j[2]) for j in filtered_j]
+        testsuites = list(dict.fromkeys(testcases))
 
-        #assert len(filtered_j) == expected_test_count
+        assert testsuites == expected_order
 
         assert str(sys_exit.value) == '0'
+
+
+    @pytest.mark.usefixtures("clear_log")
+    @pytest.mark.parametrize(
+        'board_root, expected_returncode',
+        [(True, '0'), (False, '2')],
+        ids=['dummy in additional board root', 'no additional board root, crash']
+    )
+    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+    def test_board_root(self, out_path, board_root, expected_returncode):
+        test_platforms = ['qemu_x86', 'dummy']
+        board_root_path = os.path.join(TEST_DATA, 'boards')
+        path = os.path.join(TEST_DATA, 'tests', 'dummy')
+        args = ['-i', '--outdir', out_path, '-T', path, '-y'] + \
+               (['--board-root', board_root_path] if board_root else []) + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        # Checking twister.log increases coupling,
+        # but we need to differentiate crashes.
+        with open(os.path.join(out_path, 'twister.log')) as f:
+            log = f.read()
+            error_regex = r'ERROR.*platform_filter\s+-\s+unrecognized\s+platform\s+-\s+dummy$'
+            board_error = re.search(error_regex, log)
+            assert board_error if not board_root else not board_error
+
+        assert str(sys_exit.value) == expected_returncode
