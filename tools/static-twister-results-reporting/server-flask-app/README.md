@@ -20,8 +20,6 @@ Wiki page [link](https://wiki.ith.intel.com/display/timo/%5BDaily+Test%5D%3A+Sta
 
 ### Prepare the environment:
 
-1. For server.
-
 Create a project folder:
 ```
 mkdir static-reporting
@@ -31,27 +29,35 @@ cd static-reporting
 Clone files from github repository:
   `https://github.com/intel-innersource/os.rtos.zephyr.devops.ci/tree/main/tools/static-twister-results-reporting/server-flask-app`
 
-Now let's verify app setting and set path to twister out data:
+Now let's verify app setting and set path to the twister-out data:
 Section # Paths settings in app/config_local.py file
-```
-DATA_PATH = r'/path/to/branches/directory/'
-```
-> [!NOTE]
-> Data layout for deployment on a server:
-> ```
-> DATA_PATH/
-> |-- branch_name/
-> |   |-- run_date/
-> |   |   |-- twister_out/
-> |   |   |   |-- twister.json
-> |   |-- run_date2/
-> |   |   |-- twister_out/
-> |   |   |   |-- twister.json
-> |-- branch_name_2/
-> |   |-- run_date/
-> |   |   |-- twister_out/
-> |   |   |   |-- twister.json
-> ```
+There are three options:
+1. Put twister-out directory into main folder of the application (same place where is main.py file)
+2. Set path to the twister-out output files
+   ```
+   TWISTER_OUT_PATH = r'/home/zephyr/zephyrproject/twister-out'
+   ```
+3. Third option is for server only. Set path to branches directory.
+   ```
+   DATA_PATH = r'/path/to/branches/directory/'
+   ```
+   > [!NOTE]
+   > Data layout for deployment on a server:
+   > ```
+   > DATA_PATH/
+   > |-- branch_name/
+   > |   |-- run_date/
+   > |   |   |-- twister_out/
+   > |   |   |   |-- twister.json
+   > |   |-- run_date2/
+   > |   |   |-- twister_out/
+   > |   |   |   |-- twister.json
+   > |-- branch_name_2/
+   > |   |-- run_date/
+   > |   |   |-- twister_out/
+   > |   |   |   |-- twister.json
+   > ```
+   >
 
 Now let’s create and activate virtual environment:
 ```
