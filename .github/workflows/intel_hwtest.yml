@@ -276,21 +276,21 @@ jobs:
         run: |
          # Give some time to Twister processes to close logs on cancel.
          [ $(ps -ef | grep twister | wc -l) -ge 2 ] && sleep 60s
-         [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" | tar -czf subset-${{ matrix.target.job-index }}-${{ matrix.platform }}-twister-out.tar.gz -T -
+         [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" | tar -czf subset-${{ strategy.job-index }}-${{ matrix.target.platform }}-twister-out.tar.gz -T -
       - name: Upload twister-out.tar.gz archive per subset
         if: (steps.tar-twister-out.outcome == 'success') && (success() || failure() || cancelled())
         uses: actions/upload-artifact@v2
         with:
-          name: subset-${{ matrix.target.job-index }}-${{ matrix.platform }}-twister-out archive in .tar.gz format
+          name: subset-${{ strategy.job-index }}-${{ matrix.target.platform }}-twister-out archive in .tar.gz format
           path: |
-            subset-${{ matrix.target.job-index }}-${{ matrix.platform }}-twister-out.tar.gz
+            subset-${{ strategy.job-index }}-${{ matrix.target.platform }}-twister-out.tar.gz
           retention-days: 5
 
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: Unit Test Results (Subset ${{ matrix.target.job-index }})
+          name: Unit Test Results (Subset ${{ strategy.job-index }})
           path: |
             twister-out/twister.log
             twister-out/twister.xml
