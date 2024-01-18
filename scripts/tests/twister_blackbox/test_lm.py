@@ -293,3 +293,51 @@ class TestReport:
         assert all([testsuite.startswith(expected_start)for _, testsuite, _ in filtered_j])
 
         assert str(sys_exit.value) == '0'
+
+    @pytest.mark.usefixtures("clear_log")
+    @pytest.mark.parametrize(
+        'flag_section, clobber, expect_straggler',
+        [
+            ([], True, False),
+            (['--clobber-output'], False, False),
+            (['--no-clean'], False, True),
+            (['--clobber-output', '--no-clean'], False, True),
+        ],
+        ids=['clobber', 'do not clobber', 'do not clean', 'do not clobber, do not clean']
+    )
+    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+    def test_clobber_output(self, out_path, flag_section, clobber, expect_straggler):
+        test_platforms = ['qemu_x86', 'frdm_k64f']
+        path = os.path.join(TEST_DATA, 'tests', 'dummy')
+        args = ['-i', '--outdir', out_path, '-T', path, '-y'] + \
+               flag_section + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        # We create an empty 'blackbox-out' to trigger the clobbering
+        os.mkdir(os.path.join(out_path))
+        # We want to have a single straggler to check for
+        straggler_name = 'atavi.sm'
+        straggler_path = os.path.join(out_path, straggler_name)
+        open(straggler_path, 'a').close()
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        assert str(sys_exit.value) == '0'
+
+        expected_dirs = ['blackbox-out']
+        if clobber:
+            expected_dirs += ['blackbox-out.1']
+        current_dirs = os.listdir(os.path.normpath(os.path.join(out_path, '..')))
+        print(current_dirs)
+        assert sorted(current_dirs) == sorted(expected_dirs)
+
+        out_contents = os.listdir(os.path.join(out_path))
+        print(out_contents)
+        if expect_straggler:
+            assert straggler_name in out_contents
+        else:
+            assert straggler_name not in out_contents
