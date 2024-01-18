@@ -15,6 +15,7 @@ on:
         description: 'Target'
         type: choice
         required: true
+        default: 'all'
         options:
           - all
           - intel_adsp_cavs25
@@ -37,6 +38,7 @@ on:
         description: 'Test Scope'
         type: choice
         required: true
+        default: 'acceptance'
         options:
           - acceptance
           - smoke
@@ -44,6 +46,7 @@ on:
         description: 'Debug'
         type: choice
         required: true
+        default: 'none'
         options:
           - none
           - twister-debug
