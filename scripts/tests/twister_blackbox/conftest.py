@@ -36,6 +36,7 @@ def zephyr_base_directory():
 def zephyr_test_directory():
     return TEST_DATA
 
+<<<<<<< HEAD
 @pytest.fixture(autouse=True)
 def clear_log(request):
     # As this fixture is autouse, one can use the pytest.mark.noclearlog decorator
@@ -43,6 +44,10 @@ def clear_log(request):
     if 'noclearlog' in request.keywords:
         return
 
+=======
+@pytest.fixture
+def clear_log():
+>>>>>>> 0603752498 (scripts: tests: Blackbox test expansion)
     # clear_log is used by pytest fixture
     # However, clear_log_in_test is prepared to be used directly in the code, wherever required
     clear_log_in_test()
