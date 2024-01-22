@@ -6,6 +6,7 @@ tests:
       - qemu_x86_64
     integration_platforms:
       - native_sim
+    slow: true
     tags:
       - agnostic
       - alternate-config-root
