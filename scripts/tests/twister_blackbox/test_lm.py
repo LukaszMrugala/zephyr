@@ -500,3 +500,60 @@ class TestReport:
         assert str(sys_exit.value) == '0'
 
         assert len(filtered_j) == 12
+
+    @pytest.mark.usefixtures("clear_log")
+    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+    def test_inline_logs(self, out_path):
+        test_platforms = ['qemu_x86', 'frdm_k64f']
+        path = os.path.join(TEST_DATA, 'tests', 'always_build_error', 'dummy')
+        args = ['--outdir', out_path, '-T', path] + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        assert str(sys_exit.value) == '1'
+
+        rel_path = os.path.relpath(path, ZEPHYR_BASE)
+        build_path = os.path.join(out_path, 'qemu_x86', rel_path, 'always_fail.dummy', 'build.log')
+        with open(build_path) as f:
+            build_log = f.read()
+
+        clear_log_in_test()
+
+        args = ['--outdir', out_path, '-T', path] + \
+               ['--inline-logs'] + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        assert str(sys_exit.value) == '1'
+
+        with open(os.path.join(out_path, 'twister.log')) as f:
+           inline_twister_log = f.read()
+
+        # Remove information that differs between the runs
+        removal_patterns = [
+            # Remove tmp filepaths, as they will differ
+            r'(/|\\)tmp(/|\\)\S+',
+            # Remove object creation order, as it can change
+            r'^\[[0-9]+/[0-9]+\] ',
+            # Remove variable CMake flag
+            r'-DTC_RUNID=[0-9a-zA-Z]+',
+            # Remove variable order CMake flags
+            r'-I[0-9a-zA-Z/\\]+'
+        ]
+        for pattern in removal_patterns:
+            inline_twister_log = re.sub(pattern, '', inline_twister_log, flags=re.MULTILINE)
+            build_log = re.sub(pattern, '', build_log, flags=re.MULTILINE)
+
+        split_build_log = build_log.split('\n')
+        for r in split_build_log:
+            assert r in inline_twister_log
