@@ -244,6 +244,7 @@ jobs:
           EXTRA_TWISTER_OPTS=""
           if [ "${{github.event_name}}" = "pull_request" ]; then
             TEST_COV=smoke
+            export TWISTER_QUARANTINE_LIST=.github/data/pr-quarantine-list.yml
           elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             TEST_COV=${{ github.event.inputs.scope }}
             if [ "${{ github.event.inputs.debug }}" == "twister-debug" ]; then

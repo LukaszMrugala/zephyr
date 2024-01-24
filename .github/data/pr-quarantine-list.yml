@@ -1,0 +1,98 @@
+- scenarios:
+  - pm.device_runtime.api
+  platforms:
+  - intel_adsp_ace15_mtpm
+  - intel_adsp_ace15_mtpm_sim
+  - intel_adsp_ace30_ptl_sim
+  comment: >
+    merged on upstream - rebase will bring solution
+    https://jira.devtools.intel.com/browse/RTOS-8276
+
+- scenarios:
+  - boards.intel_adsp.ssp
+  platforms:
+  - intel_adsp_cavs25
+  comment: >
+   boards.intel_adsp.ssp -> https://github.com/zephyrproject-rtos/zephyr/issues/61789
+
+- scenarios:
+  - kernel.mutex.system
+  - kernel.semaphore
+  - kernel.memory_protection.userspace
+  - logging.log_user
+  - kernel.threads.dynamic
+  platforms:
+  - intel_adsp_ace30_ptl_sim
+  comment: >
+   kernel.mutex.system -> https://jira.devtools.intel.com/browse/RTOS-8247
+   kernel.semaphore -> https://jira.devtools.intel.com/browse/RTOS-8248
+   kernel.memory_protection.userspace -> https://jira.devtools.intel.com/browse/RTOS-8120
+   logging.log_user -> https://jira.devtools.intel.com/browse/RTOS-8119
+   kernel.threads.dynamic -> https://jira.devtools.intel.com/browse/RTOS-8255
+
+- scenarios:
+  - arch.shared_interrupt
+  - kernel.timer.timer
+  - kernel.timer.tickless
+  - drivers.watchdog
+  platforms:
+  - it8xxx2_evb
+  comment: >
+   arch.shared_interrupt -> https://github.com/zephyrproject-rtos/zephyr/issues/63114
+   kernel.timer.timer -> https://github.com/zephyrproject-rtos/zephyr/issues/67833
+   kernel.timer.tickless -> https://github.com/zephyrproject-rtos/zephyr/issues/67474
+   drivers.watchdog -> https://jira.devtools.intel.com/browse/RTOS-8028
+
+- scenarios:
+  - latency_measure
+  platforms:
+  - npcx9m6f_evb
+  - frdm_k64f
+  comment: >
+   latency_measure -> https://jira.devtools.intel.com/browse/RTOS-8288
+
+- scenarios:
+  - pm.device_runtime.api
+  - kernel.tickless.concept
+  - kernel.timer.tickless
+  - kernel.common.profiling
+  platforms:
+  - intel_ish_5_4_1_simics
+  - intel_ish_5_8_0_simics
+  comment: >
+   combined issue -> https://jira.devtools.intel.com/browse/RTOS-7956
+
+- scenarios:
+  - libraries.heap
+  platforms:
+  - intel_ish_5_4_1_simics
+  - intel_ish_5_8_0_simics
+  comment: >
+    The test takes more than 30 minutes to run in Simics.
+
+- scenarios:
+  - benchmark.kernel.application
+  - benchmark.kernel.core
+  platforms:
+  - intel_ish_5_4_1_simics
+  comment: >
+    Too slow to execute on MTL Simics.
+
+- scenarios:
+  - pm.device_runtime.api
+  - kernel.tickless.concept
+  - kernel.timer.tickless
+  platforms:
+  - intel_adsp_cavs25
+  - npcx9m6f_evb
+  comment: >
+    Tests are blocking cavs25 and npcx9m6f_evb. Jira to follow : https://jira.devtools.intel.com/browse/RTOS-7956
+    Bug reported also on upstream https://github.com/zephyrproject-rtos/zephyr/issues/55085
+
+- scenarios:
+  - boards.mec172xevb_assy6906.i2c
+  - boards.mec15xxevb_assy6853.i2c
+  - boards.mec15xxevb_assy6853.qspi
+  - boards.frdm_k64f.i2c
+  comment:
+    HW does not have required sensors
