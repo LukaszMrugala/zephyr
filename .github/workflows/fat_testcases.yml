@@ -67,6 +67,8 @@ jobs:
           for r in `west  list -f {url} | grep intel-innersource | sed 's#https://##'`; do
             echo -e "https://$TOKEN:$TOKEN@$r" >> $HOME/.git-credentials
           done
+          west update fat
+          west update fat_submodules
           # debug
           cat $HOME/.git-credentials
           git config --global --add safe.directory ${PWD}

@@ -18,11 +18,15 @@ manifest:
       submodules: false
       revision: ww.42.23.v.1.1.42
       remote: intel
+      groups:
+        - fat
     - name: fat_submodules
       path: intel/frameworks.validation.firmware-automated-testing.fat/cavs_scripts-py_externals
       repo-path: frameworks.validation.firmware-automated-testing.fat-externals
       revision: main
       remote: intel
+      groups:
+        - fat
     - name: tomlc99
       remote: thesofproject
       repo-path: tomlc99

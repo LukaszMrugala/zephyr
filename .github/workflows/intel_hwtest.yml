@@ -173,6 +173,7 @@ jobs:
           if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
             west init -l . || true
           fi
+          west config manifest.group-filter -- -fat
           west config --global update.narrow true
           #west config --global update.path-cache "/runner/workspace"
           # we need this here because our local manifest does import this repo
