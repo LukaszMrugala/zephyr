@@ -557,3 +557,35 @@ class TestReport:
         split_build_log = build_log.split('\n')
         for r in split_build_log:
             assert r in inline_twister_log
+
+    @pytest.mark.usefixtures("clear_log")
+    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+    def test_extra_args(self, caplog, out_path):
+        test_platforms = ['qemu_x86', 'frdm_k64f']
+        path = os.path.join(TEST_DATA, 'tests', 'dummy', 'agnostic', 'group2')
+        args = ['--outdir', out_path, '-T', path] + \
+               ['--extra-args', 'USE_CCACHE=0', '--extra-args', 'DUMMY=1'] + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        assert str(sys_exit.value) == '0'
+
+        with open(os.path.join(out_path, 'twister.log')) as f:
+           inline_twister_log = f.read()
+
+        pattern_cache = r'Calling cmake: [^\n]+ -DUSE_CCACHE=0 [^\n]+\n'
+        pattern_dummy = r'Calling cmake: [^\n]+ -DDUMMY=1 [^\n]+\n'
+
+        assert ' -DUSE_CCACHE=0 ' in inline_twister_log
+        res = re.search(pattern_cache, inline_twister_log)
+        assert res
+
+        assert ' -DDUMMY=1 ' in inline_twister_log
+        res = re.search(pattern_dummy, inline_twister_log)
+        assert res
+
