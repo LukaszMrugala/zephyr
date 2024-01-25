@@ -15,7 +15,7 @@ import pytest
 import sys
 import json
 
-from conftest import ZEPHYR_BASE, TEST_DATA, testsuite_filename_mock, clear_log_in_test
+from conftest import ZEPHYR_BASE, TEST_DATA, sample_filename_mock, testsuite_filename_mock, clear_log_in_test
 from twisterlib.testplan import TestPlan
 from twisterlib.error import TwisterRuntimeError
 
@@ -617,4 +617,52 @@ class TestReport:
         assert str(sys_exit.value) == '0'
 
         assert len(filtered_j) == 2
+
+    @pytest.mark.usefixtures("clear_log")
+    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+    @mock.patch.object(TestPlan, 'SAMPLE_FILENAME', sample_filename_mock)
+    def test_size(self, capfd, out_path):
+        test_platforms = ['qemu_x86', 'frdm_k64f']
+        path = os.path.join(TEST_DATA, 'samples', 'hello_world')
+        args = ['-i', '--outdir', out_path, '-T', path] + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        assert str(sys_exit.value) == '0'
+
+        clear_log_in_test()
+        capfd.readouterr()
+
+        p = os.path.relpath(path, ZEPHYR_BASE)
+        prev_path = os.path.join(out_path, 'qemu_x86', p,
+                                 'sample.basic.helloworld', 'zephyr', 'zephyr.elf')
+        args = ['--size', prev_path]
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        assert str(sys_exit.value) == '0'
+
+        out, err = capfd.readouterr()
+        sys.stdout.write(out)
+        sys.stderr.write(err)
+
+        # Header and footer should be the most constant out of the report format.
+        header_pattern = r'SECTION NAME\s+VMA\s+LMA\s+SIZE\s+HEX SZ\s+TYPE\s*\n'
+        res = re.search(header_pattern, out)
+        assert res, 'No stdout size report header found.'
+
+        footer_pattern = r'Totals:\s+(?P<rom>[0-9]+)\s+bytes\s+\(ROM\),\s+' \
+                         r'(?P<ram>[0-9]+)\s+bytes\s+\(RAM\)\s*\n'
+        res = re.search(footer_pattern, out)
+        assert res, 'No stdout size report footer found.'
+
+        assert res.group('rom') == '20600', 'ROM size mismatch'
+        assert res.group('ram') == '83260', 'RAM size mismatch'
 
