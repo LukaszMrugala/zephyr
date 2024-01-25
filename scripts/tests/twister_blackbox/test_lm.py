@@ -666,3 +666,36 @@ class TestReport:
         assert res.group('rom') == '20600', 'ROM size mismatch'
         assert res.group('ram') == '83260', 'RAM size mismatch'
 
+    @pytest.mark.usefixtures("clear_log")
+    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+    @mock.patch.object(TestPlan, 'SAMPLE_FILENAME', sample_filename_mock)
+    def test_runtime_artifact_cleanup(self, capfd, out_path):
+        test_platforms = ['qemu_x86', 'frdm_k64f']
+        path = os.path.join(TEST_DATA, 'samples', 'hello_world')
+        args = ['-i', '--outdir', out_path, '-T', path] + \
+               ['--runtime-artifact-cleanup'] + \
+               [] + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        assert str(sys_exit.value) == '0'
+
+        relpath = os.path.relpath(path, ZEPHYR_BASE)
+        sample_path = os.path.join(out_path, 'qemu_x86', relpath, 'sample.basic.helloworld')
+        listdir = os.listdir(sample_path)
+        zephyr_listdir = os.listdir(os.path.join(sample_path, 'zephyr'))
+
+        expected_contents = ['CMakeFiles', 'handler.log', 'build.ninja', 'CMakeCache.txt',
+                             'zephyr', 'build.log']
+        expected_zephyr_contents = ['.config']
+
+        assert all([content in expected_zephyr_contents for content in zephyr_listdir]), \
+               'Cleaned zephyr directory has unexpected files.'
+        assert all([content in expected_contents for content in listdir]), \
+               'Cleaned directory has unexpected files.'
+
