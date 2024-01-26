@@ -87,7 +87,7 @@ jobs:
             # dispatch
             case '${{ github.event.inputs.target }}' in
               all)  build_target_all="y";;
-              *)    eval build_${{ github.events.input.target }}="y";;
+              *)    eval build_target_${{ github.event.inputs.target }}="y";;
             esac
           else
             # push / schedule
