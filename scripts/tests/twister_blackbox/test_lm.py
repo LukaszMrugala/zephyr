@@ -43,7 +43,6 @@ class TestReport:
     def teardown_class(cls):
         pass
 
-    @pytest.mark.usefixtures("clear_log")
     @pytest.mark.parametrize(
         '',
         TESTDATA_1,
@@ -110,7 +109,6 @@ class TestReport:
 
         assert str(sys_exit.value) == '0'
 
-    @pytest.mark.usefixtures("clear_log")
     @pytest.mark.parametrize(
         'jobs',
         ['1', '2'],
@@ -136,7 +134,6 @@ class TestReport:
 
         assert str(sys_exit.value) == '0'
 
-    @pytest.mark.usefixtures("clear_log")
     @pytest.mark.parametrize(
         'tag, expected_test_count',
         [
@@ -175,7 +172,6 @@ class TestReport:
 
         assert str(sys_exit.value) == '0'
 
-    @pytest.mark.usefixtures("clear_log")
     @pytest.mark.parametrize(
         'seed, ratio, expected_order',
         [
@@ -225,7 +221,6 @@ class TestReport:
         assert str(sys_exit.value) == '0'
 
 
-    @pytest.mark.usefixtures("clear_log")
     @pytest.mark.parametrize(
         'board_root, expected_returncode',
         [(True, '0'), (False, '2')],
@@ -256,7 +251,6 @@ class TestReport:
 
         assert str(sys_exit.value) == expected_returncode
 
-    @pytest.mark.usefixtures("clear_log")
     @pytest.mark.parametrize(
         'flag, expect_paths',
         [
@@ -294,7 +288,6 @@ class TestReport:
 
         assert str(sys_exit.value) == '0'
 
-    @pytest.mark.usefixtures("clear_log")
     @pytest.mark.parametrize(
         'flag_section, clobber, expect_straggler',
         [
@@ -342,7 +335,6 @@ class TestReport:
         else:
             assert straggler_name not in out_contents
 
-    @pytest.mark.usefixtures("clear_log")
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
     def test_save_tests(self, out_path):
         test_platforms = ['qemu_x86', 'frdm_k64f']
@@ -387,7 +379,6 @@ class TestReport:
 
         assert len(filtered_j) == 5
 
-    @pytest.mark.usefixtures("clear_log")
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
     def test_alt_config_root(self, out_path):
         test_platforms = ['qemu_x86', 'frdm_k64f']
@@ -416,7 +407,6 @@ class TestReport:
 
         assert len(filtered_j) == 3
 
-    @pytest.mark.usefixtures("clear_log")
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
     def test_enable_slow(self, out_path):
         test_platforms = ['qemu_x86', 'frdm_k64f']
@@ -445,7 +435,6 @@ class TestReport:
 
         assert len(filtered_j) == 5
 
-    @pytest.mark.usefixtures("clear_log")
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
     def test_enable_slow_only(self, out_path):
         test_platforms = ['qemu_x86', 'frdm_k64f']
@@ -474,7 +463,6 @@ class TestReport:
 
         assert len(filtered_j) == 3
 
-    @pytest.mark.usefixtures("clear_log")
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
     def test_force_platform(self, out_path):
         test_platforms = ['qemu_x86', 'frdm_k64f']
@@ -501,7 +489,6 @@ class TestReport:
 
         assert len(filtered_j) == 12
 
-    @pytest.mark.usefixtures("clear_log")
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
     def test_inline_logs(self, out_path):
         test_platforms = ['qemu_x86', 'frdm_k64f']
@@ -558,7 +545,6 @@ class TestReport:
         for r in split_build_log:
             assert r in inline_twister_log
 
-    @pytest.mark.usefixtures("clear_log")
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
     def test_extra_args(self, caplog, out_path):
         test_platforms = ['qemu_x86', 'frdm_k64f']
@@ -589,7 +575,6 @@ class TestReport:
         res = re.search(pattern_dummy, inline_twister_log)
         assert res
 
-    @pytest.mark.usefixtures("clear_log")
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
     def test_quarantine_verify(self, out_path):
         test_platforms = ['qemu_x86', 'frdm_k64f']
@@ -618,7 +603,6 @@ class TestReport:
 
         assert len(filtered_j) == 2
 
-    @pytest.mark.usefixtures("clear_log")
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
     @mock.patch.object(TestPlan, 'SAMPLE_FILENAME', sample_filename_mock)
     def test_size(self, capfd, out_path):
@@ -666,7 +650,6 @@ class TestReport:
         assert res.group('rom') == '20600', 'ROM size mismatch'
         assert res.group('ram') == '83260', 'RAM size mismatch'
 
-    @pytest.mark.usefixtures("clear_log")
     @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
     @mock.patch.object(TestPlan, 'SAMPLE_FILENAME', sample_filename_mock)
     def test_runtime_artifact_cleanup(self, capfd, out_path):
@@ -699,3 +682,70 @@ class TestReport:
         assert all([content in expected_contents for content in listdir]), \
                'Cleaned directory has unexpected files.'
 
+    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+    def test_short_build_path(self, capfd, out_path):
+        test_platforms = ['qemu_x86']
+        path = os.path.join(TEST_DATA, 'tests', 'dummy', 'agnostic', 'group2')
+        # twister_links dir does not exist in a dry run.
+        args = ['-i', '--outdir', out_path, '-T', path] + \
+               ['--short-build-path'] + \
+               ['--ninja'] + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        relative_test_path = os.path.relpath(path, ZEPHYR_BASE)
+        test_result_path = os.path.join(out_path, 'qemu_x86',
+                                        relative_test_path, 'dummy.agnostic.group2')
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        assert str(sys_exit.value) == '0'
+
+        with open(os.path.join(out_path, 'twister.log')) as f:
+            twister_log = f.read()
+
+        pattern_running = r'Running\s+cmake\s+on\s+(?P<full_path>[\\\/].*)\s+for\s+qemu_x86\s*\n'
+        res_running = re.search(pattern_running, twister_log)
+        assert res_running
+
+        # Spaces, forward slashes, etc. in the path as well as CMake peculiarities
+        # require us to forgo simple RegExes.
+        pattern_calling_line = r'Calling cmake: [^\n]+$'
+        res_calling = re.search(pattern_calling_line, twister_log[res_running.end():], re.MULTILINE)
+        calling_line = res_calling.group()
+
+        # HIGHLY DANGEROUS pattern!
+        # If the checked text is not CMake flags only, it is exponential!
+        # Where N is the length of non-flag space-delimited text section.
+        flag_pattern = r'(?:\S+(?: \\)?)+- '
+        cmake_path = shutil.which('cmake')
+        if not cmake_path:
+            assert False, 'Cmake not found.'
+
+        cmake_call_section = r'^Calling cmake: ' + re.escape(cmake_path)
+        calling_line = re.sub(cmake_call_section, '', calling_line)
+        calling_line = calling_line[::-1]
+        flag_iterable = re.finditer(flag_pattern, calling_line)
+
+        for match in flag_iterable:
+            reversed_flag = match.group()
+            flag = reversed_flag[::-1]
+
+            # Build flag
+            if flag.startswith(' -B'):
+                flag_value = flag[3:]
+                build_filename = os.path.basename(os.path.normpath(flag_value))
+                unshortened_build_path = os.path.join(test_result_path, build_filename)
+                assert flag_value != unshortened_build_path, 'Build path unchanged.'
+                assert len(flag_value) < len(unshortened_build_path), 'Build path not shortened.'
+
+            # Pipe flag
+            if flag.startswith(' -DQEMU_PIPE='):
+                flag_value = flag[13:]
+                pipe_filename = os.path.basename(os.path.normpath(flag_value))
+                unshortened_pipe_path = os.path.join(test_result_path, pipe_filename)
+                assert flag_value != unshortened_pipe_path, 'Pipe path unchanged.'
+                assert len(flag_value) < len(unshortened_pipe_path), 'Pipe path not shortened.'
