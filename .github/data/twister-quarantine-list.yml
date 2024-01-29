@@ -58,6 +58,7 @@
 - scenarios:
   - kernel.tickless.concept
   - pm.device_runtime.api
+  - pm.device_runtime.isr_safe.api
   - kernel.timer.tickless
   platforms:
   - npcx9m6f_evb
