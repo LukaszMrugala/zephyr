@@ -749,3 +749,29 @@ class TestReport:
                 unshortened_pipe_path = os.path.join(test_result_path, pipe_filename)
                 assert flag_value != unshortened_pipe_path, 'Pipe path unchanged.'
                 assert len(flag_value) < len(unshortened_pipe_path), 'Pipe path not shortened.'
+
+    @mock.patch.object(TestPlan, 'SAMPLE_FILENAME', sample_filename_mock)
+    def test_prep_artifacts_for_testing(self, capfd, out_path):
+        test_platforms = ['qemu_x86', 'frdm_k64f']
+        path = os.path.join(TEST_DATA, 'samples', 'hello_world')
+        relative_test_path = os.path.relpath(path, ZEPHYR_BASE)
+        zephyr_out_path = os.path.join(out_path, 'qemu_x86', relative_test_path,
+                                       'sample.basic.helloworld', 'zephyr')
+        args = ['-i', '--outdir', out_path, '-T', path] + \
+               ['--prep-artifacts-for-testing'] + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        assert str(sys_exit.value) == '0'
+
+        zephyr_artifact_list = os.listdir(zephyr_out_path)
+
+        # --build-only and normal run leave more files than --prep-artifacts-for-testing
+        # However, the cost of testing that this leaves less seems to outweigh the benefits.
+        # So we'll only check for the most important artifact.
+        assert 'zephyr.elf' in zephyr_artifact_list
