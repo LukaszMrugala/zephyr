@@ -775,3 +775,31 @@ class TestReport:
         # However, the cost of testing that this leaves less seems to outweigh the benefits.
         # So we'll only check for the most important artifact.
         assert 'zephyr.elf' in zephyr_artifact_list
+
+    @mock.patch.object(TestPlan, 'SAMPLE_FILENAME', sample_filename_mock)
+    def test_force_toolchain(self, out_path):
+        # nsim_vpx5 is one of the rare platforms that do not support the zephyr toolchain
+        test_platforms = ['nsim_vpx5']
+        path = os.path.join(TEST_DATA, 'samples', 'hello_world')
+        args = ['-i', '--outdir', out_path, '-T', path, '-y'] + \
+               ['--force-toolchain'] + \
+               [] + \
+               [val for pair in zip(
+                   ['-p'] * len(test_platforms), test_platforms
+               ) for val in pair]
+
+        with mock.patch.object(sys, 'argv', [sys.argv[0]] + args), \
+                pytest.raises(SystemExit) as sys_exit:
+            self.loader.exec_module(self.twister_module)
+
+        with open(os.path.join(out_path, 'testplan.json')) as f:
+            j = json.load(f)
+        filtered_j = [
+            (ts['platform'], ts['name'], tc['identifier'], tc['status']) \
+                for ts in j['testsuites'] \
+                for tc in ts['testcases']
+        ]
+
+        # Normally, board not supporting our toolchain would be filtered, so we check against that
+        assert len(filtered_j) == 1
+        assert filtered_j[0][3] != 'filtered'
