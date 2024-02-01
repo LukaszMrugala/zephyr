@@ -2,17 +2,20 @@
 
 import re
 from time import sleep
+from dediprog_erase import dediprog_detect, dediprog_erase, DediprogEraseException
 from labgrid_prepare_platform import power, parser, _execute
 from pyocd_reinit_halted_boards import reset_board
 
 
 ARGS = ['pyocd-board-id', 'pyocd-timeout',
         'labgrid-place', 'labgrid-crossbar',
-        'labgrid-timeout']
+        'labgrid-timeout', 'dpcmd-erase',
+        'dpcmd-place']
 
 def prepare_platform(pyocd_board_id=None, pyocd_timeout=None,
                      labgrid_place=None, labgrid_crossbar=None,
-                     labgrid_timeout=None):
+                     labgrid_timeout=None, dpcmd_erase=None,
+                     dpcmd_place=None):
     if not labgrid_timeout:
         labgrid_timeout = 5
     if isinstance(labgrid_timeout, str):
@@ -39,13 +42,39 @@ def prepare_platform(pyocd_board_id=None, pyocd_timeout=None,
                 power(lg_place=place, lg_crossbar=labgrid_crossbar,
                       lg_power='off', lg_timeout=labgrid_timeout)
                 sleep(labgrid_timeout)
+                if dpcmd_erase == 'True':
+                    try:
+                        dediprog_detect(exec_method=_execute)
+                    except DediprogEraseException:
+                        if dpcmd_place:
+                            # Dediprog reset is sometimes needed to detect chip
+                            power(lg_place=dpcmd_place, lg_crossbar=labgrid_crossbar,
+                                  lg_power='off', lg_timeout=labgrid_timeout)
+                            sleep(labgrid_timeout)
+                            power(lg_place=dpcmd_place, lg_crossbar=labgrid_crossbar,
+                                  lg_power='on', lg_timeout=labgrid_timeout)
+                    finally:
+                        dediprog_erase(exec_method=_execute, detect=False)
                 power(lg_place=place, lg_crossbar=labgrid_crossbar,
                       lg_power='on', lg_timeout=labgrid_timeout)
         else:
-            power(place=labgrid_place, lg_crossbar=labgrid_crossbar,
+            power(lg_place=labgrid_place, lg_crossbar=labgrid_crossbar,
                   lg_power='off', lg_timeout=labgrid_timeout)
             sleep(labgrid_timeout)
-            power(place=labgrid_place, lg_crossbar=labgrid_crossbar,
+            if dpcmd_erase == 'True':
+                try:
+                    dediprog_detect(exec_method=_execute)
+                except DediprogEraseException:
+                    if dpcmd_place:
+                        # Dediprog reset is sometimes needed to detect chip
+                        power(lg_place=dpcmd_place, lg_crossbar=labgrid_crossbar,
+                              lg_power='off', lg_timeout=labgrid_timeout)
+                        sleep(labgrid_timeout)
+                        power(lg_place=dpcmd_place, lg_crossbar=labgrid_crossbar,
+                              lg_power='on', lg_timeout=labgrid_timeout)
+                finally:
+                    dediprog_erase(exec_method=_execute, detect=False)
+            power(lg_place=labgrid_place, lg_crossbar=labgrid_crossbar,
                   lg_power='on', lg_timeout=labgrid_timeout)
 
     else:
@@ -57,4 +86,6 @@ if __name__ == "__main__":
                      pyocd_timeout=args.pyocd_timeout,
                      labgrid_place=args.labgrid_place,
                      labgrid_crossbar=args.labgrid_crossbar,
-                     labgrid_timeout=args.labgrid_timeout)
+                     labgrid_timeout=args.labgrid_timeout,
+                     dpcmd_erase=args.dpcmd_erase,
+                     dpcmd_place=args.dpcmd_place)
