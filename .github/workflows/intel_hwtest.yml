@@ -203,9 +203,11 @@ jobs:
         run: |
           echo "Resetting ${{ matrix.target.platform }} with labgrid, labgrid-crossbar: $LG_CROSSBAR"
           eval $(ssh-agent -s) && echo "$IGK_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-          python3 scripts/support/prepare_platform.py --labgrid-place "${{ matrix.target.labgrid_place }}" --labgrid-crossbar "$LG_CROSSBAR" --labgrid-timeout $LG_TIMEOUT
+          python3 scripts/support/prepare_platform.py --labgrid-place "${{ matrix.target.labgrid_place }}" --labgrid-crossbar "$LG_CROSSBAR" --labgrid-timeout $LG_TIMEOUT --dpcmd-erase $DPCMD_ERASE --dpcmd-place $DPCMD_PLACE
         env:
           LG_TIMEOUT: ${{ matrix.target.labgrid_timeout || 5 }}
+          DPCMD_ERASE: ${{ matrix.target.dpcmd_erase || 'False' }}
+          DPCMD_PLACE: ${{matrix.target.dpcmd_place || 'None' }}
 
       - name: Build RIMAGE
         run: |

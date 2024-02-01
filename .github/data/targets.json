@@ -47,8 +47,10 @@
     "runner": "fmos-testhost-nuc-igk-mec17",
     "hwmap": "map-igk.yaml",
     "container_options": "--privileged --device /dev/ttyUSB0:/dev/ttyUSB0 -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id",
-    "labgrid_place": "mec17-igk,mec17-igk-dediprog",
-    "labgrid_timeout": 3
+    "labgrid_place": "mec17-igk",
+    "labgrid_timeout": 3,
+    "dpcmd_erase": "False",
+    "dpcmd_place": "mec17-igk-dediprog"
   },
   {
     "toolchain": "zephyr",
@@ -69,8 +71,10 @@
     "runner": "fmos-testhost-nuc-igk-mec15",
     "hwmap": "map-igk.yaml",
     "container_options": "--privileged --device /dev/ttyUSB0:/dev/ttyUSB0 -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id",
-    "labgrid_place": "mec15-igk,mec15-igk-dediprog",
-    "labgrid_timeout": 5
+    "labgrid_place": "mec15-igk",
+    "labgrid_timeout": 5,
+    "dpcmd_erase": "True",
+    "dpcmd_place": "mec15-igk-dediprog"
   },
   {
     "toolchain": "zephyr",
