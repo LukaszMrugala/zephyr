@@ -6,7 +6,7 @@
   - intel_adsp_ace30_ptl_sim
   comment: >
     merged on upstream - rebase will bring solution
-    https://jira.devtools.intel.com/browse/RTOS-8276
+    https://jira.devtools.intel.com/browse/RTOS-8275
 
 - scenarios:
   - boards.intel_adsp.ssp
@@ -42,14 +42,6 @@
    kernel.timer.timer -> https://github.com/zephyrproject-rtos/zephyr/issues/67833
    kernel.timer.tickless -> https://github.com/zephyrproject-rtos/zephyr/issues/67474
    drivers.watchdog -> https://jira.devtools.intel.com/browse/RTOS-8028
-
-- scenarios:
-  - latency_measure
-  platforms:
-  - npcx9m6f_evb
-  - frdm_k64f
-  comment: >
-   latency_measure -> https://jira.devtools.intel.com/browse/RTOS-8288
 
 - scenarios:
   - pm.device_runtime.api
