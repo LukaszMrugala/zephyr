@@ -20,7 +20,7 @@ jobs:
         shell: bash
     runs-on: fmos-guest-ubuntu-24c
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
       options: "-v /srv/runner/workspace:/runner/workspace"
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
@@ -31,7 +31,7 @@ jobs:
 
     env:
       TWISTER_OPTS: "-v -M -x=USE_CCACHE=0 --inline-logs --retry-failed 3 --retry-interval 60 --force-color --no-skipped-report --integration"
-      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.4
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.5
     steps:
       - name: Clean
         shell: bash
@@ -106,7 +106,7 @@ jobs:
 
   publish-test-results:
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
     env:
