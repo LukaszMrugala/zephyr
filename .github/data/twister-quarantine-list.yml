@@ -20,13 +20,6 @@
   - boards.frdm_k64f.i2c
 
 - scenarios:
-  - logging.log_link_order
-  platforms:
-  - nsim_em
-  comment: >
-    bug reported upstream https://github.com/zephyrproject-rtos/zephyr/issues/51422
-
-- scenarios:
   - sample.tfm.*
   comment: >
     covered upstream
@@ -63,7 +56,8 @@
   platforms:
   - npcx9m6f_evb
   comment: >
-    Bug reported upstream https://github.com/zephyrproject-rtos/zephyr/issues/55085 causes the board to lock up until a manual reset is issued via a JLink.
+    kernel.tickless.concept, kernel.timer.tickless, pm.device_runtime.api -> https://github.com/zephyrproject-rtos/zephyr/issues/55085
+    pm.device_runtime.isr_safe.api -> https://github.com/zephyrproject-rtos/zephyr/issues/68453
 
 - scenarios:
   - pm.device_runtime.api
@@ -73,5 +67,5 @@
   platforms:
   - intel_adsp_cavs25
   comment: >
-    Test is blocking cavs25. Jira to follow : https://jira.devtools.intel.com/browse/RTOS-7919
     pm.device_runtime.isr_safe.api -> https://github.com/zephyrproject-rtos/zephyr/issues/68453
+    kernel.tickless.concept, kernel.timer.tickless, pm.device_runtime.api -> https://jira.devtools.intel.com/browse/RTOS-7956
