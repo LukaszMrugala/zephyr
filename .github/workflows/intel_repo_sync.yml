@@ -50,3 +50,9 @@ jobs:
       with:
         source_repo: "https://github.com/zephyrproject-rtos/zephyr.git"
         branch: "v3.3-branch"
+
+    - name: Sync HWMv2 collab. branch
+      uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/git-sync@main
+      with:
+        source_repo: "https://github.com/zephyrproject-rtos/zephyr.git"
+        branch: "collab-hwm"
