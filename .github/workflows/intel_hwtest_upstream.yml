@@ -205,7 +205,6 @@ jobs:
           ./scripts/twister -M -x=USE_CCACHE=0 --inline-logs \
             --force-color -v \
             --quarantine-list main-intel/.github/data/twister-quarantine-list.yml \
-            --disable-suite-name-check \
             --retry-build-errors \
             --retry-failed 2 \
             --retry-interval 15 \

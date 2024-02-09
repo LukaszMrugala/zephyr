@@ -269,7 +269,6 @@ jobs:
             --force-color -v \
             ${EXTRA_TWISTER_OPTS} \
             --quarantine-list $TWISTER_QUARANTINE_LIST \
-            --disable-suite-name-check \
             --retry-build-errors \
             --retry-failed 2 \
             --retry-interval 15 \
