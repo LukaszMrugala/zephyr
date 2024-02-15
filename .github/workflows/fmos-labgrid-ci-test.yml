@@ -7,7 +7,7 @@ on:
 
 jobs:
   fmos-labgrid-ci-pipeline:
-    if: contains(github.event.pull_request.labels.*.name, 'labgrid')
+    if: contains(github.event.pull_request.labels.*.name, 'labgrid') || github.event.workflow_dispatch
     name: '[${{ matrix.name }}] FMOS Labgrid setup'
     defaults:
       run:
@@ -33,12 +33,14 @@ jobs:
             install: true
             coordinator: "ws://admin-fmos.igk.intel.com:80/lg"
             scope: smoke
+            configure: true
           - platform_group: 2
-            name: 'IGK: No Install and Configure on smoke scope'
-            os: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
+            name: 'IGK: No Install and No Configure on smoke scope'
+            os: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
             install: false
             runner: fmos-guest-ubuntu-12c-igk-debug
             scope: full
+            configure: false
           - platform_group: 3
             name: 'IGK: Install and Configure on full scope'
             os: ubuntu:20.04
@@ -46,6 +48,7 @@ jobs:
             install: true
             coordinator: "ws://admin-fmos.igk.intel.com:80/lg"
             scope: full
+            configure: true
           - platform_group: 4
             name: 'HF: Install and Configure on smoke scope'
             os: ubuntu:20.04
@@ -53,12 +56,14 @@ jobs:
             install: true
             coordinator: "ws://admin-fmos.hf.intel.com:80/lg"
             scope: smoke
+            configure: true
           - platform_group: 5
-            name: 'HF: No install and Configure on smoke scope'
-            os: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.6
+            name: 'HF: No install and No Configure on smoke scope'
+            os: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
             install: false
             runner: guest-thor3-4
             scope: full
+            configure: false
           - platform_group: 6
             name: 'HF: Install and Configure on full scope'
             os: ubuntu:20.04
@@ -66,9 +71,15 @@ jobs:
             install: true
             coordinator: "ws://admin-fmos.hf.intel.com:80/lg"
             scope: full
+            configure: true
 
     runs-on: ${{ matrix.runner }}
     steps:
+      - name: Cleanup
+        run: |
+          sudo rm -rf /__w/os.rtos.zephyr.devops.ci/os.rtos.zephyr.devops.ci/.*
+          sudo rm -rf /__w/os.rtos.zephyr.devops.ci/os.rtos.zephyr.devops.ci/*
+
       - name: Checkout
         uses: actions/checkout@v3.1.0
         with:
@@ -112,5 +123,6 @@ jobs:
 
           ./tools/labgrid/prepare-labgrid-env.sh -l ${{ matrix.coordinator }} \
                                                  -i ${{ matrix.install }} \
-                                                 -s ${{ matrix.scope }}
+                                                 -s ${{ matrix.scope }} \
+                                                 -c ${{ matrix.configure }}
         shell: bash

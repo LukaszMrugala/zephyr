@@ -50,7 +50,7 @@ jobs:
     steps:
       - name: Cleanup
         run: |
-          ls
+          sudo rm -rf /__w/os.rtos.zephyr.devops.ci/os.rtos.zephyr.devops.ci/.*
           sudo rm -rf /__w/os.rtos.zephyr.devops.ci/os.rtos.zephyr.devops.ci/*
 
       - name: Checkout

@@ -1,7 +1,7 @@
 # Intel Internal CI Support repo
 *A repo for CI and Infrastructure services, actions, and scripts*
 
-**Contacts: Chris Turner
+**Contacts: Chris Turner, Mateusz Redzynia
 
 ## FMOS Infrastructure Links & Docs
 
