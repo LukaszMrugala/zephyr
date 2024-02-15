@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform_group: [1, 2, 3, 4, 5]
+        platform_group: [1, 2, 3, 4, 5, 6]
         include:
           - platform_group: 1
             toolchain: 'zephyr'
@@ -78,6 +78,15 @@ jobs:
             container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
             variant: 'zephyr'
             runner: fmos-testhost-nuc-igk-04
+          - platform_group: 6
+            toolchain: 'zephyr'
+            scope: acceptance
+            hwtype: device
+            platform: 'npcx9m6f_evb'
+            variant: 'zephyr'
+            runner: fmos-testhost-nuc-igk-03
+            hwmap: "map-igk.yaml"
+            container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
 
     runs-on: ${{ matrix.runner }}
     timeout-minutes: ${{ matrix.timeout || 90 }}
