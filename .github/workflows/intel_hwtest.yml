@@ -185,7 +185,7 @@ jobs:
           # debug
           cat $HOME/.git-credentials
           git config --global --add safe.directory ${PWD}
-          west update
+          west update  2>&1 1> west.update.log || ( rm -rf ../intel ../modules ../bootloader ../tools && west update )
           west forall -c 'git reset --hard HEAD'
 
       - name: Reset platform with pyocd
