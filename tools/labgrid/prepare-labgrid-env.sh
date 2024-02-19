@@ -5,6 +5,9 @@
 INSTALL=""
 LABGRID_COORDINATOR=""
 P_SCOPE="smoke"
+GENERATE_REPORT=false
+CONFIGURE_LABGRID_LIB=false
+REPORT_NAME=""
 USE_PROXY=false
 IS_ROOT=false
 LOCKED_PLACES=()  # locked places that will not be touched
@@ -16,7 +19,7 @@ DOCKER_IGK_HOST="docker-igk-host"
 HF_PROXY="admin-fmos.hf.intel.com"
 DOCKER_HF_HOST="docker-host"
 
-while getopts ":hi:l:p:s:" option; do
+while getopts ":hi:l:p:s:g:r:c:" option; do
     case $option in
         h) # Display Help
             echo "Labgrid automation script will prepare the environment for the user."
@@ -28,6 +31,9 @@ while getopts ":hi:l:p:s:" option; do
             echo "-l     Labgrid coordinator to which connection is requested. Required."
             echo "-p     Tell script to use proxy or not. Default: false"
             echo "-s     Test scope if set to 'full' full scope will be tested. Default: 'smoke'"
+            echo "-g     Generate report."
+            echo "-r     Report name."
+            echo "-c     Configure labgrid library files. If labgrid is already installed omit this one."
             echo
             exit;;
         i) # Install labgrid
@@ -42,6 +48,15 @@ while getopts ":hi:l:p:s:" option; do
         s) # Scope
             P_SCOPE=$OPTARG
             echo "SCOPE=$P_SCOPE";;
+        g) # Generate report
+            GENERATE_REPORT=$OPTARG
+            ;;
+        r) # Report name
+            REPORT_NAME=$OPTARG
+            ;;
+        c) # Configure labgrid lib
+            CONFIGURE_LABGRID_LIB=$OPTARG
+            ;;
         \?) # Invalid options
             echo "Error: Invalid option"
             exit;;
@@ -76,7 +91,11 @@ labgridSetStrictHostKeyChecking () {
     else
         for python_ver in $(ls $HOME/.local/lib | grep '^python*'); do
             labgrid_ssh_path="$HOME/.local/lib/$python_ver/site-packages/labgrid/util/ssh.py"
-            sed -i 's/"StrictHostKeyChecking=yes",/"StrictHostKeyChecking=no",/' $labgrid_ssh_path
+            if [ -f "$labgrid_ssh_path" ]; then
+                sed -i 's/"StrictHostKeyChecking=yes",/"StrictHostKeyChecking=no",/' $labgrid_ssh_path
+            else
+                printf "Labgrid lib not found in %s\nSkipping...\n" "$labgrid_ssh_path"
+            fi
         done
     fi
 }
@@ -213,8 +232,10 @@ main () {
     for place in $($LABGRID_BIN -x $LABGRID_COORDINATOR places); do
         places[${#places[@]}]+=$place
     done
-    # set stricthostkeyckeching to no
-    labgridSetStrictHostKeyChecking
+    if [[ "$CONFIGURE_LABGRID_LIB" = true ]]; then
+        # set stricthostkeyckeching to no
+        labgridSetStrictHostKeyChecking
+    fi
     # create ssh_config file for user
     configureSshConfig $LABGRID_COORDINATOR ${places[*]}
     set +e
@@ -253,6 +274,26 @@ main () {
 
     if [[ "$INSTALL" = true ]]; then
         cleanup $labgrid_path
+    fi
+    if [[ "$GENERATE_REPORT" = true ]]; then
+        printf '{"places":[' >> $REPORT_NAME
+        for place in ${SCOPE[@]}; do
+            ssh=false
+            power=false
+            for i in ${SSH_PLACES[*]}; do
+                if [[ "$place" == $i ]]; then
+                    ssh=true
+                fi
+            done
+            for i in ${POWER_PLACES[*]}; do
+                if [[ "$place" == $i ]]; then
+                    power=true
+                fi
+            done
+            printf '{"name": "%s", "ssh": %s, "power": %s},' "$place" "$ssh" "$power" >> $REPORT_NAME
+        done
+        printf "]}" >> $REPORT_NAME
+        sed -i 's:,]}:]}:g' $REPORT_NAME
     fi
 }
 

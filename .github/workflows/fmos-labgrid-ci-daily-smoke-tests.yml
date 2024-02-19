@@ -1,0 +1,84 @@
+name: FMOS Labgrid CI Daily Smoke Tests
+on:
+  schedule: 
+    - cron: 0 5 * * *
+  workflow_dispatch:
+
+jobs:
+  fmos-labgrid-ci-daily-smoke-tests-pipeline:
+    name: '[${{ matrix.lab }}] FMOS Labgrid CI Daily Smoke Tests'
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: ${{ matrix.os }}
+      env:
+        IGK_PRIVATE_KEY: ${{ secrets.IGK_PRIVATE_KEY }}
+        HF_PRIVATE_KEY: ${{ secrets.HF_PRIVATE_KEY }}
+        no_proxy: '192.168.0.0/16,intel,intel.com'
+        USER: sys_tmbuild
+        NETBOX_HOST: zep-netbox-ccg-fmos.igk.intel.com
+    strategy:
+      fail-fast: false
+      max-parallel: 0
+      matrix:
+        platform_group: [1, 2]
+        include:
+          - platform_group: 1
+            lab: 'IGK'
+            os: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
+            install: false
+            runner: fmos-guest-ubuntu-12c-igk-debug
+            scope: full
+            coordinator: "ws://admin-fmos.igk.intel.com:80/lg"
+            generate_report: true
+            report_name: labgrid-report.json
+            configure: false
+            update_netbox: true
+          - platform_group: 2
+            lab: 'HF'
+            os: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
+            install: false
+            runner: guest-thor3-4
+            scope: full
+            coordinator: "ws://admin-fmos.hf.intel.com:80/lg"
+            generate_report: true
+            report_name: labgrid-report.json
+            configure: false
+
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Cleanup
+        run: |
+          ls
+          sudo rm -rf /__w/os.rtos.zephyr.devops.ci/os.rtos.zephyr.devops.ci/*
+
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup environment
+        run: |
+          sudo python3 -m pip --proxy http://proxy-dmz.intel.com:912 install -U cryptography \
+                                            rust \
+                                            pysnmp \
+                                            pandas
+
+      - name: Run Labgrid smoke tests
+        run: |
+          eval $(ssh-agent -s) && echo "$IGK_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+          # echo "$HF_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+
+          export HOME=/home/user && ./tools/labgrid/prepare-labgrid-env.sh -l ${{ matrix.coordinator }} \
+                                                                           -i ${{ matrix.install }} \
+                                                                           -s ${{ matrix.scope }} \
+                                                                           -g ${{ matrix.generate_report }} \
+                                                                           -r ${{ matrix.report_name }} \
+                                                                           -c ${{ matrix.configure }}
+        shell: bash
+
+      - name: Update labgrid information in netbox
+        if: ${{ matrix.update_netbox  || false }}
+        run: |
+          python3 tools/labgrid/labgrid-patch-netbox.py --patch-labgrid-status ${{ matrix.update_netbox }} --patch-data-file ${{ matrix.report_name }} --token ${{ secrets.NETBOX_TOKEN }} --netbox-host $NETBOX_HOST
