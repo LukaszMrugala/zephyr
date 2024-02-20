@@ -6,8 +6,8 @@ class DediprogEraseException(Exception):
     pass
 
 def dediprog_detect(exec_method):
-    _, err = exec_method(cmd='dpcmd -d')
-    if err:
+    out, err = exec_method(cmd='dpcmd -d')
+    if (re.search('Error', out) or err):
         raise DediprogEraseException("Chip cannot be detected, reset dediprog first!")
 
 def dediprog_erase(exec_method, detect=True, max_attempts=5):
