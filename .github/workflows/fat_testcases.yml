@@ -58,6 +58,8 @@ jobs:
           if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
             west init -l . || true
           fi
+          west config manifest.project-filter -- +sof
+          west config manifest.group-filter -- +fat
           west config --global update.narrow true
           west config --global update.path-cache "/runner/workspace"
           echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/frameworks.validation.firmware-automated-testing.fat" > $HOME/.git-credentials
