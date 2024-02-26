@@ -54,12 +54,14 @@ jobs:
             variant: 'xt-clang'
             runner: fmos-mtl-igk
             hwmap: "map-igk.yaml"
+            project-filter: '+sof'
           - platform_group: 3
             toolchain: 'zephyr'
             platform: "intel_adsp/cavs25"
             scope: acceptance
             hwtype: device
             runner: guest-thor3-5
+            project-filter: '+sof'
           - platform_group: 4
             toolchain: 'zephyr'
             scope: acceptance
@@ -110,6 +112,7 @@ jobs:
             variant: 'xt-clang'
             runner: guest-odin1-1
             hwmap: "map-igk.yaml"
+            project-filter: '+sof'
           - platform_group: 9
             toolchain: 'zephyr'
             scope: acceptance
@@ -172,6 +175,9 @@ jobs:
           if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
             west init -l . || true
           fi
+          if [ ${{ matrix.west_project_filter }} ]; then
+            west config manifest.project-filter -- ${{ matrix.west_project_filter }}
+          fi
           west config --global update.narrow true
           #west config --global update.path-cache "/runner/workspace"
           # we need this here because our local manifest does import this repo
@@ -225,6 +231,7 @@ jobs:
           DPCMD_PLACE: ${{matrix.dpcmd_place || 'None' }}
 
       - name: Build RIMAGE
+        if: ${{ contains(matrix.platform, 'intel_adsp') }}
         run: |
           pushd ../modules/audio/sof/tools/rimage
           cmake -B build/

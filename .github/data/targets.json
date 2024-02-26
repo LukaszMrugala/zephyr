@@ -4,7 +4,8 @@
     "platform": "intel_adsp/cavs25",
     "identifier": "intel_adsp_cavs25",
     "hwtype": "device",
-    "runner": "guest-thor3-5"
+    "runner": "guest-thor3-5",
+    "west_project_filter": "+sof"
   },
   {
     "hwtype": "simulator",
@@ -14,7 +15,8 @@
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
-    "runner": "fmos-guest-ubuntu-12c"
+    "runner": "fmos-guest-ubuntu-12c",
+    "west_project_filter": "+sof"
   },
   {
     "hwtype": "simulator",
@@ -24,7 +26,8 @@
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace30_LX7HiFi4_PIF",
     "variant": "xt-clang",
-    "runner": "fmos-guest-ubuntu-12c"
+    "runner": "fmos-guest-ubuntu-12c",
+    "west_project_filter": "+sof"
   },
   {
     "hwtype": "simulator",
@@ -34,7 +37,8 @@
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
-    "runner": "fmos-guest-ubuntu-12c"
+    "runner": "fmos-guest-ubuntu-12c",
+    "west_project_filter": "+sof"
   },
   {
     "toolchain": "zephyr",
@@ -156,7 +160,8 @@
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
     "runner": "fmos-mtl-igk",
-    "hwmap": "map-igk.yaml"
+    "hwmap": "map-igk.yaml",
+    "west_project_filter": "+sof"
   },
   {
     "toolchain": "zephyr",
@@ -167,6 +172,7 @@
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
     "runner": "guest-odin1-1",
-    "hwmap": "map-igk.yaml"
+    "hwmap": "map-igk.yaml",
+    "west_project_filter": "+sof"
   }
 ]
