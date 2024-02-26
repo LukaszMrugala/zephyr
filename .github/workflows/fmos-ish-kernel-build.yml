@@ -1,0 +1,100 @@
+name: FMOS Build ISH Kernel
+on:
+  workflow_dispatch:
+    inputs:
+      kernel_repo:
+        type: string
+        description: Kernel repo url. Default https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy
+      kernel_config:
+        type: string
+        description: Kernel kconfig file for ish, it's name of the file to use. Default config-5.15.0-92-generic
+      kernel_branch:
+        type: string
+        description: Kernel branch on provided repository. Default lowlatency-hwe-5.19-prep
+      kernel_version:
+        type: string
+        description: Target kernel version. Default 5.19.0
+      kernel_target:
+        type: string
+        description: Target operating system. Default ubuntu22.04.2
+
+jobs:
+  fmos-ish-kernel-build:
+    name: 'FMOS ISH Kernel Build ${{ matrix.kernel_version }}-${{ matrix.kernel_target }}-${{ matrix.kernel_config }}'
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: ${{ matrix.os }}
+      env:
+        IGK_PRIVATE_KEY: ${{ secrets.IGK_PRIVATE_KEY }}
+        HF_PRIVATE_KEY: ${{ secrets.HF_PRIVATE_KEY }}
+        http_proxy: 'http://proxy-dmz.intel.com:912'
+        https_proxy: 'http://proxy-dmz.intel.com:912'
+        USER: sys_tmbuild
+    strategy:
+      fail-fast: false
+      max-parallel: 0
+      matrix:
+        platform_group: [1]
+        include:
+          - platform_group: 1
+            os: ubuntu:22.04
+            runner: guest-thor8-4
+            kernel_config: ${{ inputs.kernel_config || 'config-5.15.0-92-generic' }}
+            kernel_repo: ${{ inputs.kernel_repo || 'https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy' }}
+            kernel_branch: ${{ inputs.kernel_branch || 'lowlatency-hwe-5.19-prep' }}
+            kernel_version: ${{ inputs.kernel_version || '5.19.0' }}
+            kernel_target: ${{ inputs.kernel_target || 'ubuntu22.04.2' }}
+
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup environment
+        run: |
+          apt-get update
+          # Setup git
+          type -p curl >/dev/null || ( apt update &&  apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg |  dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+          &&  chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" |  tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+          &&  apt update \
+          &&  apt install gh git wget -y
+
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Clone ubuntu kernel source code
+        run: |
+          git clone -b ${{ matrix.kernel_branch }} ${{ matrix.kernel_repo }}
+
+      - name: Patch kernel
+        run: |
+          wget https://ubit-artifactory-sh.intel.com/artifactory/ipg_public-sh-local/FDK/ZephyrPatches/ubuntu-change-ish-fw-binary-path-for-loader.patch
+          patch jammy/drivers/hid/intel-ish-hid/ishtp-fw-loader.c < ubuntu-change-ish-fw-binary-path-for-loader.patch
+
+      - name: Build kernel
+        run: |
+          export DEBIAN_FRONTEND=noninteractive && export TZ=Etc/UTC
+          sed -i '/deb-src/s/^# //' /etc/apt/sources.list && apt-get update && apt-get build-dep -y linux
+          apt-get install -y libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf llvm vim fakeroot
+          cp -r .github/data/${{ matrix.kernel_target }}/${{ matrix.kernel_config }} jammy/.config
+          cd jammy && \
+          scripts/config --disable SYSTEM_TRUSTED_KEYS && \
+          scripts/config --disable SYSTEM_REVOCATION_KEYS && \
+          make -j $(nproc) bindeb-pkg LOCALVERSION=-ish-intel-kernel
+        shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux-ish-intel-kernel
+          path: |
+            linux*
+          retention-days: 2
