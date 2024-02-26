@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform_group: [1, 2, 3, 4, 5, 6]
+        platform_group: [1, 2, 3, 4, 5, 6, 7]
         include:
           - platform_group: 1
             toolchain: 'zephyr'
@@ -87,6 +87,15 @@ jobs:
             runner: fmos-testhost-nuc-igk-03
             hwmap: "map-igk.yaml"
             container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
+          - platform_group: 7
+            toolchain: 'zephyr'
+            scope: acceptance
+            hwtype: device
+            platform: 'up_squared'
+            variant: 'zephyr'
+            timeout: 120
+            runner: fmos-up_squared-igk
+            hwmap: "map-igk.yaml"
 
     runs-on: ${{ matrix.runner }}
     timeout-minutes: ${{ matrix.timeout || 90 }}
@@ -125,6 +134,7 @@ jobs:
           cp -r main-intel/boards/arm/mec172xevb_assy6906/support/* boards/arm/mec172xevb_assy6906/support
           cp -r main-intel/boards/xtensa/intel_adsp_ace15_mtpm/support boards/xtensa/intel_adsp_ace15_mtpm/
           cp -r main-intel/boards/riscv/it8xxx2_evb/support/loader.sh boards/riscv/it8xxx2_evb/support/loader.sh
+          mkdir -p boards/x86/up_squared/support && cp main-intel/boards/x86/up_squared/support/up_squared_efi.sh $_/.
           if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
             west init -l . || true
           fi
