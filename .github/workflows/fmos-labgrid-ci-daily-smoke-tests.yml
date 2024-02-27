@@ -48,10 +48,10 @@ jobs:
 
     runs-on: ${{ matrix.runner }}
     steps:
-      - name: Cleanup
+      - name: Chown repo files
+        if: contains(matrix.os, 'ci-sdk')
         run: |
-          sudo rm -rf /__w/os.rtos.zephyr.devops.ci/os.rtos.zephyr.devops.ci/.*
-          sudo rm -rf /__w/os.rtos.zephyr.devops.ci/os.rtos.zephyr.devops.ci/*
+          sudo chown user:user -R /__w/os.rtos.zephyr.devops.ci/os.rtos.zephyr.devops.ci
 
       - name: Checkout
         uses: actions/checkout@v3.1.0

@@ -95,8 +95,11 @@ jobs:
       run:
         shell: bash
     steps:
-      - name: Clean
-        run: rm -rf test_ssh_scp
+      - name: Cleanup
+        run: | 
+          sudo rm -rf test_ssh_scp
+          sudo chown user:user -R /__w/os.rtos.zephyr.devops.ci/os.rtos.zephyr.devops.ci
+
       - name: Prepare Environment
         if: success()
         run: |
