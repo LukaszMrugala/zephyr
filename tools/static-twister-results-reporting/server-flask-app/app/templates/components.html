@@ -4,11 +4,10 @@
 
 {% block head %}
   {{ super() }}
-  <!-- <link href="{{ url_for('static', filename='vendor/datatables/Buttons-2.4.2/css/buttons.dataTables.min.css') }}" rel="stylesheet"> -->
 {% endblock %}
 
 {% block app_content %}
-<main role="main" class="col pt-3 px-4">
+{% if if_triage %}
 {#
     <div class="d-flex flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
         <!-- Page Heading -->
@@ -19,6 +18,18 @@
         </div>
     </div>
 #}
+    <div class="row card shadow mb-4 px-3">
+        <div class="card-header py-3">
+            <h4 class="m-0 font-weight-bold text-primary">Results of test suites by components</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                {{ table_comp_s | safe }}
+            </div>
+        </div>
+    </div>
+
+{% else %}
     <!-- Tabs navs -->
     <ul class="nav nav-tabs mb-3" id="comp" role="tablist">
         <li class="nav-item" role="presentation">
@@ -37,7 +48,7 @@
     <div class="tab-pane fade show active" id="comp-tabs-1" role="tabpanel">
         <div class="row card shadow mb-4 px-3">
             <div class="card-header py-3">
-                <h5 class="m-0 font-weight-bold text-primary">Results of test suites by components</h5>
+                <h4 class="m-0 font-weight-bold text-primary">Results of test suites by components</h4>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -47,25 +58,19 @@
         </div>
         <div class="row card shadow mb-4 px-3">
             <div class="card-header py-3">
-                <h5 class="m-0 font-weight-bold text-primary">List of test suites fail or error</h5>
+                <h4 class="m-0 font-weight-bold text-primary">List of test suites status equal failed, error, blocked or none</h4>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     {{ table_failures_s | safe }}
                 </div>
             </div>
-            <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>Important!</strong> Log files are available for hardware runs only.
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
         </div>
     </div>
     <div class="tab-pane fade" id="comp-tabs-2" role="tabpanel">
         <div class="row card shadow mb-4 px-3">
             <div class="card-header py-3">
-                <h5 class="m-0 font-weight-bold text-primary">Results of test cases by components</h5>
+                <h4 class="m-0 font-weight-bold text-primary">Results of test cases by components</h4>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -75,29 +80,17 @@
         </div>
         <div class="row card shadow mb-4 px-3">
             <div class="card-header py-3">
-                <h5 class="m-0 font-weight-bold text-primary">List of test cases fail or error</h5>
+                <h4 class="m-0 font-weight-bold text-primary">List of test cases status equal failed, error, blocked or none</h4>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     {{ table_failures_c | safe }}
                 </div>
             </div>
-            <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>Important!</strong> Log files are available for hardware runs only.
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
         </div>
     </div>
   </div>
-</main>
-{% endblock %}
-
-{% block date_runs_menu %}
-    {% for item in date_runs %}
-        <a class="dropdown-item run_date" href="?run-date={{ item }}" data-target="{{ item }}">{{ item }}</a>
-    {% endfor %}
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

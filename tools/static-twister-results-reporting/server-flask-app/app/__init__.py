@@ -2,7 +2,7 @@
 
 from flask import Flask, render_template
 from flask_fontawesome import FontAwesome
-from flask_bootstrap import Bootstrap
+from flask_bootstrap import Bootstrap4
 
 from .containers import Container
 
@@ -35,7 +35,7 @@ def create_app():
 
     fa = FontAwesome(app)
 
-    bootstrap = Bootstrap()
+    bootstrap = Bootstrap4()
     bootstrap.init_app(app)
 
     # Register blueprints

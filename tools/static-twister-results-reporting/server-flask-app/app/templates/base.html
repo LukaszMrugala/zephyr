@@ -10,28 +10,31 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.png') }}">
     <!-- Custom fonts for this template -->
     {{ fontawesome_html() }}
+    {{ bootstrap.load_css() }}
     <!-- <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet"> -->
-
-    <link href="https://cdn.datatables.net/v/bs4/dt-1.13.8/datatables.min.css" rel="stylesheet">
-    <!-- <link href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}" rel="stylesheet"> -->
-
+    {% if server_mode %}
+    <link href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}" rel="stylesheet">
+    {% else %}
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.8/b-2.4.2/b-html5-2.4.2/b-print-2.4.2/datatables.min.css" rel="stylesheet">
+    {% endif %}
+    <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
     <!-- Custom styles for this template -->
-    <link href="{{ url_for('static', filename='css/sb-admin-2.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.min.css') }}" rel="stylesheet">
 
     <title>{% block title %}{% endblock %} - Static Reporting Server</title>
     {% endblock %}
 </head>
-<body id="page-top">
-    <nav class="navbar sticky-top navbar-light flex-md-nowrap p-0 shadow bg-zephyr">
-        <div class="navbar-brand col-xl-auto col-md-2">
+<body id="page-top" class="">
+    <!-- Topbar -->
+    <nav class="sb-topnav navbar sticky-top navbar-light p-0 shadow bg-zephyr">
+        <div class="navbar-brand col-auto">
             <a class="mr-0" href="/">
-                <div class="sidebar-brand-icon"><img src="{{ url_for('static', filename='img/logo.svg') }}" class="logo" alt="Logo" width="210px"></div>
+                <div class="sidebar-brand-icon"><img src="{{ url_for('static', filename='img/logo.svg') }}" class="logo" alt="Logo"></div>
                 <div class="mx-3 align-items-center justify-content-center bg-zephyr">Daily Testing Reports</div>
             </a>
         </div>
-        <div class="menu col-xl-2 col-md-2">
+        <div class="menu col-sm col-md-2">
             <div class="row mt-3">
                 <div class="btn-group btn-group-toggle mx-auto">
                     <a class="btn btn-outline-secondary {%+ if not table_comp_s %}active{% endif %}" id="nav-platforms" href="/" role="button">Platforms</a>
@@ -45,16 +48,18 @@
                             Run date
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            {% block date_runs_menu %}{% endblock %}
+                            {% for item in date_runs %}
+                                <a class="btn dropdown-item run_date {% if item == run_date %}active{% endif %}" href="?run-date={{ item }}" data-target="{{ item }}">{{ item }}</a>
+                            {% endfor %}
                         </div>
                     </div>
                     <div class="dropdown ml-3">
-                        <button class="btn btn-secondary dropdown-toggle hi" disabled type="button" id="branchMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <button class="btn btn-secondary dropdown-toggle hi" type="button" id="branch-menu-dropdown-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Branch
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            {% for name, path in branch_list.items() %}
-                                <a class="dropdown-item branch" href="/?branch={{ path }}" data-target="{{ path }}">{{ name }}</a>
+                            {% for name, dir_name in branch_list.items() %}
+                                <a class="btn dropdown-item branch {% if name == branch %}active{% endif %}" href="?branch={{ name }}" data-target="{{ name }}">{{ name }}</a>
                             {% endfor %}
                         </div>
                     </div>
@@ -62,77 +67,101 @@
             </div>
         </div>
 
-        <div class="col-xl-2 col-md-6 mb-2 mt-2">
-            <div class="card border-left-primary shadow h-50 py-1">
-                <div class="card-body py-2">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col-auto">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
-                                Branch</div>
-                            <div class="h6 mb-0 font-weight-bold text-gray-800">{{ branch }}</div>
+        <div class="menu col-sm-auto col-md-6 col-lg-6 col-xl-8 pr-3">
+            <div class="row">
+                <div class="col-sm mb-2 mt-2">
+                    <div class="card border-left-primary shadow h-100 py-1">
+                        <div class="card-body py-2">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
+                                        Branch</div>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">{{ branch }}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="col-xl-2 col-md-6 mb-2 mt-2">
-            <div class="card border-left-primary shadow h-50 py-1">
-                <div class="card-body py-2">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col-auto">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
-                                Run date</div>
-                            <div class="h6 mb-0 font-weight-bold text-gray-800">{{ run_date_time }}</div>
+                <div class="col-sm mb-2 mt-2">
+                    <div class="card border-left-primary shadow h-100 py-1">
+                        <div class="card-body py-2">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
+                                        Run date</div>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">{{ run_date_time }}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="col-xl-2 col-md-6 mb-2 mt-2">
-            <div class="card border-left-primary shadow h-50 py-1">
-                <div class="card-body py-2">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col-auto">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
-                                Commit date</div>
-                            <div class="h6 mb-0 font-weight-bold text-gray-800">{{ commit_date }}
-                            <!-- <i class="fas fa-calendar fa-2x text-gray-300"></i> -->
+                <div class="col-sm mb-2 mt-2">
+                    <div class="card border-left-primary shadow h-100 py-1">
+                        <div class="card-body py-2">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
+                                        Commit date</div>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">{{ commit_date }}</div>
+                                </div>
+                                {% if was_commit %}
+                                <div class="col text-right">
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                        <i class="fa fa-solid fa-exclamation-triangle fa-2x text-danger" \
+                                        data-toggle="tooltip" title="There was a commit to {{ branch }} branch since previous run"></i>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm mb-2 mt-2">
+                    <div class="card border-left-primary shadow h-100 py-1">
+                        <div class="card-body py-2">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
+                                        Zephyr version</div>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">{{ zephyr_version }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </nav>
+    <!-- End of Topbar -->
 
-        <div class="col-xl-2 col-md-6 mb-2 mt-2">
-            <div class="card border-left-primary shadow h-50 py-1">
-                <div class="card-body py-2">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-0">
-                                Zephyr version</div>
-                            <div class="h6 mb-0 font-weight-bold text-gray-800">{{ zephyr_version }}</div>
-                        </div>
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+        {% block sidebar %}{% endblock %}
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+            <!-- Begin Page Content -->
+            <div id="content-wrapper" class="d-flex flex-column">
+                <!-- Main Content -->
+                <div id="content">
+                    <!-- Begin Page Content -->
+                    <div class="container-fluid pt-3">
+                        {% block app_content %}{% endblock %}
                     </div>
+                    <!-- /.container-fluid -->
                 </div>
+                <!-- End of Main Content -->
             </div>
         </div>
-    </nav>
-
-    <!-- End of Topbar -->
-    <div class="container-fluid">
-        <div class="row">
-            {% block sidebar %}{% endblock %}
-            {% block app_summary %}{% endblock %}
-            <!-- Begin Page Content -->
-            {% block app_content %}{% endblock %}
-        </div>
+        <!-- End of Content Wrapper -->
     </div>
-    <!-- /.container-fluid -->
-    <!-- Footer -->
-    <footer class="sticky-footer bg-white">
+    <!-- End of Page Wrapper -->
+
+     <!-- Footer -->
+     <footer class="sticky-footer bg-white">
         <div class="container my-auto">
             <div class="copyright text-center my-auto">
                 <span>Copyright &copy; RTOS Zephyr IGK Team - 2023</span>
@@ -142,9 +171,7 @@
     <!-- End of Footer -->
 
     <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top">
-        <i class="fas fa-angle-up"></i>
-    </a>
+    <a class="scroll-to-top rounded" href="#page-top"><i class="fas fa-angle-up"></i></a>
 
 {% block modal %}
     <!-- Modal Failures -->
@@ -172,8 +199,16 @@
 {% block scripts %}
 	{{ bootstrap.load_js() }}
 
-    <script src="https://cdn.datatables.net/v/bs4/dt-1.13.8/datatables.min.js"></script>
-    <!-- <script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script> -->
+    {% if server_mode %}
+    <!-- Server Mode -->
+    <script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script>
+    {% else %}
+    <!-- Desktop Mode -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-1.13.8/b-2.4.2/b-colvis-2.4.2/b-html5-2.4.2/b-print-2.4.2/cr-1.7.0/fc-4.3.0/fh-3.4.0/r-2.5.0/rg-1.4.1/sc-2.3.0/sp-2.2.0/sl-1.7.0/datatables.min.js"></script>
+
+    {% endif %}
 
 {% endblock %}
     <!-- Custom scripts for all pages-->
@@ -183,7 +218,7 @@
     <script>
         localStorage.setItem("branch", "{{branch}}");
         localStorage.setItem("run_date_time", "{{run_date_time}}");
-        localStorage.setItem("show_download_btn", "{{show_download_btn}}");
+        localStorage.setItem("server_mode", "{{server_mode}}");
     </script>
 
 </body>

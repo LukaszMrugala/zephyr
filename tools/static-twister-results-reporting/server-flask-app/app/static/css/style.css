@@ -1,13 +1,131 @@
-/*!
+/******************************
  * Zephyr RTOS - Static Reports v1.0.0
- * Copyright 2023-2023 Zephyr RTOS
- * Copyright 2023-2023 Artur Wilczak
+ * Copyright 2023-2024 Zephyr RTOS
+ * Copyright 2023-2024 Artur Wilczak
  * Licensed under MIT
- */
- 
-.bg-zephyr { background-color: #333f67; color: #fff !important; }
+*******************************/
 
-.sidebar.sidebar-zephyr a { color: #fff; }
+body {
+    font-size: 0.8rem !important;
+}
+
+.fa, .fab, .fal, .far, .fas {
+    cursor: pointer;
+}
+
+i.fas {
+    margin-right: 0.5em !important;
+}
+
+button i.fas {
+    color: inherit !important;
+}
+
+h4, .h4 {
+    font-size: 1rem !important;
+}
+
+h5, .h5 {
+    font-size: 0.8rem !important;
+}
+
+h6, .h6 {
+    font-size: 0.7rem !important;
+}
+
+.card-body {
+    padding: 0.75rem !important;
+}
+
+.alert-dismissible .close {
+    padding: 0.3rem 1.25rem !important;
+}
+
+.progress {
+    border: 1px solid !important;
+}
+
+.alert-info {
+    background-color: lavender !important;
+}
+
+/****************************** Navbar / Header ******************************/
+.navbar .menu .btn {
+    font-size: 0.8rem !important;
+}
+
+.bg-zephyr {
+    background-color: #333f67;
+    color: #fff !important;
+}
+
+.sidebar-brand-icon img {
+    width: 180px;
+}
+
+.bg-zephyr .navbar-brand {
+    font-size: 1rem;
+}
+
+/****************************** Sidebar ******************************/
+.sidebar .sidebar-heading {
+    margin-bottom: 1em !important;
+}
+
+.sidebar .nav-item a span {
+    font-size: 0.7rem !important;
+}
+
+/****************************** DataTable ******************************/
+.table-responsive  {
+    overflow-x: unset;
+}
+
+.dataTable .btn {
+    font-size: small !important;
+    padding: 0.1rem 0.5rem !important;
+}
+
+.pass-rate-progresbar {
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.pass-rate-progresbar .progress {
+    height: 1.2rem;
+    font-family: system-ui;
+}
+
+.pass-rate-progresbar .progress span {
+    /* font-size: 0.85rem; */
+    font-weight: 500;
+}
+
+.bg-passrate-100 {
+    background-color: #51b839 !important;
+}
+.bg-passrate-99 {
+    background-color: #88c039 !important;
+}
+.bg-passrate-95 {
+    background-color: #99c739 !important;
+}
+.bg-passrate-90 {
+    background-color: #d72200 !important;
+}
+
+.dataTable .actions .btn {
+    margin-right: 2px;
+    min-width: 40px;
+}
+
+.dataTable td.actions>div {
+    display: inline;
+}
+
+.dataTables_length {
+    margin-left: 1rem;
+}
 
 #dataTableFailures th { white-space: nowrap!important; }
 
@@ -19,10 +137,6 @@ table.dataTable>thead>tr>th {
 }
 table.dataTable>thead>tr>th, table.dataTable>thead>tr>td {
     padding: 8px 16px;
-}
-
-@media (min-width: 768px) {
-    .sidebar { width: 17rem !important; }
 }
 
 .dataTable.dt-components tr.even>td:first-child,
@@ -50,9 +164,12 @@ tr.dtrg-group.dtrg-start.collapsed {
     font-weight: 700;
 }
 
+/****************************** Modal window ******************************/
 #failuresModal .modal-body {
     background-color: #333;
     color: aliceblue;
+    font-family: consolas;
+    font-size: small;
 }
 
 #failuresModal .modal-header, #failuresModal .modal-footer {

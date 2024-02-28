@@ -4,20 +4,39 @@
 
   // Add query parameter to href in top menu
   $(document).ready(function() {
-    const queryString = window.location.search;
+    const searchString = window.location.search;
+    let paramsOld = new URLSearchParams(searchString);
 
     $('.navbar .menu a.btn').each(function() {
       var $this = $(this);
-      var _href = $this.attr('href');
+      const url = new URL($this.attr('href'), window.location);
+      let paramsNew = url.searchParams;
 
-      $this.attr('href', _href + queryString);
+      paramsOld.forEach((val, key) => {
+        if (paramsNew.has(key))
+          paramsNew[key] = val;
+        else
+          paramsNew.append(key, val);
+      });
+
+      let newUrl = new URL('?'+paramsNew, url);
+      $this.attr('href', newUrl.href);
     });
   });
 
   // Disable Run date button if items of the menu no exist.
-  const item = $('.dropdown-menu .dropdown-item.run_date');
-  if (item.length == 0) {
+  const run_date_item = $('.dropdown-menu .dropdown-item.run_date');
+  if (run_date_item.length == 0) {
     $('#runDateMenuButton').attr('disabled', 'disabled');
+  }
+
+  // Disable branch button if app works as desktop version or branch items no exist.
+  let if_server_mode = Boolean(parseInt(localStorage.getItem('server_mode')));
+  console.log("server_mode:"+ if_server_mode);
+
+  const branch_item = $('.dropdown-menu .dropdown-item.branch');
+  if (!if_server_mode || branch_item.length == 0) {
+    $('#branch-menu-dropdown-btn').attr('disabled', 'disabled');
   }
 
   // Generating Log Modal popup

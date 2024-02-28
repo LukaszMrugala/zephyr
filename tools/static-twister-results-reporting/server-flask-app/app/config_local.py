@@ -18,4 +18,4 @@ TWISTER_OUT_PATH = r'/home/user/zephyrproject/twister-out.1'
 ## branch dictionary for matching branch name to his directory name
 ## for server version
 ## { 'branch name': 'branch_dir_name' }
-BRANCH_DICT = {"main-intel": "master", "v3.2-branch-intel": "v3_2_intel"}
+BRANCH_DICT = {"main-intel": "master", "main": "upstream"}

@@ -14,4 +14,3 @@ DATE_FORMAT_TWISTER = f'%Y-%m-%dT%H:%M:%S%z'
 # Default settings
 DEFAULT_DATA_PATH = 'twister-out'
 TESTS_RESULT_FILE = 'twister.json'
-COVERAGE_FILE = 'code_coverage.json'

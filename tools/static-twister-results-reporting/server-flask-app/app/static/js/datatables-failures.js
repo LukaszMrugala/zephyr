@@ -1,89 +1,154 @@
 // Call the dataTables jQuery plugin
 $(document).ready(function() {
-  let show_download_btn = Boolean(parseInt(localStorage.getItem('show_download_btn')));
+  let server_mode = Boolean(parseInt(localStorage.getItem('server_mode')));
 
   // DataTables for showing failures on platform page
   $('#dataTableFailures').DataTable( {
-    pageLength: 25
+    paging: true
+    , pageLength: 25
+    , colReorder: true
+    , autoWidth: false
+    // , fixedHeader: true
+    , deferRender: false
     , scrollCollapse: true
-    , scrollY: '600px'
+    // , scrollY: '600px'
+    , scrollX: true
+    , dom: 'Bfrltip'
+    , buttons: [
+      {
+        extend: 'copy'
+        , title: 'Test cases that failed or error'
+        , className: 'shadow-sm'
+        , exportOptions: {
+            columns: '.printable'
+        }
+      }
+      , {
+        extend: 'print'
+        , title: 'Test cases that failed or error'
+        , className: 'shadow-sm'
+        , exportOptions: {
+            columns: '.printable'
+        }
+      }
+      , {
+        extend: 'csv'
+        , title: 'Test cases that failed or error'
+        , text: '<i class="fas fa-download fa-sm text-white-50"></i> CSV'
+        , className: 'shadow-sm'
+        , exportOptions: {
+            columns: '.printable'
+        }
+      }
+      , {
+        extend: 'excelHtml5'
+        , title: 'Test cases that failed or error'
+        , text: '<i class="fas fa-download fa-sm text-white-50"></i> Excel'
+        , className: 'shadow-sm'
+        , exportOptions: {
+            columns: '.printable'
+        }
+      }
+      // , 'colvis'
+    ]
     , columns: [
       {
         data: 'name'
-        , title: 'TS name'
+        , title: 'test suite name'
+        , className: 'printable'
       }
       , {
         data: 'testcases_identifier'
-        , title: 'TC identifier'
+        , title: 'test case name'
+        , className: 'printable'
       }
       , {
         data: 'testcases_status'
-        , title: 'TC status'
+        , title: 'status [tc]'
+        , className: 'printable'
       }
       , {
         data: 'testcases_reason'
-        , title: 'TC fail reason'
-        , className: 'text-nowrap'
+        , title: 'fail reason [tc]'
+        , className: 'text-nowrap printable'
+        , render: function(data, type, row) {
+          return data == 'NaN' ? 'NA' : data;
+      }
       }
       , {
         data: 'execution_time'
-        , title: 'TS execution time'
-        , className: 'text-right'
+        , title: 'execution time [tc]'
+        , className: 'text-right printable'
         , searchable: false
       }
       , {
         data: 'status'
-        , title: 'TS status'
+        , title: 'status [ts]'
         , visible: false
       }
       , {
         data: 'reason'
-        , title: 'TS fail reason'
-        , className: 'text-nowrap'
+        , title: 'fail reason [ts]'
+        , className: 'text-nowrap printable'
+        , render: function(data, type, row) {
+            return data == 'NaN' ? 'NA' : data;
+        }
       }
       , {
         data: 'log'
         , title: 'logs'
-        , className: 'text-center text-nowrap'
+        , className: 'text-center text-nowrap actions'
         , render: function(data, type, row) {
             let response = ''
-            if (show_download_btn) {
-              response = `<span data-toggle="tooltip" title="Download handler log"> \
+            if (server_mode) {
+              response = `<div data-toggle="tooltip" title="Download handler log"> \
                   <button type="button" class="btn btn-primary download-btn"
-                  data-suite="${row.name}" \
-                  data-platform="${localStorage.getItem('platform')}" \
-                  data-filename="handler.log"><i class="fas fa-solid fa-download"></i>
-                  H</button></span> \
-                <span data-toggle="tooltip" title="Download device log"> \
+                    data-suite="${row.name}" \
+                    data-platform="${localStorage.getItem('platform')}" \
+                    data-filename="handler.log"><i class="fas fa-solid fa-download"></i>
+                  H</button></div> \
+                <div data-toggle="tooltip" title="Download device log"> \
                   <button type="button" class="btn btn-primary download-btn"
-                  data-suite="${row.name}" \
-                  data-platform="${localStorage.getItem('platform')}" \
-                  data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
-                  D</button></span> \
-                <span data-toggle="tooltip" title="Download build log"> \
+                    data-suite="${row.name}" \
+                    data-platform="${localStorage.getItem('platform')}" \
+                    data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
+                  D</button></div> \
+                <div data-toggle="tooltip" title="Download build log"> \
                   <button type="button" class="btn btn-primary download-btn"
-                  data-suite="${row.name}" \
-                  data-platform="${localStorage.getItem('platform')}" \
-                  data-filename="build.log"><i class="fas fa-solid fa-download"></i> \
-                  B</button></span>`;
+                    data-suite="${row.name}" \
+                    data-platform="${localStorage.getItem('platform')}" \
+                    data-filename="build.log"><i class="fas fa-solid fa-download"></i> \
+                  B</button></div>`;
             }
 
             if (data != 'NaN') {
-              return `<button type="button" id="" class="btn btn-primary twister-log-btn" \
+              return `<div data-toggle="tooltip" title="Test suite log">
+                <button type="button" id="" class="btn btn-primary twister-log-btn" \
                   data-toggle="modal" data-target="#failuresModal" \
                   data-suite="${row.name}" \
                   data-reason="${row.reason}" \
                   data-platform="${localStorage.getItem('platform')}" \
                   data-body="${data}"> \
-                  <span data-toggle="tooltip" title="Test suite log">TS</span></button>` + response;
+                TS log</button></div>` + response;
             }
 
             return '';
         }
       }
+      , {
+        data: 'dut'
+        , class: 'text-nowrap printable'
+        , width: '10%'
+        , render: function(data, type, row) {
+          return data == 'NaN' ? 'NA' : data;
+      }
+      }
     ]
     , "language": {
       "emptyTable": "No fails, pass rate 100%"
+    }
+    , initComplete: function() {
+      $('#dataTableFailures_filter input').attr('id', 'dataTableFailures-search');
     }
   } );
 

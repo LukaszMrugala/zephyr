@@ -77,7 +77,7 @@ flask run
 
 The output should be something like:
 ```
-* Serving Flask app 'static_reports.py' (lazy loading)
+* Serving Flask app 'main.py' (lazy loading)
 * Environment: production
   WARNING: This is a development server. Do not use it in a production deployment.
   Use a production WSGI server instead.

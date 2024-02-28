@@ -1,6 +1,6 @@
 // Call the dataTables jQuery plugin
 $(document).ready(function() {
-  let show_download_btn = Boolean(parseInt(localStorage.getItem('show_download_btn')));
+  let server_mode = Boolean(parseInt(localStorage.getItem('server_mode')));
 
   // Datatables Components in Suites - Begin
   var collapsedSuiteGroups = {};
@@ -12,16 +12,47 @@ $(document).ready(function() {
     , paging: false
     // fixedHeader: true,
     , buttons: [
-      { extend: 'print',
-        exportOptions: {
-          columns: '.printable'
-        }
-      },
-      { extend: 'csv'
+      {
+        extend: 'copy'
+        , title: 'Results of test suites for components and subcomponents'
+        , className: 'shadow-sm'
         , exportOptions: {
           columns: '.printable'
         }
       }
+      , {
+        extend: 'print'
+        , title: 'Results of test suites for components and subcomponents'
+        , className: 'shadow-sm'
+        , exportOptions: {
+          columns: '.printable'
+        }
+      }
+      , {
+        extend: 'csv'
+        , title: 'Results of test suites for components and subcomponents'
+        , className: 'shadow-sm'
+        , text: '<i class="fas fa-download fa-sm text-white-50"></i> CSV'
+        , exportOptions: {
+          // rows: '.dtrg-group, .dtrg-start, .dtrg-level-0'
+          columns: '.printable'
+        }
+      }
+      , {
+        extend: 'excelHtml5'
+        , title: 'Results of test suites for components and subcomponents'
+        , className: 'shadow-sm'
+        , text: '<i class="fas fa-download fa-sm text-white-50"></i> Excel'
+        , exportOptions: {
+          columns: '.printable'
+        }
+      }
+      // , { text: 'comp'
+      //   , exportOptions: {
+      //     columns: ':visible',
+      //     rows: ':visible'
+      //   }
+      // }
       // , 'colvis'
     ]
     // , scrollCollapse: true
@@ -46,18 +77,20 @@ $(document).ready(function() {
       }
       , {
         data: 'pass_rate'
-        , title: 'pass rate'
+        , title: 'test suite pass rate'
         , className: 'printable'
         , width: '20%'
         , searchable: false
+        , orderable: false
         , render: function(data) {
           var color = 'bg-success'
           if (data < 97) { color = ' bg-warning' }
           if (data < 90) { color = ' bg-danger' }
           return `<div class="progress">
-            <div class="progress-bar ${color}" role="progressbar"
-                style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0"
-                aria-valuemax="100"><span data-toggle="tooltip" title="passed / (passed + failed + error)">${data}%</span></div>
+              <div class="progress-bar ${color}" role="progressbar" aria-valuemax="100"
+                style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0">
+                <span data-toggle="tooltip" title="passed / (passed + failed + error)">${data}%</span>
+              </div>
             </div>`;
         }
       }
@@ -67,6 +100,7 @@ $(document).ready(function() {
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
         , render: function(data) {
           return `<span data-toggle="tooltip" title="Count of test suites for this component">${data}</span>`;
         }
@@ -77,6 +111,7 @@ $(document).ready(function() {
         , className: 'text-right printable'
         , width: '10%'
         , searchable: false
+        , orderable: false
         , render: function(data) {
           return `<span data-toggle="tooltip" title="Count of run test suites marked as runnable for this component">${data}</span>`;
         }
@@ -86,24 +121,28 @@ $(document).ready(function() {
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
       , {
         data: 'failed'
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
       , {
         data: 'error'
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
       , {
         data: 'skipped'
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
     ]
     , rowGroup: {
@@ -138,9 +177,9 @@ $(document).ready(function() {
             if (item < 90) { color = ' bg-danger' }
 
             row_comp += `<div class="progress">
-              <div class="progress-bar ${color}" role="progressbar"
-                  style="width: ${item}%;" aria-valuenow="${item}" aria-valuemin="0"
-                  aria-valuemax="100">${item.toFixed(2)}%</div>
+              <div class="progress-bar ${color}" role="progressbar" aria-valuemax="100"
+                  style="width: ${item}%;" aria-valuenow="${item}" aria-valuemin="0">
+                  ${item.toFixed(2)}%</div>
               </div>`;
           }
           else {
@@ -158,10 +197,8 @@ $(document).ready(function() {
     }
     , initComplete: function() {
       $('#dTComponentSuites_filter input').attr('id', 'dTComponentSuites_search');
-
-        this.removeClass("no-footer");
-        this.append($('<tfoot/>').append( $("#dTComponentSuites thead tr").clone() ));
-
+      this.removeClass("no-footer");
+      this.append($('<tfoot/>').append( $("#dTComponentSuites thead tr").clone() ));
     }
   } );
 
@@ -184,13 +221,35 @@ $(document).ready(function() {
     , dom: 'Bfrltip'
     , buttons: [
       {
+        extend: 'copy'
+        , title: 'Results of test cases for components and subcomponents'
+        , className: 'shadow-sm'
+        , exportOptions: {
+          columns: '.printable'
+        }
+      }
+      , {
         extend: 'print'
+        , title: 'Results of test cases for components and subcomponents'
+        , className: 'shadow-sm'
         , exportOptions: {
             columns: '.printable'
         }
       }
       , {
         extend: 'csv'
+        , title: 'Results of test cases for components and subcomponents'
+        , text: '<i class="fas fa-download fa-sm text-white-50"></i> CSV'
+        , className: 'shadow-sm'
+        , exportOptions: {
+            columns: '.printable'
+        }
+      }
+      , {
+        extend: 'excelHtml5'
+        , title: 'Results of test cases for components and subcomponents'
+        , text: '<i class="fas fa-download fa-sm text-white-50"></i> Excel'
+        , className: 'shadow-sm'
         , exportOptions: {
             columns: '.printable'
         }
@@ -217,18 +276,20 @@ $(document).ready(function() {
       }
       , {
         data: 'pass_rate'
-        , title: 'pass rate'
+        , title: 'test case pass rate'
         , className: 'printable'
         , width: '15%'
         , searchable: false
+        , orderable: false
         , render: function(data) {
           var color = 'bg-success'
           if (data < 97) { color = ' bg-warning' }
           if (data < 90) { color = ' bg-danger' }
           return `<div class="progress">
             <div class="progress-bar ${color}" role="progressbar"
-                style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0"
-                aria-valuemax="100"><span data-toggle="tooltip" title="passed / (passed + failed + blocked + started + error)">${data}%</span></div>
+                style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0" aria-valuemax="100">
+                <span data-toggle="tooltip" title="passed / (passed + failed + blocked + started + error)">${data}%</span>
+              </div>
             </div>`;
         }
       }
@@ -238,6 +299,7 @@ $(document).ready(function() {
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
         , render: function(data) {
           return `<span data-toggle="tooltip" title="Count of test cases for this component">${data}</span>`;
         }
@@ -248,6 +310,7 @@ $(document).ready(function() {
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
       , {
         data: 'tests_count'
@@ -255,6 +318,7 @@ $(document).ready(function() {
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
         , render: function(data) {
           return `<span data-toggle="tooltip" title="Count of run test cases marked as runnable for this component">${data}</span>`;
         }
@@ -264,36 +328,42 @@ $(document).ready(function() {
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
       , {
         data: 'failed'
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
       , {
         data: 'error'
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
       , {
         data: 'blocked'
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
       , {
         data: 'skipped'
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
       , {
         data: 'started'
         , className: 'text-right printable'
         , width: '7%'
         , searchable: false
+        , orderable: false
       }
     ]
     , rowGroup: {
@@ -330,9 +400,9 @@ $(document).ready(function() {
               if (item < 97) { color = ' bg-warning' }
               if (item < 90) { color = ' bg-danger' }
               row_comp += `<div class="progress">
-                <div class="progress-bar ${color}" role="progressbar"
-                    style="width: ${item}%;" aria-valuenow="${item}" aria-valuemin="0"
-                    aria-valuemax="100">${item.toFixed(2)}%</div>
+                <div class="progress-bar ${color}" role="progressbar" aria-valuemax="100"
+                    style="width: ${item}%;" aria-valuenow="${item}" aria-valuemin="0">
+                    ${item.toFixed(2)}%</div>
                 </div>`;
             }
             else {
@@ -349,10 +419,9 @@ $(document).ready(function() {
       }
     }
     , initComplete: function() {
-        $('#dTComponentCases_filter input').attr('id', 'dTComponentCases_search');
-
-        this.removeClass("no-footer");
-        this.append($('<tfoot/>').append( $("#dTComponentCases thead tr").clone() ));
+      $('#dTComponentCases_filter input').attr('id', 'dTComponentCases_search');
+      this.removeClass("no-footer");
+      this.append($('<tfoot/>').append( $("#dTComponentCases thead tr").clone() ));
     }
   } );
 
@@ -364,7 +433,7 @@ $(document).ready(function() {
 
 
   // Datatables Failures in Suites - Begin
-  var collapsedFailuresGroups = {};
+  var collapsedTsFailuresGroups = {};
   var oFailuresSuitesTable = $('#dTFailuresSuites').DataTable( {
     ordering: false
     , paging: false
@@ -375,23 +444,39 @@ $(document).ready(function() {
     , dom: 'Bfrltip'
     , buttons: [
       {
+        extend: 'copy'
+        , title: 'List of fails test suites for components and subcomponents'
+        , className: 'shadow-sm'
+        , exportOptions: {
+            columns: '.printable'
+        }
+      }
+      , {
         extend: 'print'
+        , title: 'List of fails test suites for components and subcomponents'
+        , className: 'shadow-sm'
         , exportOptions: {
             columns: '.printable'
         }
       }
       , {
         extend: 'csv'
+        , title: 'List of fails test suites for components and subcomponents'
+        , text: '<i class="fas fa-download fa-sm text-white-50"></i> CSV'
+        , className: 'shadow-sm'
         , exportOptions: {
             columns: '.printable'
         }
       }
-      // , {
-      //   extend: 'excel'
-      //   , exportOptions: {
-      //      columns: ':visible'
-      //   }
-      // }
+      , {
+        extend: 'excelHtml5'
+        , title: 'List of fails test suites for components and subcomponents'
+        , text: '<i class="fas fa-download fa-sm text-white-50"></i> Excel'
+        , className: 'shadow-sm'
+        , exportOptions: {
+            columns: '.printable'
+        }
+      }
       // , 'colvis'
     ]
     , order: [[0, 'asc']]
@@ -413,10 +498,14 @@ $(document).ready(function() {
       }
       , {
         data: 'reason'
-        , title: 'status - reason'
+        , title: 'status / reason'
         , className: 'printable'
         , render: function(data, type, row) {
-            return `${row.status} - ${data}`;
+            let result = row.status == 'NaN' ? 'NA' : row.status;
+            if (data != 'NaN')
+              return `${row.status} / ${data}`;
+            else
+              return `${result} / NA`;
           }
       }
       , {
@@ -430,39 +519,39 @@ $(document).ready(function() {
       , {
         data: 'log'
         , title: 'logs'
-        , class: 'text-center'
+        , class: 'text-center actions'
         , orderable: false
         , render: function(data, type, row) {
           let response = ''
-            if (show_download_btn) {
-              response = `<span data-toggle="tooltip" title="Download handler log"> \
-                <button type="button" class="btn btn-primary download-btn"
-                data-suite="${row.name}" \
-                data-platform="${row.platform}" \
-                data-filename="handler.log"><i class="fas fa-solid fa-download"></i>
-                H</button></span> \
-              <span data-toggle="tooltip" title="Download device log"> \
-                <button type="button" class="btn btn-primary download-btn"
-                data-suite="${row.name}" \
-                data-platform="${row.platform}" \
-                data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
-                D</button></span> \
-              <span data-toggle="tooltip" title="Download build log"> \
-                <button type="button" class="btn btn-primary download-btn"
-                data-suite="${row.name}" \
-                data-platform="${row.platform}" \
-                data-filename="build.log"><i class="fas fa-solid fa-download"></i> \
-                B</button></span>`;
+            if (server_mode) {
+              response = `<div data-toggle="tooltip" title="Download handler log"> \
+                <button type="button" class="btn btn-primary download-btn" \
+                  data-suite="${row.name}" \
+                  data-platform="${row.platform}" \
+                  data-filename="handler.log"><i class="fas fa-solid fa-download"></i>H \
+                </button></div> \
+                <div data-toggle="tooltip" title="Download device log"> \
+                  <button type="button" class="btn btn-primary download-btn" \
+                    data-suite="${row.name}" \
+                    data-platform="${row.platform}" \
+                    data-filename="device.log"><i class="fas fa-solid fa-download"></i>D \
+                </button></div> \
+                <div data-toggle="tooltip" title="Download build log"> \
+                  <button type="button" class="btn btn-primary download-btn" \
+                  data-suite="${row.name}" \
+                  data-platform="${row.platform}" \
+                  data-filename="build.log"><i class="fas fa-solid fa-download"></i>B \
+                </button></div>`;
             }
 
             if (data != 'NaN') {
-              return `<button type="button" id="" class="btn btn-primary twister-log-btn" \
+              return `<div data-toggle="tooltip" title="Test suite fail log"> \
+                <button type="button" id="" class="btn btn-primary twister-log-btn" \
                   data-toggle="modal" data-target="#failuresModal" \
                   data-suite="${row.name}" \
                   data-reason="${row.reason}" \
                   data-platform="${row.platform}" \
-                  data-body="${data}"> \
-                  <span data-toggle="tooltip" title="Test suite log">TS</span></button>` + response;
+                  data-body="${data}">TS log</button></div>` + response;
             }
 
             return response;
@@ -472,7 +561,7 @@ $(document).ready(function() {
     , rowGroup: {
       dataSrc: 'component'
       , startRender: function(rows, group) {
-        var collapsed = !!collapsedFailuresGroups[group];
+        var collapsed = !!collapsedTsFailuresGroups[group];
 
         rows.nodes().each(function(r) {
           r.style.display = collapsed ? '' : 'none';
@@ -493,12 +582,12 @@ $(document).ready(function() {
 
   $('#dTFailuresSuites tbody').on('click', 'tr.dtrg-start', function () {
     var name = $(this).data('name');
-    collapsedFailuresGroups[name] = !collapsedFailuresGroups[name];
+    collapsedTsFailuresGroups[name] = !collapsedTsFailuresGroups[name];
     oFailuresSuitesTable.draw(false);
   } );
 
   // Datatables Failures of Test Cases - Begin
-  var collapsedFailuresGroups = {};
+  var collapsedTcFailuresGroups = {};
   var oFailuresCasesTable = $('#dTFailuresCases').DataTable( {
     ordering: false
     , paging: false
@@ -509,13 +598,35 @@ $(document).ready(function() {
     , dom: 'Bfrltip'
     , buttons: [
       {
+        extend: 'copy'
+        , title: 'List of fails test cases for components and subcomponents'
+        , className: 'shadow-sm'
+        , exportOptions: {
+            columns: '.printable'
+        }
+      }
+      , {
         extend: 'print'
+        , title: 'List of fails test cases for components and subcomponents'
+        , className: 'shadow-sm'
         , exportOptions: {
             columns: '.printable'
         }
       }
       , {
         extend: 'csv'
+        , title: 'List of fails test cases for components and subcomponents'
+        , text: '<i class="fas fa-download fa-sm text-white-50"></i> CSV'
+        , className: 'shadow-sm'
+        , exportOptions: {
+            columns: '.printable'
+        }
+      }
+      , {
+        extend: 'excelHtml5'
+        , title: 'List of fails test cases for components and subcomponents'
+        , text: '<i class="fas fa-download fa-sm text-white-50"></i> Excel'
+        , className: 'shadow-sm'
         , exportOptions: {
             columns: '.printable'
         }
@@ -545,11 +656,15 @@ $(document).ready(function() {
       }
       , {
         data: 'testcases_reason'
-        , title: 'status - reason'
+        , title: 'status / reason'
         , className: 'printable'
         , render: function(data, type, row) {
-          return `${row.testcases_status} - ${data}`;
-        }
+            let result = row.testcases_status == 'NaN' ? 'NA' : row.testcases_status;
+            if (data != 'NaN')
+              return `${row.testcases_status} / ${data}`;
+            else
+              return `${result} / NA`;
+          }
       }
       , {
         data: 'platform'
@@ -563,49 +678,49 @@ $(document).ready(function() {
       , {
         data: 'testcases_log'
         , title: 'logs'
-        , class: 'text-center'
+        , class: 'text-center actions'
         , orderable: false
         , render: function(data, type, row) {
-            let response = '';
-            if (show_download_btn) {
-              response = `<span data-toggle="tooltip" title="Download handler log"> \
+            let = response = `<div data-toggle="tooltip" title="Download handler log"> \
                 <button type="button" class="btn btn-primary download-btn"
                 data-suite="${row.name}" \
                 data-platform="${row.platform}" \
                 data-filename="handler.log"><i class="fas fa-solid fa-download"></i>
-                H</button></span> \
-              <span data-toggle="tooltip" title="Download device log"> \
+                H</button></div> \
+              <div data-toggle="tooltip" title="Download device log"> \
                 <button type="button" class="btn btn-primary download-btn"
                 data-suite="${row.name}" \
                 data-platform="${row.platform}" \
                 data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
-                D</button></span> \
-              <span data-toggle="tooltip" title="Download build log"> \
+                D</button></div> \
+              <div data-toggle="tooltip" title="Download build log"> \
                 <button type="button" class="btn btn-primary download-btn"
                 data-suite="${row.name}" \
                 data-platform="${row.platform}" \
                 data-filename="build.log"><i class="fas fa-solid fa-download"></i> \
-                B</button></span>`;
-            }
+                B</button></div>`;
 
             if (data != 'NaN') {
-              return `<button type="button" id="" class="btn btn-primary twister-log-btn" \
+              return `<div data-toggle="tooltip" title="Test suite fail log"> \
+                <button type="button" id="" class="btn btn-primary twister-log-btn" \
                   data-toggle="modal" data-target="#failuresModal" \
                   data-suite="${row.name}" \
                   data-reason="${row.testcases_reason}" \
                   data-platform="${row.platform}" \
                   data-body="${data}"> \
-                  <span data-toggle="tooltip" title="Test suite log">TS</span></button>` + response;
+                  TS log</button></div>` + response;
             }
-            
-            return response;
+            else {
+              return response;
+            }
           }
       }
+
     ]
     , rowGroup: {
       dataSrc: 'component'
       , startRender: function(rows, group) {
-        var collapsed = !!collapsedFailuresGroups[group];
+        var collapsed = !!collapsedTcFailuresGroups[group];
 
         rows.nodes().each(function(r) {
           r.style.display = collapsed ? '' : 'none';
@@ -626,7 +741,7 @@ $(document).ready(function() {
 
   $('#dTFailuresCases tbody').on('click', 'tr.dtrg-start', function () {
     var name = $(this).data('name');
-    collapsedFailuresGroups[name] = !collapsedFailuresGroups[name];
+    collapsedTcFailuresGroups[name] = !collapsedTcFailuresGroups[name];
     oFailuresCasesTable.draw(false);
   } );
 
@@ -638,4 +753,154 @@ $(document).ready(function() {
     window.location = `/download/${filename}?branch=${localStorage.getItem('branch')}&run_date=${localStorage.getItem('run_date_time')}&test_suite=${test}&platform=${platform}`;
   } );
 
+} );
+
+
+// ********************** For Triage *************************
+$('#dTComponentSuitesTriage').DataTable( {
+  dom: 'Bfrtip'
+  , ordering: true
+  , paging: false
+  // fixedHeader: true,
+  , buttons: [
+    {
+      extend: 'copy'
+      , title: ''
+      , className: 'shadow-sm'
+      , exportOptions: {
+        columns: '.printable'
+      }
+    },
+    {
+      extend: 'print'
+      , title: ''
+      , className: 'shadow-sm'
+      , exportOptions: {
+        columns: '.printable'
+      }
+    },
+    {
+      extend: 'csv'
+      , title: ''
+      , text: '<i class="fas fa-download fa-sm text-white-50"></i> CSV'
+      , className: 'shadow-sm'
+      , exportOptions: {
+        rows: '.dtrg-group, .dtrg-start, .dtrg-level-0'
+        , columns: '.printable'
+      }
+    }
+    , {
+      extend: 'excelHtml5'
+      , title: ''
+      , text: '<i class="fas fa-download fa-sm text-white-50"></i> Excel'
+      , className: 'shadow-sm'
+      , exportOptions: {
+          columns: '.printable'
+      }
+    }
+    // , {
+    //   text: '<i class="fas fa-download fa-sm text-white-50"></i> Generate Report'
+    //   , className: 'shadow-sm'
+    //   , exportOptions: {
+    //     columns: ':visible',
+    //     rows: ':visible'
+    //   }
+    // }
+    // , { text: 'comp'
+    //   , exportOptions: {
+    //     columns: ':visible',
+    //     rows: ':visible'
+    //   }
+    // }
+    // , 'colvis'
+  ]
+  // , scrollCollapse: true
+  // , scrollY: '700px'
+  , order: [
+    [1, 'asc']
+  ]
+  , columns: [
+    {
+      data: 'status'
+      , visible: false
+    }
+    , {
+      data: 'component'
+      , title: 'component'
+      , className: 'printable'
+    }
+    , {
+      data: 'pass_rate'
+      , title: 'test suite pass rate'
+      , className: 'printable'
+      , width: '20%'
+      , searchable: false
+      , orderable: false
+      , render: function(data) {
+        var color = 'bg-success'
+        if (data < 97) { color = ' bg-warning' }
+        if (data < 90) { color = ' bg-danger' }
+        return `<div class="progress">
+          <div class="progress-bar ${color}" role="progressbar"
+              style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0"
+              aria-valuemax="100"><span data-toggle="tooltip" title="passed / (passed + failed + error)">${data}%</span></div>
+          </div>`;
+      }
+    }
+    , {
+      data: 'uniqe_suites'
+      , title: 'unique suites'
+      , className: 'text-right printable'
+      , width: '7%'
+      , searchable: false
+      , orderable: false
+      , render: function(data) {
+        return `<span data-toggle="tooltip" title="Count of test suites for this component">${data}</span>`;
+      }
+    }
+    , {
+      data: 'tests_count'
+      , title: 'suite runs'
+      , className: 'text-right printable'
+      , width: '10%'
+      , searchable: false
+      , orderable: false
+      , render: function(data) {
+        return `<span data-toggle="tooltip" title="Count of run test suites marked as runnable for this component">${data}</span>`;
+      }
+    }
+    , {
+      data: 'passed'
+      , className: 'text-right printable'
+      , width: '7%'
+      , searchable: false
+      , orderable: false
+    }
+    , {
+      data: 'failed'
+      , className: 'text-right printable'
+      , width: '7%'
+      , searchable: false
+      , orderable: false
+    }
+    , {
+      data: 'error'
+      , className: 'text-right printable'
+      , width: '7%'
+      , searchable: false
+      , orderable: false
+    }
+    , {
+      data: 'skipped'
+      , className: 'text-right printable'
+      , width: '7%'
+      , searchable: false
+      , orderable: false
+    }
+  ]
+  , initComplete: function() {
+    $('#dTComponentSuitesTriage_filter input').attr('id', 'dTComponentSuitesTriage_search');
+    this.removeClass("no-footer");
+    this.append($('<tfoot/>').append( $("#dTComponentSuitesTriage thead tr").clone() ));
+  }
 } );

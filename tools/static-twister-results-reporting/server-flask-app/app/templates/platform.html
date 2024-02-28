@@ -4,59 +4,52 @@
 
 {% block sidebar %}
     <!-- Sidebar -->
-    {% include "_platform-sidebar.html" %}
+        {% include "_platform-sidebar.html" %}
     <!-- End of Sidebar -->
 {% endblock %}
 
-{% block app_summary %}
-    <!-- Content Summary Row -->
-{% endblock %}
-
 {% block app_content %}
-<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-3 pt-3">
-    <div class="d-flex flex-wrap flex-md-nowrap align-items-center border-bottom"></div>
     {% include "_platform-summary-row.html" %}
     {% if tests_result.pass_rate != 100 %}
-    <div class="row card shadow mb-4 px-3">
+    <div class="card shadow mb-4 px-3">
         <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">List of fails test cases</h5>
+            <h4 class="m-0 font-weight-bold text-primary">List of fails test cases</h4>
         </div>
         <!-- Content Table Row -->
         <div class="card-body">
-            {% include "_tables.html" %}
-            <ul>
-                <li>[TS] - test suite</li>
-                <li>[TC] - test case</li>
-            </ul>
-        </div>
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <strong>Important!</strong> Log files are available for hardware runs only.
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
+            {{ table_failures | safe }}
+
+            <div class="alert alert-info alert-dismissible mt-2 fade show" role="alert">
+                <strong>Info:</strong><ul>
+                    <li>[ts] - test suite</li>
+                    <li>[tc] - test case</li>
+                </ul>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
         </div>
     </div>
     {% endif %}
-    {% if show_download_btn %}
-    <div class="row card shadow mb-4 px-3">
+    <div class="card shadow mb-4 px-3">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Source files for {{platform}}</h6>
+            <h5 class="m-0 font-weight-bold text-primary">Source files for {{platform}}</h5>
         </div>
         <div class="card-body">
             <ul class="list-group">
+                {%for item in platforms[platform] %}
                 <li class="list-group-item">
                     <i class="fas fa-fw fa-cog"></i>
-                    <a href='{{ url_for(".download_logs", branch=branch, run_date=run_date_time, subset_name=platform_path, platform=platform, filename="twister.log") }}'>twister.log</a>
+                    <a href='{{ url_for(".download_logs", branch=branch, run_date=run_date_time, artifact=item.split("/")[-1], platform=platform, filename="twister.log") }}'>twister.log ({{ item.split("/")[-1] }})</a>
                 </li>
                 <li class="list-group-item">
                     <i class="fas fa-fw fa-cog"></i>
-                    <a href='{{ url_for(".download_logs", branch=branch, run_date=run_date_time, subset_name=platform_path, platform=platform, filename="twister.json") }}'>twister.json</a>
+                    <a href='{{ url_for(".download_logs", branch=branch, run_date=run_date_time, artifact=item.split("/")[-1], platform=platform, filename="twister.json") }}'>twister.json ({{ item.split("/")[-1] }})</a>
                 </li>
+                {% endfor %}
             </ul>
         </div>
     </div>
-    {% endif %}
-</main>
 {% endblock %}
 
 {% block date_runs_menu %}
