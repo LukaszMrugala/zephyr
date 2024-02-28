@@ -105,7 +105,7 @@ class Platform_Report:
             raise
 
 
-class Daily_Platforms_Report:
+class Platforms_Report:
     date_runs = []
     show_download_btn = False
 

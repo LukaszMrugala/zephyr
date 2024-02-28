@@ -171,7 +171,6 @@ class DirectoryParser:
             with open(yesterday_run_summary_path, 'r') as f:
                 yesterday_run_summary = json.load(f)
         except FileNotFoundError as err:
-            print(err)
             # summary of previous run is unavailabe
             # open any twister json file from yestarday's run and create summary file
             yesterdays_run_path = os.path.join(DATA_PATH, BRANCH_DICT[self.branch], yesterday)

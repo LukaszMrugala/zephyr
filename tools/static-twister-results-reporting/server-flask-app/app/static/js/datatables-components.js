@@ -1,6 +1,6 @@
 // Call the dataTables jQuery plugin
 $(document).ready(function() {
-  let server_mode = Boolean(parseInt(localStorage.getItem('server_mode')));
+  let server_mode = Boolean(parseInt(sessionStorage.getItem('server_mode')));
 
   // Datatables Components in Suites - Begin
   var collapsedSuiteGroups = {};
@@ -83,15 +83,17 @@ $(document).ready(function() {
         , searchable: false
         , orderable: false
         , render: function(data) {
-          var color = 'bg-success'
-          if (data < 97) { color = ' bg-warning' }
-          if (data < 90) { color = ' bg-danger' }
-          return `<div class="progress">
-              <div class="progress-bar ${color}" role="progressbar" aria-valuemax="100"
-                style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0">
-                <span data-toggle="tooltip" title="passed / (passed + failed + error)">${data}%</span>
-              </div>
-            </div>`;
+            var color = 'bg-passrate-100'
+            if (data < 100) { color = ' bg-passrate-99' }
+            if (data < 99) { color = ' bg-passrate-98' }
+            if (data < 95) { color = ' bg-passrate-95' }
+            if (data < 90) { color = ' bg-passrate-90' }
+            return `<div class="progress">
+                <div class="progress-bar ${color}" role="progressbar" aria-valuemax="100"
+                  style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0">
+                  <span data-toggle="tooltip" title="passed / (passed + failed + error)">${data}%</span>
+                </div>
+              </div>`;
         }
       }
       , {
@@ -172,9 +174,11 @@ $(document).ready(function() {
           row_comp += '<td>';
 
           if (row_comp == '<td>') {
-            var color = 'bg-success'
-            if (item < 97) { color = ' bg-warning' }
-            if (item < 90) { color = ' bg-danger' }
+            var color = 'bg-passrate-100'
+            if (item < 100) { color = ' bg-passrate-99' }
+            if (item < 99) { color = ' bg-passrate-98' }
+            if (item < 95) { color = ' bg-passrate-95' }
+            if (item < 90) { color = ' bg-passrate-90' }
 
             row_comp += `<div class="progress">
               <div class="progress-bar ${color}" role="progressbar" aria-valuemax="100"
@@ -282,15 +286,17 @@ $(document).ready(function() {
         , searchable: false
         , orderable: false
         , render: function(data) {
-          var color = 'bg-success'
-          if (data < 97) { color = ' bg-warning' }
-          if (data < 90) { color = ' bg-danger' }
-          return `<div class="progress">
-            <div class="progress-bar ${color}" role="progressbar"
-                style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0" aria-valuemax="100">
-                <span data-toggle="tooltip" title="passed / (passed + failed + blocked + started + error)">${data}%</span>
-              </div>
-            </div>`;
+            var color = 'bg-passrate-100'
+            if (data < 100) { color = ' bg-passrate-99' }
+            if (data < 99) { color = ' bg-passrate-98' }
+            if (data < 95) { color = ' bg-passrate-95' }
+            if (data < 90) { color = ' bg-passrate-90' }
+            return `<div class="progress">
+              <div class="progress-bar ${color}" role="progressbar"
+                  style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0" aria-valuemax="100">
+                  <span data-toggle="tooltip" title="passed / (passed + failed + blocked + started + error)">${data}%</span>
+                </div>
+              </div>`;
         }
       }
       , {
@@ -396,9 +402,11 @@ $(document).ready(function() {
             row_comp += '<td>';
 
             if (row_comp == '<td>') {
-              var color = 'bg-success'
-              if (item < 97) { color = ' bg-warning' }
-              if (item < 90) { color = ' bg-danger' }
+              var color = 'bg-passrate-100'
+              if (item < 100) { color = ' bg-passrate-99' }
+              if (item < 99) { color = ' bg-passrate-98' }
+              if (item < 95) { color = ' bg-passrate-95' }
+              if (item < 90) { color = ' bg-passrate-90' }
               row_comp += `<div class="progress">
                 <div class="progress-bar ${color}" role="progressbar" aria-valuemax="100"
                     style="width: ${item}%;" aria-valuenow="${item}" aria-valuemin="0">
@@ -750,7 +758,7 @@ $(document).ready(function() {
     var test = $(this).data('suite');
     var platform = $(this).data('platform');
 
-    window.location = `/download/${filename}?branch=${localStorage.getItem('branch')}&run_date=${localStorage.getItem('run_date_time')}&test_suite=${test}&platform=${platform}`;
+    window.location = `/download/${filename}?branch=${sessionStorage.getItem('branch')}&run_date=${sessionStorage.getItem('run_date_time')}&test_suite=${test}&platform=${platform}`;
   } );
 
 } );
@@ -837,14 +845,16 @@ $('#dTComponentSuitesTriage').DataTable( {
       , searchable: false
       , orderable: false
       , render: function(data) {
-        var color = 'bg-success'
-        if (data < 97) { color = ' bg-warning' }
-        if (data < 90) { color = ' bg-danger' }
-        return `<div class="progress">
-          <div class="progress-bar ${color}" role="progressbar"
-              style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0"
-              aria-valuemax="100"><span data-toggle="tooltip" title="passed / (passed + failed + error)">${data}%</span></div>
-          </div>`;
+          var color = 'bg-passrate-100'
+          if (data < 100) { color = ' bg-passrate-99' }
+          if (data < 99) { color = ' bg-passrate-98' }
+          if (data < 95) { color = ' bg-passrate-95' }
+          if (data < 90) { color = ' bg-passrate-90' }
+          return `<div class="progress">
+            <div class="progress-bar ${color}" role="progressbar"
+                style="width: ${data}%;" aria-valuenow="${data}" aria-valuemin="0"
+                aria-valuemax="100"><span data-toggle="tooltip" title="passed / (passed + failed + error)">${data}%</span></div>
+            </div>`;
       }
     }
     , {

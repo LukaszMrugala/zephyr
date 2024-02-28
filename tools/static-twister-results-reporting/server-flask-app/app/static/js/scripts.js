@@ -31,8 +31,7 @@
   }
 
   // Disable branch button if app works as desktop version or branch items no exist.
-  let if_server_mode = Boolean(parseInt(localStorage.getItem('server_mode')));
-  console.log("server_mode:"+ if_server_mode);
+  let if_server_mode = Boolean(parseInt(sessionStorage.getItem('server_mode')));
 
   const branch_item = $('.dropdown-menu .dropdown-item.branch');
   if (!if_server_mode || branch_item.length == 0) {

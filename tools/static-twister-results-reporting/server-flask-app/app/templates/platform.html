@@ -31,6 +31,7 @@
         </div>
     </div>
     {% endif %}
+    {% if server_mode %}
     <div class="card shadow mb-4 px-3">
         <div class="card-header py-3">
             <h5 class="m-0 font-weight-bold text-primary">Source files for {{platform}}</h5>
@@ -50,6 +51,7 @@
             </ul>
         </div>
     </div>
+    {% endif %}
 {% endblock %}
 
 {% block date_runs_menu %}

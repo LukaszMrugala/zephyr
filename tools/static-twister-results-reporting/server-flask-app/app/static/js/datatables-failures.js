@@ -1,6 +1,6 @@
 // Call the dataTables jQuery plugin
 $(document).ready(function() {
-  let server_mode = Boolean(parseInt(localStorage.getItem('server_mode')));
+  let server_mode = Boolean(parseInt(sessionStorage.getItem('server_mode')));
 
   // DataTables for showing failures on platform page
   $('#dataTableFailures').DataTable( {
@@ -104,19 +104,19 @@ $(document).ready(function() {
               response = `<div data-toggle="tooltip" title="Download handler log"> \
                   <button type="button" class="btn btn-primary download-btn"
                     data-suite="${row.name}" \
-                    data-platform="${localStorage.getItem('platform')}" \
+                    data-platform="${sessionStorage.getItem('platform')}" \
                     data-filename="handler.log"><i class="fas fa-solid fa-download"></i>
                   H</button></div> \
                 <div data-toggle="tooltip" title="Download device log"> \
                   <button type="button" class="btn btn-primary download-btn"
                     data-suite="${row.name}" \
-                    data-platform="${localStorage.getItem('platform')}" \
+                    data-platform="${sessionStorage.getItem('platform')}" \
                     data-filename="device.log"><i class="fas fa-solid fa-download"></i> \
                   D</button></div> \
                 <div data-toggle="tooltip" title="Download build log"> \
                   <button type="button" class="btn btn-primary download-btn"
                     data-suite="${row.name}" \
-                    data-platform="${localStorage.getItem('platform')}" \
+                    data-platform="${sessionStorage.getItem('platform')}" \
                     data-filename="build.log"><i class="fas fa-solid fa-download"></i> \
                   B</button></div>`;
             }
@@ -127,7 +127,7 @@ $(document).ready(function() {
                   data-toggle="modal" data-target="#failuresModal" \
                   data-suite="${row.name}" \
                   data-reason="${row.reason}" \
-                  data-platform="${localStorage.getItem('platform')}" \
+                  data-platform="${sessionStorage.getItem('platform')}" \
                   data-body="${data}"> \
                 TS log</button></div>` + response;
             }
@@ -157,7 +157,7 @@ $(document).ready(function() {
     var test = $(this).data('suite');
     var platform = $(this).data('platform');
 
-    window.location = `/download/${filename}?branch=${localStorage.getItem('branch')}&run_date=${localStorage.getItem('run_date_time')}&test_suite=${test}&platform=${platform}`;
+    window.location = `/download/${filename}?branch=${sessionStorage.getItem('branch')}&run_date=${sessionStorage.getItem('run_date_time')}&test_suite=${test}&platform=${platform}`;
   } );
 
 } );

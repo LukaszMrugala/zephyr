@@ -216,9 +216,9 @@
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 
     <script>
-        localStorage.setItem("branch", "{{branch}}");
-        localStorage.setItem("run_date_time", "{{run_date_time}}");
-        localStorage.setItem("server_mode", "{{server_mode}}");
+        sessionStorage.setItem("branch", "{{ branch }}");
+        sessionStorage.setItem("run_date_time", "{{ run_date_time }}");
+        sessionStorage.setItem("server_mode", "{{ server_mode }}");
     </script>
 
 </body>

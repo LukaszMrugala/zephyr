@@ -4,7 +4,7 @@ import os, glob, tarfile
 from datetime import datetime
 from flask import Blueprint, render_template, request, abort, send_file
 from jinja2 import TemplateNotFound
-from app.models.platform import Daily_Platforms_Report, Platform_Report
+from app.models.platform import Platforms_Report, Platform_Report
 from app.models.component import ComponentStatus
 from app.models.common import DirectoryParser
 from app.config import *
@@ -22,7 +22,7 @@ def index():
         branch = request.args.get('branch')     # get branch name from url
         n = APP_SHOW_NDAYS
 
-        results = Daily_Platforms_Report(branch, run_date)
+        results = Platforms_Report(branch, run_date)
 
         data = render_template('platforms.html'
                 , date_runs = results.date_runs[:n]

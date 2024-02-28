@@ -3,14 +3,16 @@
 from flask import Flask, render_template
 from flask_fontawesome import FontAwesome
 from flask_bootstrap import Bootstrap4
-
 from .containers import Container
+
 
 def page_not_found(e):
   return render_template('404.html'), 404
 
+
 def internal_server_error(e):
     return render_template('500.html'), 500
+
 
 # Initialize Flask Application
 def create_app():
