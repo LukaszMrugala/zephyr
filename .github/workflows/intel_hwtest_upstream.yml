@@ -19,6 +19,7 @@ jobs:
       options: "-v /srv/runner/workspace:/runner/workspace ${{ matrix.container_options }}"
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+        SSH_KEY_FMOS_QA_SIMICS: ${{ secrets.ISH_SIMICS_FMOS_QA_SSH }}
         IGK_PRIVATE_KEY: ${{ secrets.IGK_PRIVATE_KEY }}
         HF_PRIVATE_KEY: ${{ secrets.HF_PRIVATE_KEY }}
         LG_CROSSBAR: "ws://admin-fmos.igk.intel.com:80/lg"
@@ -27,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform_group: [1, 2, 3, 4, 5, 6, 7, 8]
+        platform_group: [1, 2, 3, 4, 5, 6, 7, 8, 9]
         include:
           - platform_group: 1
             toolchain: 'zephyr'
@@ -109,9 +110,18 @@ jobs:
             variant: 'xt-clang'
             runner: guest-odin1-1
             hwmap: "map-igk.yaml"
+          - platform_group: 9
+            toolchain: 'zephyr'
+            scope: acceptance
+            hwtype: device
+            platform: 'intel_ish_5_4_1'
+            variant: 'zephyr'
+            runner: fmos-ish-5-4-tgl-igk
+            hwmap: "map-igk.yaml"
+            timeout: 120
 
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: ${{ matrix.timeout || 90 }}
+    timeout-minutes: ${{ matrix.timeout || 120 }}
     steps:
       - name: Clean Workspace
         run: |
@@ -169,6 +179,11 @@ jobs:
           cp -vr main-intel/boards/ite/it8xxx2_evb/support/loader.sh boards/ite/it8xxx2_evb/support/loader.sh
           #
           mkdir -p boards/up/up_squared/support && cp main-intel/boards/up/up_squared/support/up_squared_efi.sh $_/.
+          #
+          # patch ISH:
+          cp -rv main-intel/boards/intel/ish/board.cmake boards/intel/ish/
+          mkdir -v boards/intel/ish/support && \
+            cp -rv main-intel/boards/intel/ish/support/tgl_board_flash.sh boards/intel/ish/support/
           #
           # Sanitize HWMV2 platform name
           echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | tr '/@' '_')" >> "$GITHUB_ENV"
@@ -238,6 +253,7 @@ jobs:
           export no_proxy=$no_proxy,192.168.0.0/16
 
           eval $(ssh-agent -s)
+          echo "$SSH_KEY_FMOS_QA_SIMICS" | tr -d '\r' | ssh-add -
           # faceless key used to access platforms located in IGK
           echo "$IGK_PRIVATE_KEY" | tr -d '\r' | ssh-add -
 
