@@ -24,6 +24,7 @@ message("  run          - Build a zephyr application and run it if the board sup
 message("  flash        - Run \"west flash\"")
 message("  debug        - Run \"west debug\"")
 message("  debugserver  - Run \"west debugserver\" (or start GDB server on port 1234 for QEMU targets)")
+message("  trace        - Run \"west trace\" generate trace information if the emulation target supports it")
 message("  attach       - Run \"west attach\"")
 message("  pahole       - Report struct padding (requires the pahole program)")
 message("  puncover     - Local web server to view RAM, ROM and stack usage (requires puncover pip module)")
