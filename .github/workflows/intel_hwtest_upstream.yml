@@ -46,7 +46,7 @@ jobs:
           - platform_group: 2
             scope: acceptance
             hwtype: device
-            platform: 'intel_adsp_ace15_mtpm'
+            platform: 'intel_adsp/ace15_mtpm'
             toolchain_ver: 'RI-2022.10-linux'
             xtensa_core: 'ace10_LX7HiFi4_2022_10'
             variant: 'xt-clang'
@@ -54,7 +54,7 @@ jobs:
             hwmap: "map-igk.yaml"
           - platform_group: 3
             toolchain: 'zephyr'
-            platform: "intel_adsp_cavs25"
+            platform: "intel_adsp/cavs25"
             scope: acceptance
             hwtype: device
             runner: guest-thor3-5
@@ -131,10 +131,10 @@ jobs:
 
           mkdir -p /home/user/.ssh
           echo -e "Host *\n    User zephyr\n    StrictHostKeyChecking no" >> /home/user/.ssh/config
-          cp -r main-intel/boards/arm/mec172xevb_assy6906/support/* boards/arm/mec172xevb_assy6906/support
-          cp -r main-intel/boards/xtensa/intel_adsp_ace15_mtpm/support boards/xtensa/intel_adsp_ace15_mtpm/
-          cp -r main-intel/boards/riscv/it8xxx2_evb/support/loader.sh boards/riscv/it8xxx2_evb/support/loader.sh
-          mkdir -p boards/x86/up_squared/support && cp main-intel/boards/x86/up_squared/support/up_squared_efi.sh $_/.
+          cp -r main-intel/boards/microchip/mec172xevb_assy6906/support/* boards/microchip/mec172xevb_assy6906/support
+          cp -r main-intel/boards/intel/adsp/support boards/intel/adsp
+          cp -r main-intel/boards/ite/it8xxx2_evb/support/loader.sh boards/ite/it8xxx2_evb/support/loader.sh
+          mkdir -p boards/up/up_squared/support && cp main-intel/boards/up/up_squared/support/up_squared_efi.sh $_/.
           if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
             west init -l . || true
           fi
@@ -151,7 +151,7 @@ jobs:
           git config --global --add safe.directory ${PWD}
           west update
           west forall -c 'git reset --hard HEAD'
-          sed -i 's|"otc_private_key_3k.pem" |${CMAKE_CURRENT_LIST_DIR}/support/mtl_private_key.pem |g' boards/xtensa/intel_adsp_ace15_mtpm/board.cmake
+          sed -i 's|"otc_private_key_3k.pem" |${CMAKE_CURRENT_LIST_DIR}/support/mtl_private_key.pem |g' boards/intel/adsp/board.cmake
 
       - name: Reset platform with pyocd
         if: ${{ matrix.pyocd_board_id }}

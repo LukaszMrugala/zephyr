@@ -9,7 +9,7 @@
   serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.212 stty raw 115200 -F /dev/ttyISH && cat /dev/ttyISH"
   baud: 115200
   runner_params:
-    - boards/x86/intel_ish/support/tgl_board_flash.sh
+    - boards/intel/ish/support/tgl_board_flash.sh
     - 10.123.239.213
     - /lib/firmware/intel
     - tglrvp_ish.bin
@@ -29,7 +29,7 @@
   serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.212 stty raw 115200 -F /dev/ttyISH1 && cat /dev/ttyISH1"
   baud: 115200
   runner_params:
-    - boards/x86/intel_ish/support/tgl_board_flash.sh
+    - boards/intel/ish/support/tgl_board_flash.sh
     - 10.123.239.216
     - /lib/firmware/intel
     - tglrvp_ish.bin
@@ -66,7 +66,7 @@
   serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.214 stty raw 115200 -F /dev/ttyUP2 && cat /dev/ttyUP2"
   baud: 115200
   runner_params:
-    - boards/x86/up_squared/support/up_squared_efi.sh
+    - boards/up/up_squared/support/up_squared_efi.sh
     - 192.168.21.11
     - /srv/pxe-ansible-cfg/tftpboot/
     - up_squared.efi
@@ -83,7 +83,7 @@
   serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.214 stty raw 115200 -F /dev/ttyUP2_2 && cat /dev/ttyUP2_2"
   baud: 115200
   runner_params:
-    - boards/x86/up_squared/support/up_squared_efi.sh
+    - boards/up/up_squared/support/up_squared_efi.sh
     - 192.168.21.11
     - /srv/pxe-ansible-cfg/tftpboot/
     - up_squared-2.efi
@@ -97,7 +97,7 @@
     - gpio-loopback
   id: FT9FPJYP
   platform: mec15xxevb_assy6853
-  post_flash_script: boards/arm/mec15xxevb_assy6853/support/igk_ykush_script.sh
+  post_flash_script: boards/microchip/mec15xxevb_assy6853/support/igk_ykush_script.sh
   product: TTL232R-3V3
   runner: dediprog
   serial: /dev/ttyUSB0
@@ -118,12 +118,12 @@
   runner: misc-flasher
   serial: /dev/ttyUSB0
   runner_params:
-    - boards/riscv/it8xxx2_evb/support/loader.sh
+    - boards/ite/it8xxx2_evb/support/loader.sh
     - /opt/ITE/itedlb4-linux-v106/ite
 
 - connected: true
   id: "MTL-P"
-  platform: intel_adsp_ace15_mtpm
+  platform: intel_adsp/ace15_mtpm
   product: none
   runner: intel_adsp
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,192.168.23.20:12320,-l"
@@ -132,7 +132,7 @@
 
 - connected: true
   id: "LNL-RVP-03"
-  platform: intel_adsp_ace20_lnl
+  platform: intel_adsp/ace20_lnl
   product: none
   runner: intel_adsp
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,192.168.23.23:12320,-l"
@@ -141,7 +141,7 @@
 
 - connected: true
   id: "LNL-RVP-04"
-  platform: intel_adsp_ace20_lnl
+  platform: intel_adsp/ace20_lnl
   product: none
   runner: intel_adsp
   serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,192.168.23.24:12320,-l"

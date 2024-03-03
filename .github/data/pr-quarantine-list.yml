@@ -8,23 +8,23 @@
 - scenarios:
   - kernel.memory_protection.userspace
   platforms:
-  - intel_adsp_ace30_ptl_sim
+  - intel_adsp/ace30_ptl/sim
   comment: >
    kernel.memory_protection.userspace: -> https://jira.devtools.intel.com/browse/RTOS-8120
 
 - scenarios:
   - boards.intel_adsp.ssp
   platforms:
-  - intel_adsp_cavs25
+  - intel_adsp/cavs25
   comment: >
    boards.intel_adsp.ssp: -> https://github.com/zephyrproject-rtos/zephyr/issues/61789
 
 - scenarios:
   - kernel.timer.tickless
   platforms:
-  - intel_ish_5_4_1_simics
-  - intel_ish_5_8_0_simics
-  - intel_adsp_cavs25
+  - intel_ish_5_4_1/intel_ish_5_4_1/simics
+  - intel_ish_5_8_0/intel_ish_5_8_0/simics
+  - intel_adsp/cavs25
   comment: >
    kernel.timer.tickless: -> https://jira.devtools.intel.com/browse/RTOS-7956
 

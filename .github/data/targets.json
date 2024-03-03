@@ -1,14 +1,14 @@
 [
   {
     "toolchain": "zephyr",
-    "platform": "intel_adsp_cavs25",
+    "platform": "intel_adsp/cavs25",
     "hwtype": "device",
     "runner": "guest-thor3-5"
   },
   {
     "hwtype": "simulator",
     "toolchain": "xcc",
-    "platform": "intel_adsp_ace15_mtpm_sim",
+    "platform": "intel_adsp/ace15_mtpm/sim",
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
@@ -17,7 +17,7 @@
   {
     "hwtype": "simulator",
     "toolchain": "xcc",
-    "platform": "intel_adsp_ace30_ptl_sim",
+    "platform": "intel_adsp/ace30_ptl/sim",
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace30_LX7HiFi4_PIF",
     "variant": "xt-clang",
@@ -26,7 +26,7 @@
   {
     "hwtype": "simulator",
     "toolchain": "xcc",
-    "platform": "intel_adsp_ace20_lnl_sim",
+    "platform": "intel_adsp/ace20_lnl/sim",
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
@@ -79,7 +79,7 @@
   {
     "toolchain": "zephyr",
     "hwtype": "device",
-    "platform": "intel_ish_5_8_0_simics",
+    "platform": "intel_ish_5_8_0/intel_ish_5_8_0/simics",
     "variant": "zephyr",
     "runner": "fmos-ish-5-8-lnl-igk",
     "timeout": 120,
@@ -88,7 +88,7 @@
   {
     "toolchain": "zephyr",
     "hwtype": "device",
-    "platform": "intel_ish_5_4_1_simics",
+    "platform": "intel_ish_5_4_1/intel_ish_5_4_1/simics",
     "variant": "zephyr",
     "runner": "fmos-ish-5-4-mtl-igk",
     "timeout": 240,
@@ -136,7 +136,7 @@
   {
     "toolchain": "zephyr",
     "hwtype": "device",
-    "platform": "intel_adsp_ace15_mtpm",
+    "platform": "intel_adsp/ace15_mtpm",
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
@@ -146,7 +146,7 @@
   {
     "toolchain": "zephyr",
     "hwtype": "device",
-    "platform": "intel_adsp_ace20_lnl",
+    "platform": "intel_adsp/ace20_lnl",
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
