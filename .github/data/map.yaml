@@ -3,7 +3,7 @@
   platform: intel_adsp_cavs15
   product: None
   runner: intel_adsp
-  serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59145,-l"
+  serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59145,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50145
 - connected: false
@@ -11,7 +11,7 @@
   platform: intel_adsp_cavs18
   product: None
   runner: intel_adsp
-  serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59143,-l"
+  serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59143,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50143
 - connected: true
@@ -19,7 +19,7 @@
   platform: intel_adsp_cavs18
   product: None
   runner: intel_adsp
-  serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59144,-l"
+  serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59144,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50144
 - connected: false
@@ -27,7 +27,7 @@
   platform: intel_adsp/cavs25
   product: None
   runner: intel_adsp
-  serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59141,-l"
+  serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59141,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50141
 - connected: false
@@ -35,7 +35,7 @@
   platform: intel_adsp/cavs25
   product: None
   runner: intel_adsp
-  serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59142,-l"
+  serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59142,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50142
 - connected: true
@@ -43,7 +43,7 @@
   platform: intel_adsp/cavs25
   product: None
   runner: intel_adsp
-  serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59146,-l"
+  serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59146,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50146
 - connected: true
@@ -51,7 +51,7 @@
   platform: intel_adsp/cavs25
   product: None
   runner: intel_adsp
-  serial_pty: "soc/xtensa/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59147,-l"
+  serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59147,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50147
 - connected: true

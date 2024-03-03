@@ -22,7 +22,7 @@ on:
           - intel_adsp/ace15_mtpm/sim
           - intel_adsp/ace20_lnl/sim
           - intel_adsp/ace30_ptl/sim
-          - nsim_em
+          - nsim/nsim_em
           - mec172xevb_assy6906
           - mec15xxevb_assy6853
           - frdm_k64f
@@ -98,13 +98,13 @@ jobs:
 
           if [ "${build_target_all}" == "y" ]; then
             for target in `jq -r '.[].platform' .github/data/targets.json`; do
-              eval build_target_$target="y"
+              eval build_target_${target//\//_}="y"
             done
           fi
 
           MATRIX_TARGETS='['
           for target in `jq -r '.[].platform' .github/data/targets.json`; do
-            eval check='$'build_target_$target
+            eval check='$'build_target_${target//\//_}
             if [ "${check}" == "y" ]; then
               MATRIX_TARGETS+=$(jq --arg target "$target" '.[] | select(.platform == $target)' .github/data/targets.json),
             fi
@@ -283,14 +283,14 @@ jobs:
         run: |
          # Give some time to Twister processes to close logs on cancel.
          [ $(ps -ef | grep twister | wc -l) -ge 2 ] && sleep 60s
-         [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" | tar -czf subset-${{ strategy.job-index }}-${{ matrix.target.platform }}-twister-out.tar.gz -T -
+         [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" | tar -czf subset-${{ strategy.job-index }}-${{ matrix.target.identifier }}-twister-out.tar.gz -T -
       - name: Upload twister-out.tar.gz archive per subset
         if: (steps.tar-twister-out.outcome == 'success') && (success() || failure() || cancelled())
         uses: actions/upload-artifact@v2
         with:
-          name: subset-${{ strategy.job-index }}-${{ matrix.target.platform }}-twister-out archive in .tar.gz format
+          name: subset-${{ strategy.job-index }}-${{ matrix.target.identifier }}-twister-out archive in .tar.gz format
           path: |
-            subset-${{ strategy.job-index }}-${{ matrix.target.platform }}-twister-out.tar.gz
+            subset-${{ strategy.job-index }}-${{ matrix.target.identifier }}-twister-out.tar.gz
           retention-days: 5
 
       - name: Upload Unit Test Results
