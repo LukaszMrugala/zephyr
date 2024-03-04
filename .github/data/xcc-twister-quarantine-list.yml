@@ -1,7 +1,7 @@
 - scenarios:
   - drivers.can.shell
   platforms:
-  - intel_adsp_.*
+  - intel_adsp.*
   comment: >
     test is not compatible with adsp platforms with xcc
     will revisit once upstream updates test if this entry no longer required

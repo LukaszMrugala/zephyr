@@ -44,6 +44,7 @@ jobs:
             labgrid_timeout: 3
             container_options: '--privileged --device /dev/ttyUSB0:/dev/ttyUSB0 -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
           - platform_group: 2
+            toolchain: 'zephyr'
             scope: acceptance
             hwtype: device
             platform: 'intel_adsp/ace15_mtpm'
@@ -78,6 +79,8 @@ jobs:
             container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
             variant: 'zephyr'
             runner: fmos-testhost-nuc-igk-04
+            labgrid_place: "ite-board-ci_01,ite-board-dbg_01"
+            labgrid_timeout: 10
           - platform_group: 6
             toolchain: 'zephyr'
             scope: acceptance
@@ -131,10 +134,6 @@ jobs:
 
           mkdir -p /home/user/.ssh
           echo -e "Host *\n    User zephyr\n    StrictHostKeyChecking no" >> /home/user/.ssh/config
-          cp -r main-intel/boards/microchip/mec172xevb_assy6906/support/* boards/microchip/mec172xevb_assy6906/support
-          cp -r main-intel/boards/intel/adsp/support boards/intel/adsp
-          cp -r main-intel/boards/ite/it8xxx2_evb/support/loader.sh boards/ite/it8xxx2_evb/support/loader.sh
-          mkdir -p boards/up/up_squared/support && cp main-intel/boards/up/up_squared/support/up_squared_efi.sh $_/.
           if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
             west init -l . || true
           fi
@@ -151,7 +150,17 @@ jobs:
           git config --global --add safe.directory ${PWD}
           west update
           west forall -c 'git reset --hard HEAD'
+          #
           sed -i '/default in ace15_mtpm/{s/"otc_private_key_3k.pem"/${CMAKE_CURRENT_LIST_DIR}\/support\/mtl_private_key.pem/}' boards/intel/adsp/board.cmake
+          #
+          cp -vr main-intel/boards/intel/adsp/support boards/intel/adsp/
+          #
+          cp -vr main-intel/boards/ite/it8xxx2_evb/support/loader.sh boards/ite/it8xxx2_evb/support/loader.sh
+          #
+          mkdir -p boards/up/up_squared/support && cp main-intel/boards/up/up_squared/support/up_squared_efi.sh $_/.
+          #
+          # Sanitize HWMV2 platform name
+          echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | tr '/@' '_')" >> "$GITHUB_ENV"
 
       - name: Reset platform with pyocd
         if: ${{ matrix.pyocd_board_id }}
@@ -223,7 +232,7 @@ jobs:
 
           ./scripts/twister -M -x=USE_CCACHE=0 --inline-logs \
             --force-color -v \
-            --quarantine-list main-intel/.github/data/twister-quarantine-list.yml \
+            --quarantine-list $TWISTER_QUARANTINE_LIST \
             --retry-build-errors \
             --retry-failed 2 \
             --retry-interval 15 \
@@ -238,15 +247,15 @@ jobs:
         run: |
           # Give some time to Twister processes to close logs on cancel.
           [ $(ps -ef | grep twister | wc -l) -ge 2 ] && sleep 60s
-          [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" | tar -czf subset-${{ matrix.platform_group }}-${{ matrix.platform }}-twister-out.tar.gz -T -
+          [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" | tar -czf subset-${{ matrix.platform_group }}-${{ env.PLATFORM_NAME }}-twister-out.tar.gz -T -
 
       - name: Upload twister-out.tar.gz archive per subset
         if: (steps.tar-twister-out.outcome == 'success') && (success() || failure() || cancelled())
         uses: actions/upload-artifact@v2
         with:
-          name: subset-${{ matrix.platform_group }}-${{ matrix.platform }}-twister-out archive in .tar.gz format
+          name: subset-${{ matrix.platform_group }}-${{ env.PLATFORM_NAME }}-twister-out archive in .tar.gz format
           path: |
-            subset-${{ matrix.platform_group }}-${{ matrix.platform }}-twister-out.tar.gz
+            subset-${{ matrix.platform_group }}-${{ env.PLATFORM_NAME }}-twister-out.tar.gz
           retention-days: 5
 
       - name: Upload Unit Test Results
