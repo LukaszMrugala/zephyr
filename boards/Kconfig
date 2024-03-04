@@ -46,6 +46,12 @@ config QEMU_TARGET
 	  Mark all QEMU targets with this variable for checking whether we are
 	  running in an emulated environment.
 
+config SIMICS_TARGET
+	bool
+	help
+	  Mark all SIMICS targets with this variable for checking whether we are
+	  running in an emulated environment.
+
 config NET_DRIVERS
 	bool
 	default y if QEMU_TARGET && NETWORKING
