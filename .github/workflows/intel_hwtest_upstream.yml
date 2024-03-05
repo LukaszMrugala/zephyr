@@ -15,7 +15,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7.1
       options: "-v /srv/runner/workspace:/runner/workspace ${{ matrix.container_options }}"
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
@@ -132,17 +132,32 @@ jobs:
           rm -rf ./* || true
           rm -rf ./.??* || true
           ls -la ./
-      - name: Checkout upstream branch (main)
+
+      - name: Get Commmit SHA of latest successful simulator run from upstream
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/get-latest-commit-sha@main
+        with:
+          repository: zephyrproject-rtos/zephyr
+          branch: main
+          event: push
+          workflow: twister.yaml
+          success: true
+          user: sys_tmbuild
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pages-to-parse: 40
+
+      - name: Checkout upstream branch with ${{ env.LATEST_SUCCESSFUL_RUN_SHA }} SHA (main)
         uses: actions/checkout@v3.1.0
         with:
-          ref: main  # upstream branch
+          ref: ${{ env.LATEST_SUCCESSFUL_RUN_SHA }}
           fetch-depth: 0
+
       - name: Checkout main-intel
         uses: actions/checkout@v3.1.0
         with:
           ref: main-intel
           fetch-depth: 0
           path: main-intel
+
       - name: Environment Setup
         shell: bash
         run: |
