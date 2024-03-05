@@ -151,7 +151,7 @@ jobs:
           git config --global --add safe.directory ${PWD}
           west update
           west forall -c 'git reset --hard HEAD'
-          sed -i 's|"otc_private_key_3k.pem" |${CMAKE_CURRENT_LIST_DIR}/support/mtl_private_key.pem |g' boards/intel/adsp/board.cmake
+          sed -i '/default in ace15_mtpm/{s/"otc_private_key_3k.pem"/${CMAKE_CURRENT_LIST_DIR}\/support\/mtl_private_key.pem/}' boards/intel/adsp/board.cmake
 
       - name: Reset platform with pyocd
         if: ${{ matrix.pyocd_board_id }}
