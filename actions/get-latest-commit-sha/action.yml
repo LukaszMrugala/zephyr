@@ -1,0 +1,70 @@
+# FMOS DevOps Github Actions Get Latest Commit SHA
+# - a basic github action wrapper for curl to get latest commit SHA
+# 
+# requires:
+#  0. repository in owner/repository-name format
+#  1. user used for auth
+#  2. token for auth
+#  3. workflow name
+
+name: 'Get Latest Commit SHA of specified run'
+description: 'curls the latest commit sha from provided repository and workflow with provided statements'
+inputs:
+  repository:
+    description: 'repository where the run occured'
+    required: true
+  branch:
+    description: 'branch from which commit sha will be fetched'
+    default: 'main'
+  workflow:
+    description: 'workflow file from which run was executed'
+    required: true
+  event:
+    description: 'event that triggered the run push/scheduled/pull_request'
+    default: 'push'
+  user:
+    description: 'user for authentication to api'
+    required: true
+  token:
+    description: 'token for authentication'
+    required: true
+  success:
+    description: 'fetch succesful run only'
+    default: false
+    type: boolean
+  failed:
+    description: 'fetch failed run only'
+    default: false
+    type: boolean
+  cancelled:
+    description: 'fetch canceled run only'
+    default: false
+    type: boolean
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: 'Check if curl and jq are installed'
+      run: |
+        which curl
+        which jq
+      shell: bash
+
+    - name: 'Get succesful run commit sha'
+      if: ${{ inputs.success == 'true' }}
+      run: |
+        echo "LATEST_SUCCESSFUL_RUN_SHA=$(curl -u ${{ inputs.user }}:${{ inputs.token }} -s -H "Content-Type: application/json" https://api.github.com/repos/${{ inputs.repository }}/actions/workflows/${{ inputs.workflow }}/runs?page=[1-10] | jq -r '.workflow_runs[] | select(.event=="push" and .head_branch=="${{ inputs.branch }}" and .conclusion=="success") | .head_sha' | awk 'NR==1')" >> $GITHUB_ENV
+      shell: bash
+
+    - name: 'Get failed run commit sha'
+      if: ${{ inputs.failed == 'true' }}
+      run: |
+        echo "LATEST_FAILED_RUN_SHA=$(curl -u ${{ inputs.user }}:${{ inputs.token }} -s -H "Content-Type: application/json" https://api.github.com/repos/${{ inputs.repository }}/actions/workflows/${{ inputs.workflow }}/runs?page=[1-10] | jq -r '.workflow_runs[] | select(.event=="push" and .head_branch=="${{ inputs.branch }}" and .conclusion=="failure") | .head_sha' | awk 'NR==1')" >> $GITHUB_ENV
+      shell: bash
+
+    - name: 'Get cancelled run commit sha'
+      if: ${{ inputs.cancelled == 'true' }}
+      run: |
+        echo "LATEST_CANCELLED_RUN_SHA=$(curl -u ${{ inputs.user }}:${{ inputs.token }} -s -H "Content-Type: application/json" https://api.github.com/repos/${{ inputs.repository }}/actions/workflows/${{ inputs.workflow }}/runs?page=[1-10] | jq -r '.workflow_runs[] | select(.event=="push" and .head_branch=="${{ inputs.branch }}" and .conclusion=="cancelled") | .head_sha' | awk 'NR==1')" >> $GITHUB_ENV
+      shell: bash
