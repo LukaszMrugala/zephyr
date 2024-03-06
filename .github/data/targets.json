@@ -166,7 +166,7 @@
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
-    "runner": "fmos-guest-ubuntu-12c-igk",
+    "runner": "guest-odin1-1",
     "hwmap": "map-igk.yaml"
   }
 ]
