@@ -38,13 +38,6 @@
    kernel.timer.timer: -> https://github.com/zephyrproject-rtos/zephyr/issues/67833
 
 - scenarios:
-  - kernel.memory_protection.obj_validation
-  platforms:
-  - up_squared
-  comment: >
-   kernel.memory_protection.obj_validation: -> https://github.com/zephyrproject-rtos/zephyr/issues/68634
-
-- scenarios:
   - kernel.timer.tickless
   platforms:
   - npcx9m6f_evb
