@@ -86,10 +86,9 @@ jobs:
             build_target_all="y"
           elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             # dispatch
-            case '${{ github.event.inputs.target }}' in
-              all)  build_target_all="y";;
-              *)    eval build_target_${{ github.event.inputs.target }}="y";;
-            esac
+            target=${{ github.event.inputs.target }}
+            target=${target//\//_}
+            eval build_target_$target="y"
           else
             # push / schedule
             build_target_all="y"
