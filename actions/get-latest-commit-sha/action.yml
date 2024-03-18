@@ -44,6 +44,16 @@ inputs:
     description: 'number of pages to parse'
     default: 20
     type: number
+outputs:
+  successful-commit-sha: 
+    description: 'Commit SHA of successful run'
+    value: ${{ steps.get-successful-commit-sha.outputs.commit-sha }}
+  failed-commit-sha:
+    description: 'Commit SHA of failed run'
+    value: ${{ steps.get-failed-commit-sha.outputs.commit-sha }}
+  cancelled-commit-sha:
+    description: 'Commit SHA of cancelled run'
+    value: ${{ steps.get-cancelled-commit-sha.outputs.commit-sha }}
 
 runs:
   using: "composite"
@@ -54,38 +64,47 @@ runs:
         which jq
       shell: bash
 
+    - name: 'Get commit SHA'
+      id: get-commit-sha
+      run: |
+        curl -u ${{ inputs.user }}:${{ inputs.token }} -s -H "Content-Type: application/json" https://api.github.com/repos/${{ inputs.repository }}/actions/workflows/${{ inputs.workflow }}/runs?page=[1-${{ inputs.pages-to-parse }}] | jq -r '.workflow_runs[] | select(.event=="push" and .head_branch=="${{ inputs.branch }}")' >> ${{ github.run_id }}-json.json
+      shell: bash
+
     - name: 'Get succesful run commit sha'
+      id: get-successful-commit-sha
       if: ${{ inputs.success == 'true' }}
       run: |
-        LATEST_SUCCESSFUL_RUN_SHA=$(curl -u ${{ inputs.user }}:${{ inputs.token }} -s -H "Content-Type: application/json" https://api.github.com/repos/${{ inputs.repository }}/actions/workflows/${{ inputs.workflow }}/runs?page=[1-${{ inputs.pages-to-parse }}] | jq -r '.workflow_runs[] | select(.event=="push" and .head_branch=="${{ inputs.branch }}" and .conclusion=="success") | .head_sha' | awk 'NR==1')
-        
+        LATEST_SUCCESSFUL_RUN_SHA=$(cat ${{ github.run_id }}-json.json | jq -r 'select(.conclusion=="success") | .head_sha' | awk 'NR==1')
+
         # Fail execution if LATEST_SUCCESSFUL_RUN_SHA is empty
         if [[ -z "$LATEST_SUCCESSFUL_RUN_SHA" ]]; then
           echo "LATEST_SUCCESSFUL_RUN_SHA is empty!"
           exit 1
         fi
 
-        echo "LATEST_SUCCESSFUL_RUN_SHA=$LATEST_SUCCESSFUL_RUN_SHA" >> $GITHUB_ENV
+        echo "commit-sha=$LATEST_SUCCESSFUL_RUN_SHA" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: 'Get failed run commit sha'
+      id: get-failed-commit-sha
       if: ${{ inputs.failed == 'true' }}
       run: |
-        LATEST_FAILED_RUN_SHA=$(curl -u ${{ inputs.user }}:${{ inputs.token }} -s -H "Content-Type: application/json" https://api.github.com/repos/${{ inputs.repository }}/actions/workflows/${{ inputs.workflow }}/runs?page=[1-${{ inputs.pages-to-parse }}] | jq -r '.workflow_runs[] | select(.event=="push" and .head_branch=="${{ inputs.branch }}" and .conclusion=="failure") | .head_sha' | awk 'NR==1')
-        
+        LATEST_FAILED_RUN_SHA=$(cat ${{ github.run_id }}-json.json | jq -r 'select(.conclusion=="failure") | .head_sha' | awk 'NR==1')
+
         # Fail execution if LATEST_FAILED_RUN_SHA is empty
         if [[ -z "$LATEST_FAILED_RUN_SHA" ]]; then
           echo "LATEST_FAILED_RUN_SHA is empty!"
           exit 1
         fi
 
-        echo "LATEST_FAILED_RUN_SHA=$LATEST_FAILED_RUN_SHA" >> $GITHUB_ENV
+        echo "commit-sha=$LATEST_FAILED_RUN_SHA" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: 'Get cancelled run commit sha'
+      id: get-cancelled-commit-sha
       if: ${{ inputs.cancelled == 'true' }}
       run: |
-        LATEST_CANCELLED_RUN_SHA=$(curl -u ${{ inputs.user }}:${{ inputs.token }} -s -H "Content-Type: application/json" https://api.github.com/repos/${{ inputs.repository }}/actions/workflows/${{ inputs.workflow }}/runs?page=[1-${{ inputs.pages-to-parse }}] | jq -r '.workflow_runs[] | select(.event=="push" and .head_branch=="${{ inputs.branch }}" and .conclusion=="cancelled") | .head_sha' | awk 'NR==1')
+        LATEST_CANCELLED_RUN_SHA=$(cat ${{ github.run_id }}-json.json | jq -r 'select(.conclusion=="cancelled") | .head_sha' | awk 'NR==1')
 
         # Fail execution if LATEST_CANCELLED_RUN_SHA is empty
         if [[ -z "$LATEST_CANCELLED_RUN_SHA" ]]; then
@@ -93,5 +112,10 @@ runs:
           exit 1
         fi
 
-        echo "LATEST_CANCELLED_RUN_SHA=$LATEST_CANCELLED_RUN_SHA" >> $GITHUB_ENV
+        echo "commit-sha=$LATEST_CANCELLED_RUN_SHA" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: 'Cleanup'
+      run: |
+        rm -rf ${{ github.run_id }}-json.json
       shell: bash
