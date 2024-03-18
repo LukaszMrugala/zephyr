@@ -9,8 +9,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  setup:
+    name: Setup
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7.1
+    defaults:
+      run:
+        shell: bash
+    runs-on: fmos-guest-ubuntu-12c
+    outputs:
+      successful-commit-sha: ${{ steps.get-commit-sha.outputs.successful-commit-sha }}
+    steps:
+      - name: Get Commit SHA of latest successful simulator run from upstream
+        id: get-commit-sha
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/get-latest-commit-sha@get-latest-commit-sha-v1
+        with:
+          repository: zephyrproject-rtos/zephyr
+          branch: main
+          event: push
+          workflow: twister.yaml
+          success: true
+          user: sys_tmbuild
+          token: ${{ secrets.ZEPHYR_TOKEN }}
+          pages-to-parse: 40
+
   run_twister:
     name: '[HW] test upstream ${{ matrix.platform }}'
+    needs: setup
     defaults:
       run:
         shell: bash
@@ -136,22 +161,10 @@ jobs:
           rm -rf ./.??* || true
           ls -la ./
 
-      - name: Get Commmit SHA of latest successful simulator run from upstream
-        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/get-latest-commit-sha@main
-        with:
-          repository: zephyrproject-rtos/zephyr
-          branch: main
-          event: push
-          workflow: twister.yaml
-          success: true
-          user: sys_tmbuild
-          token: ${{ secrets.GITHUB_TOKEN }}
-          pages-to-parse: 40
-
-      - name: Checkout upstream branch with ${{ env.LATEST_SUCCESSFUL_RUN_SHA }} SHA (main)
+      - name: Checkout upstream branch with ${{ needs.setup.outputs.successful-commit-sha }} SHA (main)
         uses: actions/checkout@v3.1.0
         with:
-          ref: ${{ env.LATEST_SUCCESSFUL_RUN_SHA }}
+          ref: ${{ needs.setup.outputs.successful-commit-sha }}
           fetch-depth: 0
 
       - name: Checkout main-intel
