@@ -84,7 +84,7 @@ See the [action.yml](./action.yml) file for more detail information.
 * repository: repository-in-owner/repo-format which is a fetch target (**required**)
 * user: username used for auth to github api (**required**)
 * token: token used for auth to github api (**required**)
-* workflow: name of the workflow that executes the run (**required**)
+* workflow: name of the workflow that triggered the run (**required**)
 * event: event from which sha will be fetched push/schedule/pull_request (default **push**)
 * branch: branch from which workflow will be used to fetch sha (default **main**)
 * success: only successful runs will be fetched (default **false**)

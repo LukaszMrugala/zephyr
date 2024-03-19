@@ -1,6 +1,6 @@
 # FMOS DevOps Github Actions Get Latest Commit SHA
 # - a basic github action wrapper for curl to get latest commit SHA
-# 
+#
 # requires:
 #  0. repository in owner/repository-name format
 #  1. user used for auth
@@ -8,44 +8,44 @@
 #  3. workflow name
 
 name: 'Get Latest Commit SHA of specified run'
-description: 'curls the latest commit sha from provided repository and workflow with provided statements'
+description: 'Curls the latest commit sha from provided repository and workflow with provided statements'
 inputs:
   repository:
-    description: 'repository where the run occured'
+    description: 'Repository from which data will be fetched'
     required: true
   branch:
-    description: 'branch from which commit sha will be fetched'
+    description: 'Branch from which commit sha will be fetched'
     default: 'main'
   workflow:
-    description: 'workflow file from which run was executed'
+    description: 'Workflow file that triggered the expected run'
     required: true
   event:
-    description: 'event that triggered the run push/scheduled/pull_request'
+    description: 'Event that triggered the run push/scheduled/pull_request'
     default: 'push'
   user:
-    description: 'user for authentication to api'
+    description: 'Username used for authentication'
     required: true
   token:
-    description: 'token for authentication'
+    description: 'Token used for authentication'
     required: true
   success:
-    description: 'fetch succesful run only'
+    description: 'Fetch SHA of the last successful run'
     default: false
     type: boolean
   failed:
-    description: 'fetch failed run only'
+    description: 'Fetch SHA of the last failed run'
     default: false
     type: boolean
   cancelled:
-    description: 'fetch canceled run only'
+    description: 'Fetch SHA of the last cancelled run'
     default: false
     type: boolean
   pages-to-parse:
-    description: 'number of pages to parse'
+    description: 'Number of pages to parse'
     default: 20
     type: number
 outputs:
-  successful-commit-sha: 
+  successful-commit-sha:
     description: 'Commit SHA of successful run'
     value: ${{ steps.get-successful-commit-sha.outputs.commit-sha }}
   failed-commit-sha:
@@ -64,17 +64,17 @@ runs:
         which jq
       shell: bash
 
-    - name: 'Get commit SHA'
+    - name: 'Get latest commits SHA'
       id: get-commit-sha
       run: |
-        curl -u ${{ inputs.user }}:${{ inputs.token }} -s -H "Content-Type: application/json" https://api.github.com/repos/${{ inputs.repository }}/actions/workflows/${{ inputs.workflow }}/runs?page=[1-${{ inputs.pages-to-parse }}] | jq -r '.workflow_runs[] | select(.event=="push" and .head_branch=="${{ inputs.branch }}")' >> ${{ github.run_id }}-json.json
+        curl -u ${{ inputs.user }}:${{ inputs.token }} -s -H "Content-Type: application/json" https://api.github.com/repos/${{ inputs.repository }}/actions/workflows/${{ inputs.workflow }}/runs?page=[1-${{ inputs.pages-to-parse }}] | jq -r '.workflow_runs[] | select(.event=="push" and .head_branch=="${{ inputs.branch }}")' > ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.action }}.json
       shell: bash
 
     - name: 'Get succesful run commit sha'
       id: get-successful-commit-sha
-      if: ${{ inputs.success == 'true' }}
+      if: ${{ inputs.success == 'true' && steps.get-commit-sha.outcome == 'success' }}
       run: |
-        LATEST_SUCCESSFUL_RUN_SHA=$(cat ${{ github.run_id }}-json.json | jq -r 'select(.conclusion=="success") | .head_sha' | awk 'NR==1')
+        LATEST_SUCCESSFUL_RUN_SHA=$(cat ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.action }}.json | jq -r 'select(.conclusion=="success") | .head_sha' | awk 'NR==1')
 
         # Fail execution if LATEST_SUCCESSFUL_RUN_SHA is empty
         if [[ -z "$LATEST_SUCCESSFUL_RUN_SHA" ]]; then
@@ -87,9 +87,9 @@ runs:
 
     - name: 'Get failed run commit sha'
       id: get-failed-commit-sha
-      if: ${{ inputs.failed == 'true' }}
+      if: ${{ inputs.failed == 'true' && steps.get-commit-sha.outcome == 'success' }}
       run: |
-        LATEST_FAILED_RUN_SHA=$(cat ${{ github.run_id }}-json.json | jq -r 'select(.conclusion=="failure") | .head_sha' | awk 'NR==1')
+        LATEST_FAILED_RUN_SHA=$(cat ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.action }}.json | jq -r 'select(.conclusion=="failure") | .head_sha' | awk 'NR==1')
 
         # Fail execution if LATEST_FAILED_RUN_SHA is empty
         if [[ -z "$LATEST_FAILED_RUN_SHA" ]]; then
@@ -102,9 +102,9 @@ runs:
 
     - name: 'Get cancelled run commit sha'
       id: get-cancelled-commit-sha
-      if: ${{ inputs.cancelled == 'true' }}
+      if: ${{ inputs.cancelled == 'true' && steps.get-commit-sha.outcome == 'success' }}
       run: |
-        LATEST_CANCELLED_RUN_SHA=$(cat ${{ github.run_id }}-json.json | jq -r 'select(.conclusion=="cancelled") | .head_sha' | awk 'NR==1')
+        LATEST_CANCELLED_RUN_SHA=$(cat ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.action }}.json | jq -r 'select(.conclusion=="cancelled") | .head_sha' | awk 'NR==1')
 
         # Fail execution if LATEST_CANCELLED_RUN_SHA is empty
         if [[ -z "$LATEST_CANCELLED_RUN_SHA" ]]; then
@@ -117,5 +117,5 @@ runs:
 
     - name: 'Cleanup'
       run: |
-        rm -rf ${{ github.run_id }}-json.json
+        rm -vrf ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.action }}.json
       shell: bash
