@@ -21,7 +21,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: copy files via ssh
-      uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@v1
+      uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@fmos-scp-ssh-pipeline-v1
       with:
         hostname: your-host-name
         ssh-user: user-name-for-connect-to-host
