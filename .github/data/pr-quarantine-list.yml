@@ -28,6 +28,13 @@
     kernel.timer.tickless -> https://github.com/zephyrproject-rtos/zephyr/issues/55085
 
 - scenarios:
+  - kernel.timer.tickless
+  platforms:
+  - intel_adsp/cavs25
+  comment: >
+   kernel.timer.tickless: -> https://jira.devtools.intel.com/browse/RTOS-8487
+
+- scenarios:
   - boards.mec172xevb_assy6906.i2c
   - boards.mec15xxevb_assy6853.i2c
   - boards.mec15xxevb_assy6853.qspi
