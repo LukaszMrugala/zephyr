@@ -392,7 +392,7 @@ jobs:
         if: false
         # if: ( github.event_name == 'schedule' || github.event_name == 'push') && steps.srs-prep-data.outcome == 'success'
         # TODO: enable if needed; select index.
-        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@main
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@fmos-scp-ssh-pipeline-v1
         with:
           hostname: 'zep-fmos-static-reporting.igk.intel.com'
           ssh-user: 'zephyr'
