@@ -162,13 +162,13 @@ jobs:
           ls -la ./
 
       - name: Checkout upstream branch with ${{ needs.setup.outputs.successful-commit-sha }} SHA (main)
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v4
         with:
           ref: ${{ needs.setup.outputs.successful-commit-sha }}
           fetch-depth: 0
 
       - name: Checkout main-intel
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v4
         with:
           ref: main-intel
           fetch-depth: 0
@@ -313,7 +313,7 @@ jobs:
 
       - name: Upload twister-out.tar.gz archive per subset
         if: (steps.tar-twister-out.outcome == 'success') && (success() || failure() || cancelled())
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: subset-${{ matrix.platform_group }}-${{ env.PLATFORM_NAME }}-twister-out archive in .tar.gz format
           path: |
@@ -322,7 +322,7 @@ jobs:
 
       - name: Upload Unit Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Unit Test Results (Subset ${{ matrix.platform_group }})
           path: |
@@ -353,12 +353,12 @@ jobs:
 
       - name: Checkout
         # if: github.event_name == 'schedule' || github.event_name == 'push'
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
 

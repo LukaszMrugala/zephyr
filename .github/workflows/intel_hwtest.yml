@@ -71,7 +71,7 @@ jobs:
       targets: ${{ steps.generate-matrix.outputs.targets }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Generate matrix
@@ -151,7 +151,7 @@ jobs:
           rm -rf ./.??* || true
           ls -la ./
       - name: Checkout
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Environment Setup
@@ -285,7 +285,7 @@ jobs:
          [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" | tar -czf subset-${{ strategy.job-index }}-${{ matrix.target.identifier }}-twister-out.tar.gz -T -
       - name: Upload twister-out.tar.gz archive per subset
         if: (steps.tar-twister-out.outcome == 'success') && (success() || failure() || cancelled())
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: subset-${{ strategy.job-index }}-${{ matrix.target.identifier }}-twister-out archive in .tar.gz format
           path: |
@@ -294,7 +294,7 @@ jobs:
 
       - name: Upload Unit Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Unit Test Results (Subset ${{ strategy.job-index }})
           path: |
@@ -331,12 +331,12 @@ jobs:
 
       - name: Checkout
         # if: github.event_name == 'schedule' || github.event_name == 'push'
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
 

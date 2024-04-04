@@ -44,7 +44,7 @@ jobs:
 
       # Checkout code from open internal PR
       - name: Checkout the code
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
@@ -97,7 +97,7 @@ jobs:
       # the compliance check
       - name: upload-results
         continue-on-error: true
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: compliance.xml
           path: compliance.xml
