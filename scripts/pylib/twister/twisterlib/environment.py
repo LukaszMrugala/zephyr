@@ -82,6 +82,8 @@ Artificially long but functional example:
 
     test_xor_generator = case_select.add_mutually_exclusive_group()
 
+    unrecognized_section_test_group = parser.add_mutually_exclusive_group()
+
     valgrind_asan_group = parser.add_mutually_exclusive_group()
 
     case_select.add_argument(
@@ -345,10 +347,16 @@ structure in the main Zephyr tree: boards/<arch>/<board_name>/""")
                         dest="enable_asserts",
                         help="deprecated, left for compatibility")
 
-    parser.add_argument(
+    unrecognized_section_test_group.add_argument(
         "--disable-unrecognized-section-test", action="store_true",
         default=False,
         help="Skip the 'unrecognized section' test.")
+
+    unrecognized_section_test_group.add_argument(
+        "--fail-on-unrecognized-section-test", action="store_true",
+        default=False,
+        help="The 'unrecognized section' test will now fail the testcase, "
+             "rather than just sending out a warning.")
 
     parser.add_argument(
         "--disable-suite-name-check", action="store_true", default=False,

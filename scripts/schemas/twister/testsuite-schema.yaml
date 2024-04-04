@@ -65,6 +65,9 @@ schema;scenario-schema:
       required: false
       sequence:
         - type: str
+    "fail_on_unrecognized_section_test":
+      type: bool
+      required: false
     "filter":
       type: str
       required: false

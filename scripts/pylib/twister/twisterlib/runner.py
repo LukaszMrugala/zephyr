@@ -663,24 +663,37 @@ class ProjectBuilder(FilterBuilder):
 
         elif op == "gather_metrics":
             self.gather_metrics(self.instance)
+            next_op = {}
+
+            # Unrecognized binary section test
             if self.instance.metrics.get("unrecognized") and \
              not self.options.disable_unrecognized_section_test:
-                logger.error(f"{Fore.RED}FAILED{Fore.RESET}:"
-                             f" {self.instance.name} has unrecognized binary sections:"
-                             f" {self.instance.metrics.get('unrecognized')}")
-                self.instance.status = "failed"
-                self.instance.reason = f"Unrecognized binary sections:" \
-                                       f" {self.instance.metrics.get('unrecognized')}"
-                pipeline.put({
-                    "op": "report",
-                    "test": self.instance,
-                    "status": self.instance.status,
-                    "reason": self.instance.reason
-                })
-            elif self.instance.run and self.instance.handler.ready:
-                pipeline.put({"op": "run", "test": self.instance})
+                should_fail = self.options.fail_on_unrecognized_section_test \
+                    if self.instance.testsuite.fail_on_unrecognized_section_test is None \
+                    else self.instance.testsuite.fail_on_unrecognized_section_test
+                if should_fail:
+                    logger.error(f"{Fore.RED}FAILED{Fore.RESET}:"
+                                f" {self.instance.name} has unrecognized binary sections:"
+                                f" {self.instance.metrics.get('unrecognized')}")
+                    self.instance.status = "failed"
+                    self.instance.reason = f"Unrecognized binary sections:" \
+                                        f" {self.instance.metrics.get('unrecognized')}"
+                    next_op = {
+                        "op": "report",
+                        "test": self.instance,
+                        "status": self.instance.status,
+                        "reason": self.instance.reason
+                    }
+                else:
+                    logger.warning(f" {self.instance.name} has unrecognized binary sections:"
+                                   f" {self.instance.metrics.get('unrecognized')}")
+
+            if self.instance.run and self.instance.handler.ready:
+                next_op = {"op": "run", "test": self.instance} if not next_op else next_op
             else:
-                pipeline.put({"op": "report", "test": self.instance})
+                next_op = {"op": "report", "test": self.instance} if not next_op else next_op
+
+            pipeline.put(next_op)
 
         # Run the generated binary using one of the supported handlers
         elif op == "run":
