@@ -1,46 +1,36 @@
-#!/bin/sh
+#!/bin/bash
 
-BUILD=$1/zephyr/zephyr.bin
+BUILD=$1
+FIRMWARE=${BUILD}/zephyr/zephyr.bin
 FLASHER=$2
-use_ykush_via_ssh () {
-ssh -o StrictHostKeyChecking=no -T zephyr@192.168.23.4 <<EOL
-sudo ykushcmd $3 $4
-sleep 2
-exit
-EOL
-}
-mkdir ./tmp
-
-IS_WATCHDOG=`cat ./tmp/is_watchdog.txt`
-
-if [ "$IS_WATCHDOG" = "1" ];
-then
-use_ykush_via_ssh -u 1
-fi
-
-IS_WATCHDOG=`grep wdt_basic_test_suite $BUILD | grep -c matches`
-echo $IS_WATCHDOG > ./tmp/is_watchdog.txt
+BOARD=ite-board-ci_01
+DOWNLOAD_BOARD=ite-board-dbg_01
 
 retry=0
-while [ $retry -lt 3 ]
-do
-	sudo -S ${FLASHER} -f ${BUILD} > ./tmp/flash_result.txt
-	cat ./tmp/flash_result.txt >> ./tmp/flash_log.txt
-	res=`grep -c "Verifying...     : 100%" ./tmp/flash_result.txt`
-	echo `grep Verifying ./tmp/flash_result.txt` >> ./tmp/flash_log.txt
-	if [ "$res" != "1" ];
-	then
-use_ykush_via_ssh -d a
-use_ykush_via_ssh -u a
+while [ $retry -lt 3 ]; do
+	echo "$(date): pid=$$ retry=$retry, flash start" >> ${BUILD}/ite_flash_result.txt
+	sudo -S ${FLASHER} -f ${FIRMWARE} >> ${BUILD}/ite_flash_result.txt
+	echo "$(date): pid=$$ retry=$retry, flash done" >> ${BUILD}/ite_flash_result.txt
 
+	res=`grep -c -E "Verifying[\.: \t]+100%" \${BUILD}/ite_flash_result.txt`
+	if [ "$res" != "1" ]; then
+
+        python3  $ZEPHYR_BASE/scripts/support/labgrid_prepare_platform.py \
+            --lg-place $BOARD \
+            --lg-power cycle \
+            --lg-crossbar $LG_CROSSBAR >> ${BUILD}/ite_flash_result.txt
+
+        python3  $ZEPHYR_BASE/scripts/support/labgrid_prepare_platform.py \
+            --lg-place $DOWNLOAD_BOARD \
+            --lg-power cycle \
+            --lg-crossbar $LG_CROSSBAR >> ${BUILD}/ite_flash_result.txt
+
+        sleep 3
 		retry=$((retry+1))
 	else
-		echo "is_watchdog = "$IS_WATCHDOG
-		if [ "$IS_WATCHDOG" = "1" ];
-		then
-use_ykush_via_ssh -d a
-use_ykush_via_ssh -u 2
-		fi
 		exit 0
 	fi
 done
+
+echo "Flashing failed after 3 retries." >> ${BUILD}/ite_flash_result.txt
+exit 1
