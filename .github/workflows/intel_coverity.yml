@@ -20,7 +20,7 @@ jobs:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
         COV_USR: ${{secrets.COVERITY_USER}}
         COV_PWD: ${{secrets.COVERITY_PASSWORD}}
-        TWISTER_OPTS: '-v -M -x=USE_CCACHE=0 --inline-logs --force-color --no-skipped-report --build-only -k'
+        TWISTER_OPTS: '-v -M -x=USE_CCACHE=0 --inline-logs --force-color --build-only -k'
         ARCHES: "posix x86 xtensa"
         COVERITY_INSTALLATION_DIR: /opt/coverity/analysis
         ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.5
