@@ -21,7 +21,7 @@ jobs:
     name: Run compliance checks on patch series (PR)
     runs-on: fmos-guest-ubuntu-12c
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.11
       options: "-v /srv/runner/workspace:/runner/workspace"
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}

@@ -12,7 +12,7 @@ jobs:
   setup:
     name: Setup
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7.1
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.11
     defaults:
       run:
         shell: bash
@@ -40,7 +40,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.7.1
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.11
       options: "-v /srv/runner/workspace:/runner/workspace ${{ matrix.container_options }}"
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
@@ -49,7 +49,7 @@ jobs:
         HF_PRIVATE_KEY: ${{ secrets.HF_PRIVATE_KEY }}
         LG_CROSSBAR: "ws://admin-fmos.igk.intel.com:80/lg"
     env:
-      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.5
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.5-1
     strategy:
       fail-fast: false
       matrix:
