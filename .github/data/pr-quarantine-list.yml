@@ -32,7 +32,7 @@
   platforms:
   - intel_adsp/cavs25
   comment: >
-   kernel.timer.tickless: -> https://jira.devtools.intel.com/browse/RTOS-8487
+   kernel.timer.tickless: -> https://github.com/zephyrproject-rtos/zephyr/issues/71027
 
 - scenarios:
   - boards.mec172xevb_assy6906.i2c
