@@ -1,0 +1,8 @@
+---
+- name: prepare labgrid env
+  hosts: localhost
+
+  tasks:
+  - name: Perform global installation of labgrid - global installation
+    import_role:
+      name: prepare_env

@@ -1,0 +1,24 @@
+---
+# tasks file for configure
+- name: Create config file if it does not exist
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.ssh/config"
+    state: touch
+
+- name: Create config.d directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.ssh/config.d"
+    state: directory
+
+- name: Create ssh config file if it does not exist
+  ansible.builtin.template:
+    src: labgrid_config.j2
+    dest: "{{ ansible_env.HOME }}/.ssh/config.d/labgrid_config"
+
+- name: Include newly created ssh config in main ssh config
+  shell: |
+    if [[ ! "$(grep -q 'Include config.d/labgrid_cofnig' {{ ansible_env.HOME }}/.ssh/config)" ]]; then
+      sed -i '1iInclude config.d/labgrid_config' {{ ansible_env.HOME }}/.ssh/config
+    fi
+  args:
+    executable: /bin/bash

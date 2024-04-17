@@ -1,0 +1,11 @@
+- name: Test labgrid
+  hosts: localhost
+  vars:
+    ssh_key_path: "{{ ansible_env.HOME }}/.ssh/id_rsa"
+  vars_files:
+  - vars/labgrid_places.yml
+
+  tasks:
+  - name: Test labgrid functionality
+    import_role:
+      name: test

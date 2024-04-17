@@ -1,0 +1,23 @@
+---
+# tasks file for install_labgrid
+- name: Check if labgrid is installed - root
+  shell: |
+    which labgrid-client
+  register: is_labgrid_installed
+  ignore_errors: true
+
+- name: Clone labgrid github repository - root
+  ansible.builtin.git:
+    repo: https://github.com/labgrid-project/labgrid
+    dest: "{{ ansible_env.HOME }}/labgrid-tmp"
+  when:
+  - is_labgrid_installed.failed
+
+- name: Install labgrid from source - root
+  ansible.builtin.pip:
+    name: "file:///{{ ansible_env.HOME }}/labgrid-tmp"
+    umask: "0022"
+    extra_args: --user
+  become: yes
+  when:
+  - is_labgrid_installed.failed

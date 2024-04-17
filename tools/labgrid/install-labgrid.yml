@@ -1,0 +1,26 @@
+---
+- name: Setup labgrid
+  hosts: localhost
+
+  tasks:
+    - name: Install labgrid on machine
+      block:
+      - name: Perform global installation of labgrid - global installation
+        import_role:
+          name: install
+        when: global_installation is defined and global_installation | bool
+      - name: Perform global installation of labgrid - user installation
+        import_role:
+          name: user_install
+        when: user_installation is defined and user_installation | bool
+
+      rescue:
+      - name: Error occured
+        ansible.builtin.debug:
+          msg: Error occured aborting installation
+
+      always:
+      - name: Cleanup
+        ansible.builtin.file:
+          path: "{{ ansible_env.HOME }}/labgrid-tmp"
+          state: absent

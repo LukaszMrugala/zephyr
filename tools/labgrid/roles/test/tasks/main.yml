@@ -1,0 +1,44 @@
+---
+- name: Get locked places
+  shell: |
+    for locked_place in $(labgrid-client -x "{{ labgrid_coordinator }}" who | awk 'NR>1 { print $3 }'); do
+      echo "$locked_place"
+    done
+    if [[ "{{ generate_report }}" ]]; then
+       printf '{"places":[' > "{{ report_location }}"
+    fi
+  args:
+    executable: /bin/bash
+  register: locked_places
+
+- name: Test each place
+  shell: |
+    labgrid-client -x "{{ labgrid_coordinator }}" -p "{{ item.key }}" lock > /dev/null 2>&1
+    place_hostname=$(labgrid-client -x "{{ labgrid_coordinator }}" -p "{{ item.key }}" ssh hostname)
+    power_status=$(labgrid-client -x "{{ labgrid_coordinator }}" -p "{{ item.key }}" pw get)
+    labgrid-client -x "{{ labgrid_coordinator }}" -p "{{ item.key }}" unlock > /dev/null 2>&1
+    if [[ "$place_hostname" == "{{ item.key }}" ]]; then
+      is_ssh_available=true
+    else
+      is_ssh_available=false
+    fi
+    if [[ "$power_status" == *"power"* ]]; then
+      is_pwr_available=true
+    else
+      is_pwr_available=false
+    fi
+    if [[ "{{ generate_report | default(False) }}" ]]; then
+      printf '{"name": "%s", "ssh": %s, "power": %s},' "{{ item.key }}" "$is_ssh_available" "$is_pwr_available" >> "{{ report_location }}"
+    fi
+  args:
+    executable: /bin/bash
+  loop: "{{ labgrid_places | dict2items }}"  
+  when: item.key not in locked_places.stdout_lines
+
+- name: Cleanup report file
+  shell: |
+    printf "]}" >> "{{ report_location }}"
+    sed -i 's:,]}:]}:g' "{{ report_location }}"
+  args:
+    executable: /bin/bash
+  when: generate_report is defined and generate_report

@@ -1,0 +1,38 @@
+---
+# tasks file for prepare_env
+- name: "Add 'export LG_CROSSBAR' to user's .bashrc"
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: export LG_CROSSBAR={{ labgrid_coordinator }}
+
+- name: "Add 'export LG_CROSSBAR' to user's .profile"
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.profile"
+    line: export LG_CROSSBAR={{ labgrid_coordinator }}
+
+- name: Create vars directory if it's absent
+  ansible.builtin.file:
+    path: vars
+    state: directory
+
+- name: Check stat of vars/labgrid_places
+  ansible.builtin.stat:
+    path: vars/labgrid_places.yml
+  register: vars_labgrid_places
+  ignore_errors: true
+
+- name: Create var file with labgrid_places
+  shell: |
+    printf -- "--- \nlabgrid_places:\n" > "vars/labgrid_places.yml"
+    for place in $(labgrid-client -x "{{ labgrid_coordinator }}" places); do
+        place_user=$(labgrid-client -x "{{ labgrid_coordinator }}" -p $place show | awk '/username/ { print $2 }' | sed -e "s:'::g" -e "s:}::g")
+        place_ip=$(labgrid-client -x "{{ labgrid_coordinator }}" -p $place show | awk '/address/ { print $3 }' | sed -e "s:'::g" -e "s:,::g")
+        if [[ ! $place_user == "" && ! $place_ip == "" ]]; then
+            printf "  %s:\n    user: %s\n    address: %s\n" "$place" "$place_user" "$place_ip" >> "vars/labgrid_places.yml"
+        else
+             printf "  %s:\n    user: %s\n" "$place" "zephyr" >> "vars/labgrid_places.yml"
+        fi
+    done
+  args:
+    executable: /bin/bash
+  when: vars_labgrid_places is defined and (( ansible_date_time.epoch | float - vars_labgrid_places.stat.mtime ) > (30 * 60))

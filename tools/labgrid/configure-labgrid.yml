@@ -1,0 +1,12 @@
+---
+- name: Configure labgrid
+  hosts: localhost
+  vars:
+    ssh_key_path: "{{ ansible_env.HOME }}/.ssh/id_rsa"
+  vars_files:
+    - vars/labgrid_places.yml
+
+  tasks:
+  - name: Configure labgrid files for user
+    import_role:
+      name: configure
