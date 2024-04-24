@@ -40,17 +40,17 @@
     - sys_fmos_qa_simics
 
 - connected: true
-  id: 02400b0150234e45003600045f780029b931000197969900
+  id: 02400b0177384e45002070016f01001ac401000197969900
   platform: frdm_k64f
   product: DAPLink CMSIS-DAP
   runner: pyocd
-  serial: /dev/serial/by-id/usb-ARM_DAPLink_CMSIS-DAP_02400b0150234e45003600045f780029b931000197969900-if01
+  serial: /dev/serial/by-id/usb-ARM_DAPLink_CMSIS-DAP_02400b0177384e45002070016f01001ac401000197969900-if01
 - connected: true
-  id: 02400b0150234e45005200045f780021b931000197969900
+  id: 02400b0177384e45000770016f01001ec401000197969900
   platform: frdm_k64f
   product: DAPLink CMSIS-DAP
   runner: pyocd
-  serial: /dev/serial/by-id/usb-ARM_DAPLink_CMSIS-DAP_02400b0150234e45005200045f780021b931000197969900-if01
+  serial: /dev/serial/by-id/usb-ARM_DAPLink_CMSIS-DAP_02400b0177384e45000770016f01001ec401000197969900-if01
 - connected: true
   id: D30CC4MH
   platform: npcx9m6f_evb
