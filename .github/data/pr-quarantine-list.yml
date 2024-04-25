@@ -38,6 +38,5 @@
   - boards.mec172xevb_assy6906.i2c
   - boards.mec15xxevb_assy6853.i2c
   - boards.mec15xxevb_assy6853.qspi
-  - boards.frdm_k64f.i2c
   comment:
     HW does not have required sensors
