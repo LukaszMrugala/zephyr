@@ -115,7 +115,7 @@ jobs:
       BRANCH_NAME: ${{ github.event_name == 'schedule' && 'master' || 'test_branch' }}
     name: 'Publish Twister Results'
     needs: [run_twister]
-    runs-on: fmos-guest-ubuntu-12c
+    runs-on: guest-thor4-8
     continue-on-error: true
     if: success() || failure()
     steps:
