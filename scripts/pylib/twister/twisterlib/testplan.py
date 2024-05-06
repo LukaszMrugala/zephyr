@@ -30,7 +30,7 @@ except ImportError:
 
 from twisterlib.testsuite import TestSuite, scan_testsuite_path
 from twisterlib.error import TwisterRuntimeError
-from twisterlib.platform import Platform
+from twisterlib.twister_platform import Platform
 from twisterlib.config_parser import TwisterConfigParser
 from twisterlib.statuses import TwisterStatus
 from twisterlib.testinstance import TestInstance

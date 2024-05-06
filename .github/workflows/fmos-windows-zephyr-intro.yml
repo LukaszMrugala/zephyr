@@ -1,0 +1,175 @@
+name: Windows Twister Tests
+
+on:
+  push:
+    branches:
+      - main-intel
+      - v*-branch
+      - collab-*
+  pull_request:
+    branches:
+      - main-intel
+      - v*-branch
+      - collab-*
+    paths:
+      - 'scripts/pylib/**'
+      - 'scripts/requirements*.txt'
+      - 'scripts/tests/**'
+      - '.github/workflows/fmos-windows-zephyr-intro.yml'
+      - 'SDK_VERSION'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  twister-windows-tests:
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, '3.10', '3.11', '3.12']
+        os: [fmos-guest-windows-8c-igk]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: zephyr
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Setup variables
+        shell: bash
+        run: |
+          app-path="zephyr"
+          manifest-file-name="west.yml"
+          sdk-version="auto"
+          sdk-base="https://github.com/zephyrproject-rtos/sdk-ng/releases/download"
+          toolchains="all"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          python.exe -m pip install -U pip
+
+          pip3 install -U pip wheel
+          pip3 install west
+
+          choco feature enable -n allowGlobalConfirmation
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+          choco install ninja wget 7zip
+
+      - name: Initialize
+        shell: bash
+        run: |
+          west init -l ${{ inputs.app-path }} --mf ${{ inputs.manifest-file-name }}
+          west update -o=--depth=1 -n
+
+      - name: Environment setup
+        id: env-setup
+        shell: bash
+        run: |
+          runner="${{ runner.os }}-${{ runner.arch }}"
+          if [ "$runner" = "Linux-X64" ]; then
+            sdk_variant="linux-x86_64"
+          elif [ "$runner" = "Linux-ARM64" ]; then
+            sdk_variant="linux-aarch64"
+          elif [ "$runner" = "macOS-X64" ]; then
+            sdk_variant="macos-x86_64"
+          elif [ "$runner" = "macOS-ARM64" ]; then
+            sdk_variant="macos-aarch64"
+          elif [ "$runner" = "Windows-X64" ]; then
+            sdk_variant="windows-x86_64"
+          else
+            echo "Unsupported runner platform: $runner"
+          f
+          pip_cache_path="~\AppData\Local\pip\Cache"
+          sdk_ext="7z"
+          setup_file="./setup.cmd"
+          setup_opt="//
+          if [ "${{ inputs.sdk-version }}" = "auto" ]; then
+            zephyr_path="zephyr"
+            if west list -f '{abspath}' zephyr; then
+              zephyr_path="$( west list -f '{abspath}' zephyr )"
+            f
+            if [ -f "${zephyr_path}/SDK_VERSION" ]; then
+              echo "Reading SDK version from ${zephyr_path}/SDK_VERSION"
+              sdk_version=$( cat ${zephyr_path}/SDK_VERSION )
+            else
+              echo "Cannot find ${zephyr_path}/SDK_VERSION"
+              exit 1
+            fi
+          else
+            sdk_version="${{ inputs.sdk-version }}"
+          f
+          echo "SDK_VERSION=${sdk_version}" >> $GITHUB_ENV
+          echo "SDK_FILE=zephyr-sdk-${sdk_version}_${sdk_variant}_minimal.${sdk_ext}" >> $GITHUB_ENV
+          echo "PIP_CACHE_PATH=${pip_cache_path}" >> $GITHUB_ENV
+          echo "SETUP_FILE=${setup_file}" >> $GITHUB_ENV
+          echo "SETUP_OPT=${setup_opt}" >> $GITHUB_ENV
+
+      - name: Cache Python packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PIP_CACHE_PATH }}
+          key: pip-${{ runner.os }}-${{ hashFiles('zephyr/scripts/requirements*.txt') }}
+
+      - name: Install Python packages
+        shell: bash
+        run: |
+          pip3 install -r zephyr/scripts/requirements.txt
+
+      - name: Cache Zephyr SDK
+        id: cache-toolchain
+        uses: actions/cache@v4
+        with:
+          path: zephyr-sdk
+          key: ${{ env.SDK_FILE }}-${{ inputs.toolchains }}
+
+      - if: ${{ steps.cache-toolchain.outputs.cache-hit != 'true' }}
+        name: Download Zephyr SDK
+        shell: bash
+        run: |
+          wget --progress=dot:giga ${{ inputs.sdk-base }}/v${SDK_VERSION}/${SDK_FILE}
+          7z x $SDK_FILE
+          mv zephyr-sdk-${SDK_VERSION} zephyr-sdk
+
+
+      - name: Setup Zephyr SDK
+        working-directory: zephyr-sdk
+        shell: bash
+        run: |
+          IFS=":"
+          TOOLCHAINS="${{ inputs.toolchains }}"
+          for toolchain in $TOOLCHAINS; do
+              ${SETUP_FILE} ${SETUP_OPT}t $toolchain
+          done
+          if [ ! -d sysroots ]; then
+              ${SETUP_FILE} ${SETUP_OPT}h
+          fi
+          ${SETUP_FILE} ${SETUP_OPT}c
+
+      - name: Install Python Packages
+        run: |
+          python3 -m pip install -U -r scripts/requirements-base.txt -r scripts/requirements-build-test.txt -r scripts/requirements-run-test.txt
+
+      - name: Run Pytest For Twister Black Box Tests
+        shell: bash
+        env:
+          ZEPHYR_BASE: ./
+          ZEPHYR_TOOLCHAIN_VARIANT: zephyr
+        run: |
+          echo "Run twister tests"
+          source zephyr-env.sh
+          PYTHONPATH="./scripts/tests" pytest ./scripts/tests/twister_blackbox
+
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: ignore
+          path:
+            zephyr/twister-out/*/samples/hello_world/sample.basic.helloworld/build.log

@@ -17,7 +17,7 @@ import csv
 
 from twisterlib.environment import TwisterEnv
 from twisterlib.testsuite import TestCase, TestSuite
-from twisterlib.platform import Platform
+from twisterlib.twister_platform import Platform
 from twisterlib.error import BuildError, StatusAttributeError
 from twisterlib.size_calc import SizeCalculator
 from twisterlib.statuses import TwisterStatus

@@ -43,7 +43,7 @@ from twisterlib.log_helper import log_command
 from twisterlib.testinstance import TestInstance
 from twisterlib.environment import TwisterEnv
 from twisterlib.testsuite import TestSuite
-from twisterlib.platform import Platform
+from twisterlib.twister_platform import Platform
 from twisterlib.testplan import change_skip_to_error_if_integration
 from twisterlib.harness import HarnessImporter, Pytest
 
