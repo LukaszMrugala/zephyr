@@ -1,6 +1,0 @@
----
-sudo:
-  - tgraydon
-access:
-  - AMR\tgraydon
-

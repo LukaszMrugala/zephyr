@@ -1,9 +1,0 @@
-# map of ttys across hwtest agents
-HWTEST_TTYS=(
-	'1c:69:7a:0a:96:e8,nucleo_f103rb,/dev/serial/by-path/pci-0000:00:14.0-usb-0:1:1.2'
-	'1c:69:7a:60:bd:c5,nucleo_f103rb,/dev/serial/by-id/usb-STMicroelectronics_STM32_STLink_066BFF575550897767151747-if02'
-	'1c:69:7a:60:bd:a0,nucleo_f103rb,/dev/serial/by-id/usb-STMicroelectronics_STM32_STLink_066FFF575550897767145723-if02'
-	'1c:69:7a:0f:09:07,frdm_k64f,/dev/serial/by-id/usb-MBED_MBED_CMSIS-DAP_024002010EA73E1FF359C3A7-if01'
-	'1c:69:7a:60:8d:92,iotdk,/dev/serial/by-id/usb-Digilent_Digilent_USB_Device_251642542504-if00-port0'
-	'1c:69:7a:60:8d:f7,sam_e70b_xplained,/dev/serial/by-path/pci-0000\:00\:14.0-usb-0\:2\:1.1'
-)
