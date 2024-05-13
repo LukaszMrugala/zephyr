@@ -23,18 +23,23 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
   twister-windows-tests:
     strategy:
       matrix:
         python-version: [3.8, 3.9, '3.10', '3.11', '3.12']
-        os: [fmos-guest-windows-8c-igk]
+        os: [fmos-guest-windows11-8c-igk]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout upstream
         uses: actions/checkout@v4
         with:
-          repository: zephyrproject-rtos/zephyr
+          repository: LukaszMrugala/zephyr
+          ref: lmrugalx_twister_ut_windows
           path: zephyr
           fetch-depth: 0
 
