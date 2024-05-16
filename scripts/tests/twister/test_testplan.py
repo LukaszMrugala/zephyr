@@ -281,11 +281,27 @@ QUARANTINE_BASIC = {
 }
 
 QUARANTINE_WITH_REGEXP = {
+<<<<<<< HEAD
     'demo_board_2/unit_testing' + '/scripts/tests/twister/test_data/testsuites/tests/test_a/test_a.check_2'.replace('/', os.sep) : 'a2 and c2 on x86',
     'demo_board_1/unit_testing' + '/scripts/tests/twister/test_data/testsuites/tests/test_d/test_d.check_1'.replace('/', os.sep) : 'all test_d',
     'demo_board_3/unit_testing' + '/scripts/tests/twister/test_data/testsuites/tests/test_d/test_d.check_1'.replace('/', os.sep) : 'all test_d',
     'demo_board_2/unit_testing' + '/scripts/tests/twister/test_data/testsuites/tests/test_d/test_d.check_1'.replace('/', os.sep) : 'all test_d',
     'demo_board_2/unit_testing' + '/scripts/tests/twister/test_data/testsuites/tests/test_c/test_c.check_2'.replace('/', os.sep) : 'a2 and c2 on x86'
+=======
+<<<<<<< HEAD
+    'demo_board_2/unit_testing/scripts/tests/twister/test_data/testsuites/tests/test_a/test_a.check_2' : 'a2 and c2 on x86',
+    'demo_board_1/unit_testing/scripts/tests/twister/test_data/testsuites/tests/test_d/test_d.check_1' : 'all test_d',
+    'demo_board_3/unit_testing/scripts/tests/twister/test_data/testsuites/tests/test_d/test_d.check_1' : 'all test_d',
+    'demo_board_2/unit_testing/scripts/tests/twister/test_data/testsuites/tests/test_d/test_d.check_1' : 'all test_d',
+    'demo_board_2/unit_testing/scripts/tests/twister/test_data/testsuites/tests/test_c/test_c.check_2' : 'a2 and c2 on x86'
+=======
+    'demo_board_2/scripts/tests/twister/test_data/testsuites/tests/test_a/test_a.check_2'.replace('/', os.sep) : 'a2 and c2 on x86',
+    'demo_board_1/scripts/tests/twister/test_data/testsuites/tests/test_d/test_d.check_1'.replace('/', os.sep) : 'all test_d',
+    'demo_board_3/scripts/tests/twister/test_data/testsuites/tests/test_d/test_d.check_1'.replace('/', os.sep) : 'all test_d',
+    'demo_board_2/scripts/tests/twister/test_data/testsuites/tests/test_d/test_d.check_1'.replace('/', os.sep) : 'all test_d',
+    'demo_board_2/scripts/tests/twister/test_data/testsuites/tests/test_c/test_c.check_2'.replace('/', os.sep) : 'a2 and c2 on x86'
+>>>>>>> 7d5261a24ec (scripts: twister: Fix Unit Tests on Windows)
+>>>>>>> 2f4cc15c7a7 (scripts: twister: Fix Unit Tests on Windows)
 }
 
 QUARANTINE_PLATFORM = {
@@ -1213,6 +1229,12 @@ testing:
     p2_yamlfile = tmp_p2_dir / 'p2.yaml'
     p2_yamlfile.write_text(p2_yaml, encoding='utf-8')
 
+<<<<<<< HEAD
+=======
+    if create_duplicate:
+        p2_yamlfile = tmp_p2_dir / 'p2-1.yaml'
+        p2_yamlfile.write_text(p2_yaml, encoding='utf-8')
+>>>>>>> 7d5261a24ec (scripts: twister: Fix Unit Tests on Windows)
 
     p2_2_yaml = """\
 testing:
@@ -1256,9 +1278,19 @@ testing:
   default: True
 """
     p3_yamlfile = tmp_p3_dir / 'p3.yaml'
+<<<<<<< HEAD
     p3_yamlfile.write_text(p3_yaml, encoding='utf-8')
     p3_yamlfile = tmp_p3_dir / 'p3_B.conf'
     p3_yamlfile.write_text('', encoding='utf-8')
+=======
+<<<<<<< HEAD
+    p3_yamlfile.write_text(p3_yaml)
+=======
+    p3_yamlfile.write_text(p3_yaml, encoding='utf-8')
+    p3_yamlfile = tmp_p3_dir / 'p3_B.conf'
+    p3_yamlfile.write_text('', encoding='utf-8')
+>>>>>>> 7d5261a24ec (scripts: twister: Fix Unit Tests on Windows)
+>>>>>>> 2f4cc15c7a7 (scripts: twister: Fix Unit Tests on Windows)
 
     env = mock.Mock(board_roots=[tmp_board_root_dir],soc_roots=[tmp_path], arch_roots=[tmp_path])
 
@@ -1337,9 +1369,17 @@ TESTDATA_9 = [
         'testsuite filter, alt root',
     ]
 )
+<<<<<<< HEAD
 def test_testplan_add_testsuites(tmp_path, testsuite_filter, use_alt_root, detailed_id,
                                  expected_errors, expected_suite_count):
+<<<<<<< HEAD
     testsuite_filter = [f.replace('/', os.sep) for f in testsuite_filter]
+=======
+=======
+def test_testplan_add_testsuites(tmp_path, testsuite_filter, use_alt_root, expected_suite_count):
+    testsuite_filter = [f.replace('/', os.sep) for f in testsuite_filter]
+>>>>>>> 7d5261a24ec (scripts: twister: Fix Unit Tests on Windows)
+>>>>>>> 2f4cc15c7a7 (scripts: twister: Fix Unit Tests on Windows)
     # tmp_path
     # ├ tests  <- test root
     # │ ├ good_test

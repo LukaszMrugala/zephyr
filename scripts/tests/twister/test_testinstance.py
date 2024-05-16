@@ -72,6 +72,7 @@ def test_check_build_or_run(
     testsuite.slow = slow
 
     testinstance = TestInstance(testsuite, platform, class_testplan.env.outdir)
+<<<<<<< HEAD
     env = mock.Mock(
         options=mock.Mock(
             device_testing=False,
@@ -81,11 +82,24 @@ def test_check_build_or_run(
             sim_name=platform_sim
         )
     )
+<<<<<<< HEAD
 
     with mock.patch('os.name', 'posix'):
         run = testinstance.check_runnable(env.options)
         _, r = expected
         assert run == r
+=======
+    run = testinstance.check_runnable(env.options)
+    _, r = expected
+    assert run == r
+=======
+
+    with mock.patch('os.name', 'posix'):
+        run = testinstance.check_runnable(slow, device_testing, fixture)
+        _, r = expected
+        assert run == r
+>>>>>>> 7d5261a24ec (scripts: twister: Fix Unit Tests on Windows)
+>>>>>>> 2f4cc15c7a7 (scripts: twister: Fix Unit Tests on Windows)
 
     with mock.patch('os.name', 'nt'):
         # path to QEMU binary is not in QEMU_BIN_PATH environment variable
@@ -235,16 +249,39 @@ def test_testinstance_init(all_testsuites_dict, class_testplan, platforms_list, 
     testsuite = class_testplan.testsuites.get(testsuite_path)
     testsuite.detailed_test_id = detailed_test_id
     class_testplan.platforms = platforms_list
+<<<<<<< HEAD
     platform = class_testplan.get_platform("demo_board_2")
+=======
+<<<<<<< HEAD
+    platform = class_testplan.get_platform("demo_board_2/unit_testing")
+=======
+
+    platform = class_testplan.get_platform("demo_board_2")
+>>>>>>> 7d5261a24ec (scripts: twister: Fix Unit Tests on Windows)
+>>>>>>> 2f4cc15c7a7 (scripts: twister: Fix Unit Tests on Windows)
 
     testinstance = TestInstance(testsuite, platform, class_testplan.env.outdir)
 
     if detailed_test_id:
+<<<<<<< HEAD
         expected_path = os.path.join(class_testplan.env.outdir, platform.normalized_name, testsuite_rel_path)
     else:
         expected_path = os.path.join(class_testplan.env.outdir, platform.normalized_name, testsuite.source_dir_rel, testsuite.name)
     expected_path = os.path.abspath(os.fspath(expected_path))
     assert testinstance.build_dir == expected_path
+=======
+<<<<<<< HEAD
+        assert testinstance.build_dir == os.path.join(class_testplan.env.outdir, platform.normalized_name, testsuite_path)
+    else:
+        assert testinstance.build_dir == os.path.join(class_testplan.env.outdir, platform.normalized_name, testsuite.source_dir_rel, testsuite.name)
+=======
+        expected_path = os.path.join(class_testplan.env.outdir, platform.name, testsuite_rel_path)
+    else:
+        expected_path = os.path.join(class_testplan.env.outdir, platform.name, testsuite.source_dir_rel, testsuite.name)
+    expected_path = os.path.abspath(os.fspath(expected_path))
+    assert testinstance.build_dir == expected_path
+>>>>>>> 7d5261a24ec (scripts: twister: Fix Unit Tests on Windows)
+>>>>>>> 2f4cc15c7a7 (scripts: twister: Fix Unit Tests on Windows)
 
 
 @pytest.mark.parametrize('testinstance', [{'testsuite_kind': 'sample'}], indirect=True)
@@ -371,7 +408,11 @@ def test_testinstance_dunders(all_testsuites_dict, class_testplan, platforms_lis
     assert not testinstance < testinstance_copy
     assert not testinstance_copy < testinstance
 
+<<<<<<< HEAD
     assert testinstance.__repr__() == f'<TestSuite {testsuite_path} on demo_board_2/unit_testing>'
+=======
+    assert testinstance.__repr__() == f'<TestSuite {testsuite_name} on demo_board_2>'
+>>>>>>> 7d5261a24ec (scripts: twister: Fix Unit Tests on Windows)
 
 
 @pytest.mark.parametrize('testinstance', [{'testsuite_kind': 'tests'}], indirect=True)

@@ -293,6 +293,7 @@ def find_c_files_in(path: str, extensions: list = None) -> list:
     os.chdir(path)
 
     filenames = []
+    ffs = []
     for ext in extensions:
         # glob.glob('**/*.c') does not pick up the base directory
         filenames += [TPath(path, x) for x in glob.glob(f'*.{ext}')]

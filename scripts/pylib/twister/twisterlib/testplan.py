@@ -448,8 +448,8 @@ class TestPlan:
         # Note, internally in twister a board root includes the `boards` folder
         # but in Zephyr build system, the board root is without the `boards` in folder path.
         board_roots = [Path(os.path.dirname(root)) for root in self.env.board_roots]
-        arch_roots = [Path(root) for root in self.env.arch_roots]
-        soc_roots = [Path(root) for root in self.env.soc_roots]
+        arch_roots = [Path(os.path.dirname(root)) for root in self.env.arch_roots]
+        soc_roots = [Path(os.path.dirname(root)) for root in self.env.soc_roots]
         lb_args = Namespace(arch_roots=arch_roots, soc_roots=soc_roots,
                             board_roots=board_roots, board=None, board_dir=None)
 

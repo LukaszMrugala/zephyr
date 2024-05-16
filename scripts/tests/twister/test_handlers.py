@@ -1802,6 +1802,104 @@ def test_qemuhandler_thread_get_fifo_names():
     assert fifo_in ==  'dummy.in'
     assert fifo_out ==  'dummy.out'
 
+<<<<<<< HEAD
+=======
+
+TESTDATA_22 = [
+    (False, False),
+    (False, True),
+    (True, False),
+    (True, True),
+]
+
+@pytest.mark.skipif(os.name == 'nt', reason='QEMUWinHandler is used on Windows, not QEMUHandler.')
+@pytest.mark.parametrize(
+    'fifo_in_exists, fifo_out_exists',
+    TESTDATA_22,
+    ids=['both missing', 'out exists', 'in exists', 'both exist']
+)
+def test_qemuhandler_thread_open_files(fifo_in_exists, fifo_out_exists):
+    def mock_exists(path):
+        if path == 'fifo.in':
+            return fifo_in_exists
+        elif path == 'fifo.out':
+            return fifo_out_exists
+        else:
+            raise ValueError('Unexpected path in mock of os.path.exists')
+
+    unlink_mock = mock.Mock()
+    exists_mock = mock.Mock(side_effect=mock_exists)
+    mkfifo_mock = mock.Mock()
+
+    fifo_in = 'fifo.in'
+    fifo_out = 'fifo.out'
+    logfile = 'log.file'
+
+    with mock.patch('os.unlink', unlink_mock), \
+         mock.patch('os.mkfifo', mkfifo_mock), \
+         mock.patch('os.path.exists', exists_mock), \
+         mock.patch('builtins.open', mock.mock_open()) as open_mock:
+        _, _, _ = QEMUHandler._thread_open_files(fifo_in, fifo_out, logfile)
+
+    open_mock.assert_has_calls([
+        mock.call('fifo.in', 'wb'),
+        mock.call('fifo.out', 'rb', buffering=0),
+        mock.call('log.file', 'wt'),
+    ])
+
+    if fifo_in_exists:
+        unlink_mock.assert_any_call('fifo.in')
+
+    if fifo_out_exists:
+        unlink_mock.assert_any_call('fifo.out')
+
+
+TESTDATA_23 = [
+    (False, False),
+    (True, True),
+    (True, False)
+]
+
+@pytest.mark.skipif(os.name == 'nt', reason='QEMUWinHandler is used on Windows, not QEMUHandler.')
+@pytest.mark.parametrize(
+    'is_pid, is_lookup_error',
+    TESTDATA_23,
+    ids=['pid missing', 'pid lookup error', 'pid ok']
+)
+def test_qemuhandler_thread_close_files(is_pid, is_lookup_error):
+    is_process_killed = {}
+
+    def mock_kill(pid, sig):
+        if is_lookup_error:
+            raise ProcessLookupError(f'Couldn\'t find pid: {pid}.')
+        elif sig == signal.SIGTERM:
+            is_process_killed[pid] = True
+
+    unlink_mock = mock.Mock()
+    kill_mock = mock.Mock(side_effect=mock_kill)
+
+    fifo_in = 'fifo.in'
+    fifo_out = 'fifo.out'
+    pid = 12345 if is_pid else None
+    out_fp = mock.Mock()
+    in_fp = mock.Mock()
+    log_out_fp = mock.Mock()
+
+    with mock.patch('os.unlink', unlink_mock), \
+         mock.patch('os.kill', kill_mock):
+        QEMUHandler._thread_close_files(fifo_in, fifo_out, pid, out_fp,
+                                        in_fp, log_out_fp)
+
+    out_fp.close.assert_called_once()
+    in_fp.close.assert_called_once()
+    log_out_fp.close.assert_called_once()
+
+    unlink_mock.assert_has_calls([mock.call('fifo.in'), mock.call('fifo.out')])
+
+    if is_pid and not is_lookup_error:
+        assert is_process_killed[pid]
+
+>>>>>>> 7d5261a24ec (scripts: twister: Fix Unit Tests on Windows)
 
 TESTDATA_24 = [
     (TwisterStatus.FAIL, 'timeout', TwisterStatus.FAIL, 'timeout'),
