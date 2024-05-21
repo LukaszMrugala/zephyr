@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8, 3.9, '3.10', '3.11', '3.12']
-        os: [fmos-guest-windows11-8c-igk]
+        os: [fmos-guest-windows-8c-igk, fmos-guest-windows11-8c-igk]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout upstream
@@ -53,7 +53,7 @@ jobs:
           cd .\zephyr
           python3 -m pip install -U -r ./scripts/requirements-base.txt -r ./scripts/requirements-build-test.txt -r ./scripts/requirements-run-test.txt
 
-      - name: Run Pytest For Twister Black Box Tests
+      - name: Run Pytest For Twister Unit Tests
         env:
           ZEPHYR_BASE: .
           ZEPHYR_TOOLCHAIN_VARIANT: zephyr
@@ -71,3 +71,8 @@ jobs:
           if-no-files-found: ignore
           path:
             zephyr/twister-out/*/samples/hello_world/sample.basic.helloworld/build.log
+
+      - name: Clean pytest_twister_harness
+        if: failure()
+        run: |
+          pip uninstall -y pytest-twister-harness
