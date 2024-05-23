@@ -60,7 +60,7 @@ jobs:
           if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
             west init -l . || true
           fi
-          west config manifest.group-filter -- +ci,+optional
+          west config manifest.group-filter -- +ci,-optional,-fat
           west config --global update.narrow true
           west config --global update.path-cache "/runner/workspace"
           echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/drivers.audio.firmware.converged" > $HOME/.git-credentials
