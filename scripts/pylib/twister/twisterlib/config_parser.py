@@ -6,7 +6,9 @@
 import copy
 import scl
 import warnings
+
 from typing import Union
+
 from twisterlib.error import ConfigurationError
 
 def extract_fields_from_arg_list(target_fields: set, arg_list: Union[str, list]):

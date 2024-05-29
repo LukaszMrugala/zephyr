@@ -23,9 +23,10 @@ import time
 
 from pathlib import Path
 from queue import Queue, Empty
+
 from twisterlib.environment import ZEPHYR_BASE, strip_ansi_sequences
 from twisterlib.error import TwisterException
-from twisterlib.platform import Platform
+from twisterlib.twister_platform import Platform
 from twisterlib.statuses import TwisterStatus
 from typing import Optional
 

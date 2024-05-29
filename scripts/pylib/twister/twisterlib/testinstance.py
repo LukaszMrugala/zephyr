@@ -6,18 +6,20 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-from enum import Enum
-import os
-import hashlib
-import random
-import logging
-import shutil
-import glob
+
 import csv
+import glob
+import hashlib
+import logging
+import os
+import random
+import shutil
+
+from enum import Enum
 
 from twisterlib.environment import TwisterEnv
 from twisterlib.testsuite import TestCase, TestSuite
-from twisterlib.platform import Platform
+from twisterlib.twister_platform import Platform
 from twisterlib.error import BuildError, StatusAttributeError
 from twisterlib.size_calc import SizeCalculator
 from twisterlib.statuses import TwisterStatus

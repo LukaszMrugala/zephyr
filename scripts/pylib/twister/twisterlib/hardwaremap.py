@@ -4,16 +4,16 @@
 # Copyright (c) 2022 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-import os
-from multiprocessing import Lock, Value
-import re
-
-import platform
-import yaml
-import scl
 import logging
-from pathlib import Path
+import os
+import platform
+import re
+import scl
+import yaml
+
+from multiprocessing import Lock, Value
 from natsort import natsorted
+from pathlib import Path
 
 from twisterlib.environment import ZEPHYR_BASE
 

@@ -16,13 +16,14 @@ import sys
 import time
 import traceback
 import yaml
+
+from colorama import Fore
+from domains import Domains
 from multiprocessing import Lock, Process, Value
 from multiprocessing.managers import BaseManager
 from typing import List
 from packaging import version
 
-from colorama import Fore
-from domains import Domains
 from twisterlib.cmakecache import CMakeCache
 from twisterlib.environment import canonical_zephyr_base
 from twisterlib.error import BuildError, ConfigurationError, StatusAttributeError
@@ -43,7 +44,7 @@ from twisterlib.log_helper import log_command
 from twisterlib.testinstance import TestInstance
 from twisterlib.environment import TwisterEnv
 from twisterlib.testsuite import TestSuite
-from twisterlib.platform import Platform
+from twisterlib.twister_platform import Platform
 from twisterlib.testplan import change_skip_to_error_if_integration
 from twisterlib.harness import HarnessImporter, Pytest
 

@@ -3,22 +3,24 @@
 #
 # Copyright (c) 2018 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
-import os
-import sys
-import re
-import subprocess
+import collections
+import copy
 import glob
 import json
-import collections
-from collections import OrderedDict
-from itertools import islice
 import logging
-import copy
-import shutil
+import os
 import random
+import re
+import shutil
 import snippets
-from pathlib import Path
+import subprocess
+import sys
+
 from argparse import Namespace
+from collections import OrderedDict
+from colorama import Fore
+from itertools import islice
+from pathlib import Path
 
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
@@ -30,7 +32,7 @@ except ImportError:
 
 from twisterlib.testsuite import TestSuite, scan_testsuite_path
 from twisterlib.error import TwisterRuntimeError
-from twisterlib.platform import Platform
+from twisterlib.twister_platform import Platform
 from twisterlib.config_parser import TwisterConfigParser
 from twisterlib.statuses import TwisterStatus
 from twisterlib.testinstance import TestInstance
