@@ -5,22 +5,23 @@
 # Copyright 2022 NXP
 # SPDX-License-Identifier: Apache-2.0
 
-import os
-import pkg_resources
-import sys
-from pathlib import Path
+import argparse
 import json
 import logging
+import os
+import pkg_resources
+import re
 import subprocess
 import shutil
-import re
-import argparse
+import sys
+
 from datetime import datetime, timezone
-from twisterlib.coverage import supported_coverage_formats
+from pathlib import Path
 
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
 
+from twisterlib.coverage import supported_coverage_formats
 from twisterlib.error import TwisterRuntimeError
 from twisterlib.log_helper import log_command
 

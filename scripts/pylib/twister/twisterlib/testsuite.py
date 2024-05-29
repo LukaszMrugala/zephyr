@@ -3,17 +3,19 @@
 # Copyright (c) 2018-2022 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-import os
-from pathlib import Path
-import re
-import logging
 import contextlib
-import mmap
 import glob
+import logging
+import mmap
+import re
+import os
+
+from pathlib import Path
 from typing import List
-from twisterlib.mixins import DisablePyTestCollectionMixin
+
 from twisterlib.environment import canonical_zephyr_base
 from twisterlib.error import TwisterException, TwisterRuntimeError
+from twisterlib.mixins import DisablePyTestCollectionMixin
 
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)

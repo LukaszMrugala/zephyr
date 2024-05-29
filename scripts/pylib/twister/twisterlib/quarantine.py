@@ -7,8 +7,8 @@ import logging
 import re
 import yaml
 
-from pathlib import Path
 from dataclasses import dataclass, field
+from pathlib import Path
 
 try:
     from yaml import CSafeLoader as SafeLoader

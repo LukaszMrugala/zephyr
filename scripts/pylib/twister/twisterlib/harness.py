@@ -1,18 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-from asyncio.log import logger
+
+import logging
+import os
 import platform
 import re
-import os
-import sys
-import subprocess
 import shlex
-from collections import OrderedDict
-import xml.etree.ElementTree as ET
-import logging
+import shutil
+import subprocess
+import sys
 import threading
 import time
-import shutil
+import xml.etree.ElementTree as ET
+
+from asyncio.log import logger
+from collections import OrderedDict
 
 from twisterlib.error import ConfigurationError
 from twisterlib.environment import ZEPHYR_BASE, PYTEST_PLUGIN_INSTALLED

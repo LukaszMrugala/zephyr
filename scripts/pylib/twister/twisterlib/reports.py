@@ -4,12 +4,13 @@
 # Copyright (c) 2018 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 import json
 import logging
-from colorama import Fore
-import xml.etree.ElementTree as ET
+import os
 import string
+import xml.etree.ElementTree as ET
+
+from colorama import Fore
 from datetime import datetime
 from pathlib import PosixPath
 

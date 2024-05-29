@@ -6,6 +6,7 @@
 
 import os
 import scl
+
 from twisterlib.config_parser import TwisterConfigParser
 from twisterlib.environment import ZEPHYR_BASE
 

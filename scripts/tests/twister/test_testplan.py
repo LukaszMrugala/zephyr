@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts/pylib/twister"))
 from twisterlib.testplan import TestPlan, change_skip_to_error_if_integration
 from twisterlib.testinstance import TestInstance
 from twisterlib.testsuite import TestSuite
-from twisterlib.platform import Platform
+from twisterlib.twister_platform import Platform
 from twisterlib.quarantine import Quarantine
 from twisterlib.error import TwisterRuntimeError
 

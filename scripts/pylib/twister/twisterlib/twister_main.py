@@ -58,6 +58,13 @@ def setup_logging(outdir, log_file, verbose, timestamps):
     logger.addHandler(fh)
 
 
+def close_logging():
+    handlers = logger.handlers[:]
+    for handler in handlers:
+        logger.removeHandler(handler)
+        handler.close()
+
+
 def init_color(colorama_strip):
     colorama.init(strip=colorama_strip)
 
@@ -111,6 +118,7 @@ def main(options, default_options):
     hwm = HardwareMap(env)
     ret = hwm.discover()
     if ret == 0:
+        close_logging()
         return 0
 
     env.hwm = hwm
@@ -120,15 +128,18 @@ def main(options, default_options):
         tplan.discover()
     except RuntimeError as e:
         logger.error(f"{e}")
+        close_logging()
         return 1
 
     if tplan.report() == 0:
+        close_logging()
         return 0
 
     try:
         tplan.load()
     except RuntimeError as e:
         logger.error(f"{e}")
+        close_logging()
         return 1
 
     if VERBOSE > 1:
@@ -158,13 +169,16 @@ def main(options, default_options):
 
     if options.save_tests:
         report.json_report(options.save_tests)
+        close_logging()
         return 0
 
     if options.report_summary is not None:
         if options.report_summary < 0:
             logger.error("The report summary value cannot be less than 0")
+            close_logging()
             return 1
         report.synopsis()
+        close_logging()
         return 0
 
     if options.device_testing and not options.build_only:
@@ -175,6 +189,7 @@ def main(options, default_options):
     if options.dry_run:
         duration = time.time() - start_time
         logger.info("Completed in %d seconds" % (duration))
+        close_logging()
         return 0
 
     if options.short_build_path:
@@ -231,6 +246,7 @@ def main(options, default_options):
         artifacts.package()
 
     logger.info("Run completed")
+    close_logging()
     if (
         runner.results.failed
         or runner.results.error
