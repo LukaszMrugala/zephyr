@@ -123,6 +123,7 @@ def twister(options: argparse.Namespace, default_options: argparse.Namespace):
     hwm = HardwareMap(env)
     ret = hwm.discover()
     if ret == 0:
+        close_logging()
         return 0
 
     env.hwm = hwm
@@ -132,15 +133,18 @@ def twister(options: argparse.Namespace, default_options: argparse.Namespace):
         tplan.discover()
     except RuntimeError as e:
         logger.error(f"{e}")
+        close_logging()
         return 1
 
     if tplan.report() == 0:
+        close_logging()
         return 0
 
     try:
         tplan.load()
     except RuntimeError as e:
         logger.error(f"{e}")
+        close_logging()
         return 1
 
     if options.verbose > 1:
@@ -165,13 +169,16 @@ def twister(options: argparse.Namespace, default_options: argparse.Namespace):
 
     if options.save_tests:
         report.json_report(options.save_tests, env.version)
+        close_logging()
         return 0
 
     if options.report_summary is not None:
         if options.report_summary < 0:
             logger.error("The report summary value cannot be less than 0")
+            close_logging()
             return 1
         report.synopsis()
+        close_logging()
         return 0
 
     if options.device_testing and not options.build_only:
@@ -182,6 +189,7 @@ def twister(options: argparse.Namespace, default_options: argparse.Namespace):
     if options.dry_run:
         duration = time.time() - start_time
         logger.info(f"Completed in {duration} seconds")
+        close_logging()
         return 0
 
     if options.short_build_path:
@@ -246,6 +254,7 @@ def twister(options: argparse.Namespace, default_options: argparse.Namespace):
         artifacts = Artifacts(env)
         artifacts.package()
 
+    close_logging()
     if (
         runner.results.failed
         or runner.results.error
