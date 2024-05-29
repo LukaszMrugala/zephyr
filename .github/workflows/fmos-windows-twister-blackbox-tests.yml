@@ -40,7 +40,8 @@ jobs:
       - name: Checkout upstream
         uses: actions/checkout@v4
         with:
-          repository: zephyrproject-rtos/zephyr
+          repository: LukaszMrugala/zephyr
+          ref: lmrugalx_twister_bb_windows
           path: zephyr
           fetch-depth: 0
 
