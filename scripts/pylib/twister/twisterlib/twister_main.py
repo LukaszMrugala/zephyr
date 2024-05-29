@@ -56,6 +56,13 @@ def setup_logging(outdir, log_file, log_level, timestamps):
     logger.addHandler(fh)
 
 
+def close_logging():
+    handlers = logger.handlers[:]
+    for handler in handlers:
+        logger.removeHandler(handler)
+        handler.close()
+
+
 def init_color(colorama_strip):
     colorama.init(strip=colorama_strip)
 
@@ -116,6 +123,7 @@ def main(options: argparse.Namespace, default_options: argparse.Namespace):
     hwm = HardwareMap(env)
     ret = hwm.discover()
     if ret == 0:
+        close_logging()
         return 0
 
     env.hwm = hwm
@@ -125,15 +133,18 @@ def main(options: argparse.Namespace, default_options: argparse.Namespace):
         tplan.discover()
     except RuntimeError as e:
         logger.error(f"{e}")
+        close_logging()
         return 1
 
     if tplan.report() == 0:
+        close_logging()
         return 0
 
     try:
         tplan.load()
     except RuntimeError as e:
         logger.error(f"{e}")
+        close_logging()
         return 1
 
     if options.verbose > 1:
@@ -158,13 +169,16 @@ def main(options: argparse.Namespace, default_options: argparse.Namespace):
 
     if options.save_tests:
         report.json_report(options.save_tests, env.version)
+        close_logging()
         return 0
 
     if options.report_summary is not None:
         if options.report_summary < 0:
             logger.error("The report summary value cannot be less than 0")
+            close_logging()
             return 1
         report.synopsis()
+        close_logging()
         return 0
 
     if options.device_testing and not options.build_only:

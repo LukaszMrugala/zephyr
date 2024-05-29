@@ -12,7 +12,7 @@ from pathlib import Path
 from twisterlib.harness import Pytest
 from twisterlib.testsuite import TestSuite
 from twisterlib.testinstance import TestInstance
-from twisterlib.platform import Platform
+from twisterlib.twister_platform import Platform
 
 
 @pytest.fixture

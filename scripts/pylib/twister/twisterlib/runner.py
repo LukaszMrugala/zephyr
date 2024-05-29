@@ -26,10 +26,17 @@ from colorama import Fore
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
 from packaging import version
+from pylib.build_helpers.domains import Domains
 from twisterlib.cmakecache import CMakeCache
-from twisterlib.environment import canonical_zephyr_base
+from twisterlib.environment import TwisterEnv, canonical_zephyr_base
 from twisterlib.error import BuildError, ConfigurationError, StatusAttributeError
+from twisterlib.harness import HarnessImporter, Pytest
+from twisterlib.log_helper import log_command
 from twisterlib.statuses import TwisterStatus
+from twisterlib.testinstance import TestInstance
+from twisterlib.testplan import change_skip_to_error_if_integration
+from twisterlib.testsuite import TestSuite
+from twisterlib.twister_platform import Platform
 
 if version.parse(elftools.__version__) < version.parse('0.24'):
     sys.exit("pyelftools is out of date, need version 0.24 or later")
@@ -37,18 +44,6 @@ if version.parse(elftools.__version__) < version.parse('0.24'):
 # Job server only works on Linux for now.
 if sys.platform == 'linux':
     from twisterlib.jobserver import GNUMakeJobClient, GNUMakeJobServer, JobClient
-
-from twisterlib.environment import ZEPHYR_BASE
-
-sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts/pylib/build_helpers"))
-from domains import Domains
-from twisterlib.environment import TwisterEnv
-from twisterlib.harness import HarnessImporter, Pytest
-from twisterlib.log_helper import log_command
-from twisterlib.platform import Platform
-from twisterlib.testinstance import TestInstance
-from twisterlib.testplan import change_skip_to_error_if_integration
-from twisterlib.testsuite import TestSuite
 
 try:
     from yaml import CSafeLoader as SafeLoader

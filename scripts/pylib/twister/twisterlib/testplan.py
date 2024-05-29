@@ -31,7 +31,7 @@ import list_boards
 import scl
 from twisterlib.config_parser import TwisterConfigParser
 from twisterlib.error import TwisterRuntimeError
-from twisterlib.platform import Platform
+from twisterlib.twister_platform import Platform
 from twisterlib.quarantine import Quarantine
 from twisterlib.statuses import TwisterStatus
 from twisterlib.testinstance import TestInstance

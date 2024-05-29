@@ -14,7 +14,11 @@ import pytest
 ZEPHYR_BASE = os.getenv("ZEPHYR_BASE")
 sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts/pylib/twister"))
 
+<<<<<<< HEAD
 from twisterlib.platform import Platform, Simulator
+=======
+from twisterlib.twister_platform import Platform
+>>>>>>> c15590c20a4 (scripts: twister: Rename twisterlib.platform)
 
 
 TESTDATA_1 = [
