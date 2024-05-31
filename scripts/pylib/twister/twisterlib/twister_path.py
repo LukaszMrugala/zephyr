@@ -95,3 +95,19 @@ class TPath(os.PathLike):
 
     def __format__(self, format_spec):
         return self.__str__().format(format_spec)
+
+def prepare_path_for_windows(path):
+    if os.name == 'nt':
+        return '\\\\?\\' + os.fspath(Path(path).resolve())
+    return path
+
+def open(filename, *args, **kwargs):
+    return open(prepare_path_for_windows(filename), *args, **kwargs)
+
+
+def makedirs(filename, *args, **kwargs):
+    return os.makedirs(prepare_path_for_windows(filename), *args, **kwargs)
+
+
+def mkdir(filename, *args, **kwargs):
+    return os.mkdir(prepare_path_for_windows(filename), *args, **kwargs)

@@ -23,6 +23,7 @@ from twisterlib.twister_platform import Platform
 from twisterlib.error import BuildError, StatusAttributeError
 from twisterlib.size_calc import SizeCalculator
 from twisterlib.statuses import TwisterStatus
+from twisterlib.twister_path import makedirs
 from twisterlib.handlers import (
     Handler,
     SimulationHandler,
@@ -137,7 +138,7 @@ class TestInstance:
             random_str = f"{random.getrandbits(64)}".encode()
             hash_object.update(random_str)
             run_id = hash_object.hexdigest()
-            os.makedirs(self.build_dir, exist_ok=True)
+            makedirs(self.build_dir, exist_ok=True)
             with open(run_id_file, 'w+') as fp:
                 fp.write(run_id)
         return run_id
@@ -332,7 +333,7 @@ class TestInstance:
                 content = content + "\nCONFIG_UBSAN=y"
 
         if content:
-            os.makedirs(subdir, exist_ok=True)
+            makedirs(subdir, exist_ok=True)
             file = os.path.join(subdir, "testsuite_extra.conf")
             with open(file, "w", encoding='utf-8') as f:
                 f.write(content)
