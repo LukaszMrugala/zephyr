@@ -67,7 +67,7 @@ def init_color(colorama_strip):
     colorama.init(strip=colorama_strip)
 
 
-def main(options: argparse.Namespace, default_options: argparse.Namespace):
+def twister(options: argparse.Namespace, default_options: argparse.Namespace):
     start_time = time.time()
 
     # Configure color output
@@ -123,7 +123,6 @@ def main(options: argparse.Namespace, default_options: argparse.Namespace):
     hwm = HardwareMap(env)
     ret = hwm.discover()
     if ret == 0:
-        close_logging()
         return 0
 
     env.hwm = hwm
@@ -133,18 +132,15 @@ def main(options: argparse.Namespace, default_options: argparse.Namespace):
         tplan.discover()
     except RuntimeError as e:
         logger.error(f"{e}")
-        close_logging()
         return 1
 
     if tplan.report() == 0:
-        close_logging()
         return 0
 
     try:
         tplan.load()
     except RuntimeError as e:
         logger.error(f"{e}")
-        close_logging()
         return 1
 
     if options.verbose > 1:
@@ -169,16 +165,13 @@ def main(options: argparse.Namespace, default_options: argparse.Namespace):
 
     if options.save_tests:
         report.json_report(options.save_tests, env.version)
-        close_logging()
         return 0
 
     if options.report_summary is not None:
         if options.report_summary < 0:
             logger.error("The report summary value cannot be less than 0")
-            close_logging()
             return 1
         report.synopsis()
-        close_logging()
         return 0
 
     if options.device_testing and not options.build_only:
@@ -267,3 +260,10 @@ def main(options: argparse.Namespace, default_options: argparse.Namespace):
 
     logger.info("Run completed")
     return 0
+
+def main(options, default_options):
+    try:
+        return_code = twister(options, default_options)
+    finally:
+        close_logging()
+    return return_code
