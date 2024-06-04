@@ -579,6 +579,8 @@ class TestPlan:
             root = os.path.abspath(root)
 
             logger.debug(f"Reading testsuite configuration files under {root}...")
+            logger.debug(f'TESTSUITE_FILENAME: {self.TESTSUITE_FILENAME}')
+            logger.debug(f'SAMPLE_FILENAME: {self.SAMPLE_FILENAME}')
 
             for dirpath, _, filenames in os.walk(root, topdown=True):
                 if self.SAMPLE_FILENAME in filenames:
