@@ -102,7 +102,9 @@ class TestTooling:
         'flag',
         ['--ninja', '-N']
     )
-    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+#    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+#    @mock.patch('twisterlib.testplan.TestPlan.TESTSUITE_FILENAME', new_callable=mock.PropertyMock, return_value=testsuite_filename_mock)
+    @mock.patch('twisterlib.testplan.TestPlan.TESTSUITE_FILENAME', testsuite_filename_mock)
     def test_ninja(self, capfd, out_path, test_path, test_platforms, flag):
         args = ['--outdir', out_path, '-T', test_path, flag] + \
                [val for pair in zip(
