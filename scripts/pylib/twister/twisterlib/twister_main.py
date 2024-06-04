@@ -246,11 +246,7 @@ def twister(options: argparse.Namespace, default_options: argparse.Namespace):
         artifacts = Artifacts(env)
         artifacts.package()
 
-<<<<<<< HEAD
     close_logging()
-=======
-    logger.info("Run completed")
->>>>>>> 1b986c58c2c (scripts: twister: Protect against intertest interference)
     if (
         runner.results.failed
         or runner.results.error

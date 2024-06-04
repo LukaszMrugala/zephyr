@@ -586,9 +586,15 @@ class TestPlan:
         for root in self.env.test_roots:
             root = os.path.abspath(root)
 
+<<<<<<< HEAD
             logger.debug(f"Reading testsuite configuration files under {root}...")
             logger.debug(f'TESTSUITE_FILENAME: {self.testsuite_filename}')
             logger.debug(f'SAMPLE_FILENAME: {self.sample_filename}')
+=======
+            logger.debug("Reading test case configuration files under %s..." % root)
+            logger.debug(f'TESTSUITE_FILENAME: {self.TESTSUITE_FILENAME}')
+            logger.debug(f'SAMPLE_FILENAME: {self.SAMPLE_FILENAME}')
+>>>>>>> 788f06a26f6 (scripts: twister: debug)
 
             for dirpath, _, filenames in os.walk(root, topdown=True):
                 if self.sample_filename in filenames:
