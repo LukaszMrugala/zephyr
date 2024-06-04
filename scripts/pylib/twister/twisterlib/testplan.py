@@ -522,6 +522,8 @@ class TestPlan:
             root = os.path.abspath(root)
 
             logger.debug("Reading test case configuration files under %s..." % root)
+            logger.debug(f'TESTSUITE_FILENAME: {self.TESTSUITE_FILENAME}')
+            logger.debug(f'SAMPLE_FILENAME: {self.SAMPLE_FILENAME}')
 
             for dirpath, _, filenames in os.walk(root, topdown=True):
                 if self.SAMPLE_FILENAME in filenames:
