@@ -6,111 +6,82 @@
 # This script upload fat test ci results to the zephyr ES instance for reporting and analysis.
 # see https://kibana.zephyrproject.io/
 
+
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 import os
 import json
 import argparse
 from datetime import datetime
-
-def check_path_existence(path):
-    return os.path.exists(path) or os.path.isdir(path) or os.path.isfile(path)
+from pathlib import Path
 
 def load_json(file_path):
     with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+        return json.load(file)
 
 def append_json(existing_data, json_file_path):
     additional_data = load_json(json_file_path)
     existing_data["tests"].extend(additional_data)
-    return existing_data
 
-#for each test we get separate folder containing data, we need data from specific file - test_result.json
-#the path for each result is always different cause of output from FAT tests, thats we need to scan everything
 def find_json_files(directory_path):
-    json_files = []
-
-    for root, _dirs, files in os.walk(directory_path):
-        for file in files:
-            if file.endswith("test_result.json"):
-                json_files.append(os.path.join(root, file))
-
-    if not json_files:
-        print("Error with parsing files into list")
-    return json_files
-
-def list_files(directory_path):
-    files = [f for f in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, f))]
-    return files
+    return list(Path(directory_path).rglob("*test_result.json"))
 
 def gendata(data, index, run_date=None):
-    for t in data['tests']:
-        t['run_date'] = run_date
+    for test in data['tests']:
+        test['run_date'] = run_date
         yield {
             "_index": index,
-            "_source": t
-            }
+            "_source": test
+        }
 
-def main():
-    args = parse_args()
-
-    if args.index:
-        index_name = args.index
-    else:
-        index_name = 'fat-test-1'
-
-    selected_path = args.folder[0]
-    if check_path_existence(selected_path):
-        try:
-            print(list_files(selected_path))
-            combined_test_data = {"tests": []}
-            json_files = find_json_files(selected_path)
-            for json_file in json_files:
-                append_json(combined_test_data,json_file)
-        except FileNotFoundError as e:
-            print(f"Error: {e}")
-        except json.JSONDecodeError as e:
-            print(f"Error decoding JSON: {e}")
-    else:
-        print(f"The path '{selected_path}' does not exists.")
-
-    es = Elasticsearch(
+def create_elasticsearch_instance():
+    return Elasticsearch(
         [os.environ['ELASTICSEARCH_SERVER']],
         api_key=os.environ['ELASTICSEARCH_KEY'],
         verify_certs=False
-        )
+    )
 
+def create_index(es, index_name):
     settings = {
-            "index": {
-                "number_of_shards": 4
-                }
-            }
-    mappings = { }
-
-    if args.create_index:
-        es.indices.create(index=index_name, mappings=mappings, settings=settings)
-    else:
-        if args.run_date:
-            print(f"Setting run date from command line: {args.run_date}")
-        else:
-            time = os.path.getmtime(args.folder[0])
-            args.run_date = datetime.fromtimestamp(time).isoformat()
-
-        bulk(es, gendata(combined_test_data, index_name, args.run_date))
+        "index": {
+            "number_of_shards": 4
+        }
+    }
+    mappings = {}
+    es.indices.create(index=index_name, mappings=mappings, settings=settings)
 
 def parse_args():
     parser = argparse.ArgumentParser(allow_abbrev=False)
-    parser.add_argument('-y','--dry-run', action="store_true", help='Dry run.')
-    parser.add_argument('-c','--create-index', action="store_true", help='Create index.')
-    parser.add_argument('-i', '--index', help='index to push to.', required=True)
-    parser.add_argument('-r', '--run-date', help='Run date in ISO format', required=False)
-    parser.add_argument('folder', metavar='FILE', nargs='+', help='folder with test data.')
+    parser.add_argument('-y', '--dry-run', action="store_true", help='Dry run.')
+    parser.add_argument('-c', '--create-index', action="store_true", help='Create index.')
+    parser.add_argument('-i', '--index', help='Index to push to.', required=True)
+    parser.add_argument('-r', '--run-date', help='Run date in ISO format.')
+    parser.add_argument('folder', help='Folder with test data.')
+    return parser.parse_args()
 
-    args = parser.parse_args()
+def main():
 
-    return args
+    args = parse_args()
+    selected_path = args.folder
+    if not Path(selected_path).exists():
+        print(f"The path '{selected_path}' does not exist.")
+        return
 
+    combined_test_data = {"tests": []}
+    for json_file in find_json_files(selected_path):
+        append_json(combined_test_data, json_file)
+
+    es = create_elasticsearch_instance()
+
+    if args.create_index:
+        create_index(es, args.index)
+
+    if not args.run_date:
+        time = os.path.getmtime(selected_path)
+        args.run_date = datetime.fromtimestamp(time).isoformat()
+
+    if not args.dry_run:
+        bulk(es, gendata(combined_test_data, args.index, args.run_date))
 
 if __name__ == '__main__':
     main()
