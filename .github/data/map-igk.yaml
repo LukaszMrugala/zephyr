@@ -122,6 +122,33 @@
     - /opt/ITE/itedlb4-linux-v106/ite
 
 - connected: true
+  id: upx-tgl-igk-01
+  platform: intel_adsp/cavs25
+  product: None
+  runner: intel_adsp
+  serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,192.168.23.41:12320,-l"
+  runner_params:
+    - --remote-host=192.168.23.41:22320
+
+- connected: true
+  id: upx-tgl-igk-02
+  platform: intel_adsp/cavs25
+  product: None
+  runner: intel_adsp
+  serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,192.168.23.42:12320,-l"
+  runner_params:
+    - --remote-host=192.168.23.42:22320
+
+- connected: false
+  id: upx-tgl-igk-03
+  platform: intel_adsp/cavs25
+  product: None
+  runner: intel_adsp
+  serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,192.168.23.43:12320,-l"
+  runner_params:
+    - --remote-host=192.168.23.43:22320
+
+- connected: true
   id: "MTL-P"
   platform: intel_adsp/ace15_mtpm
   product: none

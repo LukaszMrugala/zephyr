@@ -38,7 +38,7 @@
   serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59142,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50142
-- connected: true
+- connected: false
   id: tgl3
   platform: intel_adsp/cavs25
   product: None
@@ -46,7 +46,7 @@
   serial_pty: "soc/intel/intel_adsp/tools/cavstool_client.py,-s,zephyr@admin-fmos.hf.intel.com:59146,-l"
   runner_params:
     - --remote-host=admin-fmos.hf.intel.com:50146
-- connected: true
+- connected: false
   id: tgl4
   platform: intel_adsp/cavs25
   product: None
