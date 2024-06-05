@@ -105,7 +105,19 @@ class TestPlan:
     SAMPLE_FILENAME = 'sample.yaml'
     TESTSUITE_FILENAME = 'testcase.yaml'
 
+<<<<<<< HEAD
     def __init__(self, env: Namespace):
+=======
+    @property
+    def sample_filename(self):
+        return self.SAMPLE_FILENAME
+
+    @property
+    def testsuite_filename(self):
+        return self.TESTSUITE_FILENAME
+
+    def __init__(self, env=None):
+>>>>>>> 41e3612255b (scripts: twister: Change testplan consts to instance attrs)
 
         self.options = env.options
         self.env = env
@@ -579,14 +591,14 @@ class TestPlan:
             root = os.path.abspath(root)
 
             logger.debug(f"Reading testsuite configuration files under {root}...")
-            logger.debug(f'TESTSUITE_FILENAME: {self.TESTSUITE_FILENAME}')
-            logger.debug(f'SAMPLE_FILENAME: {self.SAMPLE_FILENAME}')
+            logger.debug(f'TESTSUITE_FILENAME: {self.testsuite_filename}')
+            logger.debug(f'SAMPLE_FILENAME: {self.sample_filename}')
 
             for dirpath, _, filenames in os.walk(root, topdown=True):
-                if self.SAMPLE_FILENAME in filenames:
-                    filename = self.SAMPLE_FILENAME
-                elif self.TESTSUITE_FILENAME in filenames:
-                    filename = self.TESTSUITE_FILENAME
+                if self.sample_filename in filenames:
+                    filename = self.sample_filename
+                elif self.testsuite_filename in filenames:
+                    filename = self.testsuite_filename
                 else:
                     continue
 
