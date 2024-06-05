@@ -35,7 +35,7 @@ class TestTooling:
         ['1', '2'],
         ids=['single job', 'two jobs']
     )
-    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
+    @mock.patch('twisterlib.testplan.TestPlan.testsuite_filename', testsuite_filename_mock)
     def test_jobs(self, out_path, jobs):
         test_platforms = ['qemu_x86', 'frdm_k64f']
         path = os.path.join(TEST_DATA, 'tests', 'dummy', 'agnostic', 'group2')
@@ -55,7 +55,7 @@ class TestTooling:
 
         assert str(sys_exit.value) == '0'
 
-    @mock.patch.object(TestPlan, 'SAMPLE_FILENAME', sample_filename_mock)
+    @mock.patch('twisterlib.testplan.TestPlan.sample_filename', sample_filename_mock)
     def test_force_toolchain(self, out_path):
         # nsim_vpx5 is one of the rare platforms that do not support the zephyr toolchain
         test_platforms = ['nsim/nsim_vpx5']
@@ -101,9 +101,7 @@ class TestTooling:
         'flag',
         ['--ninja', '-N']
     )
-#    @mock.patch.object(TestPlan, 'TESTSUITE_FILENAME', testsuite_filename_mock)
-#    @mock.patch('twisterlib.testplan.TestPlan.TESTSUITE_FILENAME', new_callable=mock.PropertyMock, return_value=testsuite_filename_mock)
-    @mock.patch('twisterlib.testplan.TestPlan.TESTSUITE_FILENAME', testsuite_filename_mock)
+    @mock.patch('twisterlib.testplan.TestPlan.testsuite_filename', testsuite_filename_mock)
     def test_ninja(self, capfd, out_path, test_path, test_platforms, flag):
         args = ['--outdir', out_path, '-T', test_path, flag] + \
                [val for pair in zip(
