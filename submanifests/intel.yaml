@@ -16,7 +16,7 @@ manifest:
       path: intel/frameworks.validation.firmware-automated-testing.fat
       repo-path: frameworks.validation.firmware-automated-testing.fat
       submodules: false
-      revision: ww.42.23.v.1.1.42
+      revision: ww.15.24.v.1.1.15
       remote: intel
       groups:
         - fat
@@ -32,3 +32,10 @@ manifest:
       repo-path: tomlc99
       path: modules/audio/sof/tools/rimage/tomlc99
       revision: e3a03f5ec7d8d33be705c5ce8a632d998ce9b4d1
+    - name: sof_submodules
+      path: intel/converged-sof-modules
+      repo-path: converged-sof-modules
+      revision: main
+      remote: thesofproject
+      groups:
+        - fat

@@ -15,7 +15,7 @@ jobs:
         shell: bash
     runs-on: fmos-guest-ubuntu-24c
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.11
+      image: amr-registry.caas.intel.com/zephyrproject/fat-zephyr:v1.0.1
       env:
         ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
@@ -36,7 +36,6 @@ jobs:
           ls -la ./
           rm -rf ./* || true
           rm -rf ./.??* || true
-          rm -rf ../build-mtl || true
           # just to be sure...
           sudo rm -rf *
           echo "Post Clean Below"
@@ -45,47 +44,57 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: main  # upstream branch
           fetch-depth: 0
+
+      - name: Checkout main-intel
+        uses: actions/checkout@v4
+        with:
+          ref: main-intel
+          fetch-depth: 0
+          path: main-intel
 
       - name: Environment Setup
         shell: bash
         run: |
-          touch $HOME/.git-credentials
-          touch $HOME/.gitconfig
           git config --global user.email "sys_tmbuild@intel.com"
           git config --global user.name "Github Builder CI"
           git config --global credential.helper 'store --file=$HOME/.git-credentials'
+          echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/frameworks.validation.firmware-automated-testing.fat" > $HOME/.git-credentials
+
+          cp main-intel/submanifests/intel.yaml submanifests/intel.yaml
+          mkdir -p .github/data && cp main-intel/.github/data/fat_test_list.json .github/data/fat_test_list.json
+
           if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
             west init -l . || true
           fi
+
           west config manifest.project-filter -- +sof
           west config manifest.group-filter -- +fat
           west config --global update.narrow true
           west config --global update.path-cache "/runner/workspace"
-          echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/frameworks.validation.firmware-automated-testing.fat" > $HOME/.git-credentials
-          echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/applications.audio.simulator.std-sim" > $HOME/.git-credentials
 
           west update  2>&1 1> west.update.log || ( rm -rf ../intel ../modules ../bootloader ../tools && west update )
+
           for r in `west  list -f {url} | grep intel-innersource | sed 's#https://##'`; do
             echo -e "https://$TOKEN:$TOKEN@$r" >> $HOME/.git-credentials
           done
+
           west update fat
           west update fat_submodules
-          # debug
-          cat $HOME/.git-credentials
+
           git config --global --add safe.directory ${PWD}
+
           west update --path-cache /runner/workspace
           west forall -c 'git reset --hard HEAD'
 
-          sudo apt-get update
-          export PYTHONPATH="${PYTHONPATH}:/github/home/.local/bin"
-          sudo apt-get -y install cifs-utils curl make zlib1g-dev libsqlite3-dev libbz2-dev zlib1g-dev libreadline-dev libffi-dev libkrb5-dev libasound-dev libportaudio2 libportaudiocpp0 portaudio19-dev
-          python3.10 -m pip install --upgrade pip
-          python3.10 -m pip install meson ninja
-          python3.10 -m pip install -r ${GITHUB_WORKSPACE}/../intel/frameworks.validation.firmware-automated-testing.fat/requirements.txt
-
-          cp ${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/config.ini ${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/configfat.ini
-          sed -i '/GLOBAL/d' ${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/configfat.ini
+      - name: Download sim
+        shell: bash
+        run: |
+          wget -q --show-progress --progress=bar:force:noscroll --no-check-certificate --header="X-JFrog-Art-Api:$ARTIFACTORY_API_KEY" https://ubit-artifactory-or.intel.com/artifactory/zephyr-generic-or-local/tools/fat/test_mtl_ww0524.tar.gz
+          mkdir -p ${GITHUB_WORKSPACE}/../intel/std_sim/
+          tar -xzf test_mtl_ww0524.tar.gz --strip-components=1 -C ${GITHUB_WORKSPACE}/../intel/std_sim/
+          rm test_mtl_ww0524.tar.gz
 
       - name: Build RIMAGE
         run: |
@@ -100,42 +109,71 @@ jobs:
           export ZEPHYR_BASE=${GITHUB_WORKSPACE}
           cd ${GITHUB_WORKSPACE}/..
           west build --build-dir build-mtl -p always -b intel_adsp_ace15_mtpm ./modules/audio/sof/app
-          cp ${GITHUB_WORKSPACE}/../build-mtl/zephyr/zephyr.ri ${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm
+          cp ${GITHUB_WORKSPACE}/../build-mtl/zephyr/zephyr.ri ${GITHUB_WORKSPACE}/../intel/std_sim
 
       - name: Run FAT testcases
         shell: bash
         run: |
           cd ${GITHUB_WORKSPACE}/../intel/frameworks.validation.firmware-automated-testing.fat
-          git submodule update --init --recursive
+          git submodule update --init --recursive --force
 
-          mtl_test_list=( "tests/ace/fw_100_base_fw/test_17_fw_manifest.py::TestFwManifest::test_100_17_verify_core_type_field"
-                          "tests/avs/fw_00_basic/test_00_load_fw_basic.py::TestLoadFwBasic::test_00_00_load_fw_default"
-                          "tests/avs/fw_02_base_fw_api/test_01_fw_large_config_get.py::TestFwLargeConfigGet::test_02_01_fw_config"
-                          "tests/avs/fw_00_basic/test_01_load_fw_extended.py::TestLoadFwExtended::test_00_01_load_fw_and_check_responsiveness"
-                          "tests/avs/fw_02_base_fw_api/test_02_mem_reclaim_no.py::TestMemReclaimNo::test_02_02_memory_reclaim"
-                          "tests/avs/fw_02_base_fw_api/test_09_memory_state_info.py::TestMemoryStateInfoGet::test_02_09_memory_state_after_load_fw"
-                          "tests/ace/fw_100_base_fw/test_00_enable_logs.py::TestFwEnableLogs::test_100_00_enable_logs_memory_window"
-                          "tests/ace/fw_100_base_fw/test_02_memory_window.py::TestMemoryWindow::test_100_02_memory_window_ipc_communication"
-                          "tests/ace/fw_102_base_fw_api/test_18_pipeline_negative_tests.py::TestPplCustomFlows::test_102_18_ppl_create_after_create"
-                          "tests/ace/fw_102_base_fw_api/test_18_pipeline_negative_tests.py::TestPplCustomFlows::test_102_18_ppl_pause_after_delete"
-                          "tests/ace/fw_102_base_fw_api/test_18_pipeline_negative_tests.py::TestPplCustomFlows::test_102_18_ppl_reset_after_delete"
-                          "tests/ace/fw_102_base_fw_api/test_18_pipeline_negative_tests.py::TestPplCustomFlows::test_102_18_ppl_reset_before_create"
-                          "tests/ace/fw_102_base_fw_api/test_18_pipeline_negative_tests.py::TestPplCustomFlows::test_102_18_ppl_run_after_delete"
-                          "tests/avs/sim_00_basic/test_01_iface_hda_host_dma.py::TestIfaceHdaHostDma::test_hda_dma_loopack"
-                          "tests/avs/fw_00_basic/test_01_load_fw_extended.py::TestLoadFwExtended::test_00_01_load_fw_custom_dma[12]"
-                          "tests/ace/fw_107_dmic/test_01_ace_dmic_basic.py::TestDmicBasic::test_107_01_ace_raw_capture[16000Hz_16in16bit_4ch_1200000]"
-                          "tests/avs/fw_02_base_fw_api/test_01_fw_large_config_get.py::TestFwLargeConfigGet::test_02_01_hw_config"
-                          "tests/avs/fw_00_basic/test_01_load_fw_extended.py::TestLoadFwExtended::test_00_01_check_dma_configuration")
+          # Extract platform.py from README
+          sed -n '208,301p' board_defs/README.md > board_defs/platform.py
 
-          #dont exit or error
+          # Read test list from JSON file
+          readarray -t mtl_test_list < <(jq -r '.tests[]' ${GITHUB_WORKSPACE}/.github/data/fat_test_list.json)
+
+          # Initialize test results file for Summarize test results step
+          results_file="${GITHUB_WORKSPACE}/test_results.txt"
+          : > "${results_file}"
+
           set +e
-          for test in ${mtl_test_list[@]}; do
-            python3.10 -m pytest -p no:labgrid --iterations=1 -sv --platform=mtl \
-            --pnp-sim --pnp-sim-path=${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/ \
-            --pnp-sim-params="config=${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/configfat.ini" \
-            --fw=${GITHUB_WORKSPACE}/../intel/std_sim/intel_ace15_mtpm/zephyr.ri \
-            $test
+          any_test_failed=false
+          for i in "${!mtl_test_list[@]}"; do
+            test=${mtl_test_list[$i]}
+            echo "Running test $((i + 1)) of ${#mtl_test_list[@]}"
+
+            output=$(python3.12 -m pytest -p no:labgrid --iterations=1 -sv --platform=mtl \
+                --pnp-sim --pnp-sim-path=${GITHUB_WORKSPACE}/../intel/std_sim/ \
+                --pnp-sim-params="config=${GITHUB_WORKSPACE}/../intel/std_sim/config.ini" \
+                --rom=${GITHUB_WORKSPACE}/../intel/std_sim/dsp_rom_mtl_release.bin \
+                --romext=${GITHUB_WORKSPACE}/../intel/std_sim/dsp_lib_rom_ext_mtl_release.bin  \
+                --fw=${GITHUB_WORKSPACE}/../intel/std_sim/zephyr.ri \
+                "$test" 2>&1)
+            exit_code=$?
+
+            if [ $exit_code -eq 0 ]; then
+              echo "$test: PASSED" | tee -a "${results_file}"
+            else
+              echo "$test: FAILED" | tee -a "${results_file}"
+              echo "Output from failed test $test:"
+              echo "$output"
+              any_test_failed=true
+            fi
           done
+
+          # Exit with a non-zero status if any test failed
+          if [ "$any_test_failed" = true ]; then
+            exit 1
+          fi
+
+      - name: Summarize test results
+        if: (success() || failure() || cancelled())
+        shell: bash
+        run: |
+          results_file="${GITHUB_WORKSPACE}/test_results.txt"
+          passed_count=$(grep -c 'PASSED' "${results_file}" || true)
+          failed_count=$(grep -c 'FAILED' "${results_file}" || true)
+          total_tests=$((passed_count + failed_count))
+
+          echo "${passed_count} of ${total_tests} tests were passed."
+
+          if [ "${failed_count}" -gt 0 ]; then
+            echo "Failed tests:"
+            grep 'FAILED' "${results_file}" | awk 'BEGIN {FS=": "}; { $NF=""; print $0}'
+          else
+            echo "No tests failed."
+          fi
 
       - name: Upload FAT Test Results
         if: success() || failure()
@@ -164,7 +202,6 @@ jobs:
         run: |
           rm -rf artifacts
           pip3 install elasticsearch
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -181,4 +218,4 @@ jobs:
           run_date=`date --iso-8601=minutes`
           echo ${run_date}
           python3 ./scripts/ci/upload_test_results_fat.py -r ${run_date} \
-            -i zephyr-tests-fat artifacts/**
+          -i zephyr-tests-fat artifacts/**
