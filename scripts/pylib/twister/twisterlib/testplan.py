@@ -105,9 +105,6 @@ class TestPlan:
     SAMPLE_FILENAME = 'sample.yaml'
     TESTSUITE_FILENAME = 'testcase.yaml'
 
-<<<<<<< HEAD
-    def __init__(self, env: Namespace):
-=======
     @property
     def sample_filename(self):
         return self.SAMPLE_FILENAME
@@ -116,8 +113,7 @@ class TestPlan:
     def testsuite_filename(self):
         return self.TESTSUITE_FILENAME
 
-    def __init__(self, env=None):
->>>>>>> 41e3612255b (scripts: twister: Change testplan consts to instance attrs)
+    def __init__(self, env: Namespace):
 
         self.options = env.options
         self.env = env
