@@ -1314,10 +1314,10 @@ class TwisterRunner:
                     else:
                         pipeline.put({"op": "cmake", "test": instance})
 
-
-    def pipeline_mgr(self, pipeline, done_queue, lock, results):
+    @staticmethod
+    def pipeline_mgr(pipeline, done_queue, lock, results, jobserver, env, duts):
         if sys.platform == 'linux':
-            with self.jobserver.get_job():
+            with jobserver.get_job():
                 while True:
                     try:
                         task = pipeline.get_nowait()
@@ -1325,8 +1325,8 @@ class TwisterRunner:
                         break
                     else:
                         instance = task['test']
-                        pb = ProjectBuilder(instance, self.env, self.jobserver)
-                        pb.duts = self.duts
+                        pb = ProjectBuilder(instance, env, jobserver)
+                        pb.duts = duts
                         pb.process(pipeline, done_queue, task, lock, results)
 
                 return True
@@ -1338,8 +1338,8 @@ class TwisterRunner:
                     break
                 else:
                     instance = task['test']
-                    pb = ProjectBuilder(instance, self.env, self.jobserver)
-                    pb.duts = self.duts
+                    pb = ProjectBuilder(instance, env, jobserver)
+                    pb.duts = duts
                     pb.process(pipeline, done_queue, task, lock, results)
             return True
 
@@ -1353,7 +1353,7 @@ class TwisterRunner:
         processes = []
 
         for _ in range(self.jobs):
-            p = Process(target=self.pipeline_mgr, args=(pipeline, done, lock, self.results, ))
+            p = Process(target=TwisterRunner.pipeline_mgr, args=(pipeline, done, lock, self.results, self.jobserver, self.env, self.duts))
             processes.append(p)
             p.start()
         logger.debug(f"Launched {self.jobs} jobs")
