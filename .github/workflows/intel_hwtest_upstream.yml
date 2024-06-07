@@ -212,7 +212,9 @@ jobs:
           #
           cp -vr main-intel/boards/ite/it8xxx2_evb/support/loader.sh boards/ite/it8xxx2_evb/support/loader.sh
           #
-          mkdir -p boards/up-bridge-the-gap/up_squared/support && cp main-intel/boards/up-bridge-the-gap/up_squared/support/up_squared_efi.sh $_/.
+          mkdir -p boards/up-bridge-the-gap/up_squared/support && \
+            cp -v main-intel/boards/up-bridge-the-gap/up_squared/up_squared.yaml boards/up-bridge-the-gap/up_squared/ && \
+            cp -v main-intel/boards/up-bridge-the-gap/up_squared/support/up_squared_efi.sh boards/up-bridge-the-gap/up_squared/support/
           #
           # patch ISH:
           cp -rv main-intel/boards/intel/ish/board.cmake boards/intel/ish/
