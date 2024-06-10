@@ -24,6 +24,7 @@ from typing import List
 ZEPHYR_BASE = os.getenv("ZEPHYR_BASE")
 sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts/pylib/twister"))
 
+from twisterlib.environment import TwisterEnv
 from twisterlib.error import BuildError
 from twisterlib.harness import Pytest
 
@@ -2650,7 +2651,7 @@ def test_twisterrunner_pipeline_mgr(mocked_jobserver, platform):
     env_mock = mock.Mock()
 
     tr = TwisterRunner(instances, suites, env=env_mock)
-    tr.jobserver = mock.Mock(
+    jobserver = mock.Mock(
         get_job=mock.Mock(
             return_value=nullcontext()
         )
@@ -2665,13 +2666,21 @@ def test_twisterrunner_pipeline_mgr(mocked_jobserver, platform):
     with mock.patch('sys.platform', platform), \
          mock.patch('twisterlib.runner.ProjectBuilder',\
                     return_value=mock.Mock()) as pb:
-        tr.pipeline_mgr(pipeline_mock, done_queue_mock, lock_mock, results_mock)
+        tr.pipeline_mgr(pipeline_mock, done_queue_mock, lock_mock, results_mock,
+                        jobserver, env_mock, [])
 
     assert len(pb().process.call_args_list) == 5
 
     if platform == 'linux':
-        tr.jobserver.get_job.assert_called_once()
+        jobserver.get_job.assert_called_once()
 
+
+class Opt:
+    # Returns None on every unset non-private, non-protected attribute
+    def __getattr__(self, name):
+        if (name[:2] == '__' and name[-2:] == '__' and not self.__dict__.has_key(name)):
+            raise AttributeError(name)
+        return self.__dict__.get(name, None)
 
 def test_twisterrunner_execute(caplog):
     counter = 0
@@ -2683,9 +2692,11 @@ def test_twisterrunner_execute(caplog):
 
     instances = {}
     suites = []
-    env_mock = mock.Mock()
+    options_mock=Opt()
+    options_mock.outdir = ''
+    env = TwisterEnv(options=options_mock)
 
-    tr = TwisterRunner(instances, suites, env=env_mock)
+    tr = TwisterRunner(instances, suites, env=env)
     tr.add_tasks_to_queue = mock.Mock()
     tr.jobs = 5
 

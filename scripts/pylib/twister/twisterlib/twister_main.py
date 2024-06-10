@@ -17,7 +17,7 @@ from twisterlib.reports import Reporting
 from twisterlib.hardwaremap import HardwareMap
 from twisterlib.coverage import run_coverage
 from twisterlib.runner import TwisterRunner
-from twisterlib.environment import TwisterEnv
+import twisterlib.environment
 from twisterlib.package import Artifacts
 
 logger = logging.getLogger("twister")
@@ -112,7 +112,7 @@ def twister(options, default_options):
     VERBOSE = options.verbose
     setup_logging(options.outdir, options.log_file, VERBOSE, options.timestamps)
 
-    env = TwisterEnv(options, default_options)
+    env = twisterlib.environment.TwisterEnv(options, default_options)
     env.discover()
 
     hwm = HardwareMap(env)

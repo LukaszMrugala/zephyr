@@ -24,10 +24,6 @@ from multiprocessing.managers import BaseManager
 from typing import List
 from packaging import version
 
-from twisterlib.cmakecache import CMakeCache
-from twisterlib.environment import canonical_zephyr_base
-from twisterlib.error import BuildError, ConfigurationError
-
 import elftools
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
@@ -39,13 +35,15 @@ if version.parse(elftools.__version__) < version.parse('0.24'):
 if sys.platform == 'linux':
     from twisterlib.jobserver import GNUMakeJobClient, GNUMakeJobServer, JobClient
 
+from twisterlib.cmakecache import CMakeCache
+from twisterlib.error import BuildError, ConfigurationError
+from twisterlib.environment import canonical_zephyr_base, TwisterEnv
+from twisterlib.harness import HarnessImporter, Pytest
 from twisterlib.log_helper import log_command
 from twisterlib.testinstance import TestInstance
-from twisterlib.environment import TwisterEnv
+from twisterlib.testplan import change_skip_to_error_if_integration
 from twisterlib.testsuite import TestSuite
 from twisterlib.twister_platform import Platform
-from twisterlib.testplan import change_skip_to_error_if_integration
-from twisterlib.harness import HarnessImporter, Pytest
 
 try:
     from yaml import CSafeLoader as SafeLoader
@@ -1352,8 +1350,18 @@ class TwisterRunner:
 
         processes = []
 
+        #results_pickle = pickle.dumps(self.results)
+        jobserver_pickle = pickle.dumps(self.jobserver)
+        env_pickle = pickle.dumps(self.env)
+        duts_pickle = pickle.dumps(self.duts)
+
+        #results_copy = pickle.loads(results_pickle)
+        jobserver_copy = pickle.loads(jobserver_pickle)
+        env_copy = pickle.loads(env_pickle)
+        duts_copy = pickle.loads(duts_pickle)
+
         for _ in range(self.jobs):
-            p = Process(target=TwisterRunner.pipeline_mgr, args=(pipeline, done, lock, self.results, self.jobserver, self.env, self.duts))
+            p = Process(target=TwisterRunner.pipeline_mgr, args=(pipeline, done, lock, self.results, jobserver_copy, env_copy, duts_copy))
             processes.append(p)
             p.start()
         logger.debug(f"Launched {self.jobs} jobs")
