@@ -16,27 +16,6 @@
     boards.intel_adsp.hda: -> https://github.com/zephyrproject-rtos/zephyr/issues/74250
 
 - scenarios:
-  - kernel.timer.timer
-  platforms:
-  - it8xxx2_evb
-  comment: >
-    kernel.timer.timer: -> https://github.com/zephyrproject-rtos/zephyr/issues/67833
-
-- scenarios:
-  - kernel.timer.tickless
-  platforms:
-  - npcx9m6f_evb
-  comment: >
-    kernel.timer.tickless: -> https://github.com/zephyrproject-rtos/zephyr/issues/55085
-
-- scenarios:
-  - kernel.timer.tickless
-  platforms:
-  - intel_adsp/cavs25
-  comment: >
-    kernel.timer.tickless: -> https://github.com/zephyrproject-rtos/zephyr/issues/71027
-
-- scenarios:
   - kernel.memory_protection.stackprot
   - kernel.memory_protection.stackprot_tls
   platforms:
