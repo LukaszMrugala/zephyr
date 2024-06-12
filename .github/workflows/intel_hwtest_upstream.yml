@@ -85,7 +85,8 @@ jobs:
             platform: "intel_adsp/cavs25"
             scope: acceptance
             hwtype: device
-            runner: guest-thor3-5
+            hwmap: "map-igk.yaml"
+            runner: guest-odin1-2
             project-filter: '+sof'
           - platform_group: 4
             toolchain: 'zephyr'
