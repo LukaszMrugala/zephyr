@@ -1,0 +1,11 @@
+identifier: cdns_swerv/s400/whisper
+name: Cadence SweRV S400 (Whisper)
+type: sim
+simulation: whisper
+arch: riscv
+toolchain:
+  - zephyr
+testing:
+  ignore_tags:
+    - net
+    - bluetooth

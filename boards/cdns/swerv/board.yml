@@ -1,0 +1,7 @@
+board:
+  name: cdns_swerv
+  vendor: cdns
+  socs:
+    - name: s400
+      variants:
+        - name: whisper

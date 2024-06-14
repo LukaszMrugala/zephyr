@@ -1,0 +1,22 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+CONFIG_CONSOLE=y
+CONFIG_SERIAL=y
+CONFIG_WHISPER_CONSOLE=y
+CONFIG_XIP=n
+
+# Although there is some vague mentioning of whisper
+# assuming CPU running at 1GHz, that is too fast
+# which means any simulation will take forever to run.
+# So lower it to 15MHz which corresponds to FPGA
+# configuration in the build script.
+CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=15000000
+CONFIG_SYS_CLOCK_TICKS_PER_SEC=100
+
+# MRAC - Region Access Control CSR
+#   0x0000_0000 - 0x0FFF_FFFF is cacheable
+#   0x4000_0000 - 0x4FFF_FFFF has side-effect
+#   0xF000_0000 - 0xFFFF_FFFF has side-effect
+CONFIG_SOC_CDNS_SWERV_S400_BOOT_MRAC=0x80000201

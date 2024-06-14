@@ -1,0 +1,13 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_FAMILY_CDNS_SWERV
+	select INCLUDE_RESET_VECTOR
+	select RISCV
+
+if SOC_FAMILY_CDNS_SWERV
+
+rsource "*/Kconfig"
+
+endif # SOC_FAMILY_CDNS_SWERV

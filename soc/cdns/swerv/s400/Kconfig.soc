@@ -1,0 +1,20 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_CDNS_SWERV_S400
+	bool
+	select SOC_FAMILY_CDNS_SWERV
+
+config SOC
+	default "s400" if SOC_CDNS_SWERV_S400
+
+if SOC_CDNS_SWERV_S400
+
+config SOC_CDNS_SWERV_S400_BOOT_MRAC
+	hex "Set MRAC CSR value at boot"
+	help
+	  Setup the MRAC CSR register for region access control
+	  on caching and side effect settings.
+
+endif # SOC_CDNS_SWERV_S400

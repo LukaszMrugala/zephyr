@@ -1,0 +1,29 @@
+To build:
+
+  west build -b cdns_swerv/s400/whisper samples/hello_world/
+
+To Run and debug:
+
+  Set the following environment varibles:
+    export WHISPER_BASE=<dir to swerv-sw-package-*>
+    export WHISPER_BIN=${WHISPER_BASE}/whisper/board/swerv400/whisper
+
+  Run via west:
+    west build -b cdns_swerv/s400/whisper samples/hello_world/ -t run
+
+  Debug via west:
+    Start debug server:
+      west build -b cdns_swerv/s400/whisper samples/hello_world/ -t debugserver
+
+    Use GDB to connect to port 1234
+
+To Run manually under swerv-sw-package-SA-2023.2-debian/ :
+
+  whisper/board/swerv400/whisper /tmp/build/zephyr/zephyr.elf --raw \
+          --configfile riscv-fw-infrastructure/firmware/board/whisper/whisper_swerv400.json
+
+To Debug manually:
+
+  whisper/board/swerv400/whisper /tmp/build/zephyr/zephyr.elf --raw \
+          --gdb --gdb-tcp-port 1234 \
+          --configfile riscv-fw-infrastructure/firmware/board/whisper/whisper_swerv400.json

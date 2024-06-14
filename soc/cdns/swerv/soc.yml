@@ -1,0 +1,4 @@
+family:
+- name: swerv
+  socs:
+  - name: s400

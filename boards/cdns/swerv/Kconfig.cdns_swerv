@@ -1,0 +1,28 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_CDNS_SWERV_S400_WHISPER
+	select SOC_FAMILY_CDNS_SWERV
+	select SOC_CDNS_SWERV_S400
+
+if BOARD_CDNS_SWERV_S400_WHISPER
+
+# 15 in core RISC-V by MIE CSR
+# 256 in SweRV PIC for external interrupts
+config NUM_IRQS
+	default 271
+
+config SWERV_PIC_MAX_GENERIC_IRQ
+	default 15
+
+config WHISPER_TARGET
+	default y
+
+config WHISPER_USE_CLINT
+	default y
+
+config WHISPER_CLINT_BASE_ADDRESS
+	default 0x02000000
+
+endif # BOARD_CDNS_SWERV_S400_WHISPER
