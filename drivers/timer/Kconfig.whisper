@@ -1,0 +1,22 @@
+# Copyright (c) 2014-2015 Wind River Systems, Inc.
+# Copyright (c) 2016 Cadence Design Systems, Inc.
+# Copyright (c) 2019-2024 Intel Corp.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+config WHISPER_TIMER
+	bool "Whisper Simulator Timer"
+	default y
+	depends on DT_HAS_WHISPER_TIMER_ENABLED
+	select TICKLESS_CAPABLE
+	help
+	  This module implements a kernel device driver for the Whisper simulator
+	  timer driver. It provides the standard "system clock driver" interfaces.
+
+	  Note that, although the timer register and compare value are both
+	  64-bit, writing to the upper 32-bit compare value will result it
+	  overwriting the lower 32-bit compare value. So for now, this driver
+	  is 32-bit only. Once the timer value goes above maximum value of
+	  32-bit unsigned integer, writing the compare value will no longer
+	  trigger any timer interrupt. This is a whisper bug which needs to be
+	  fixed there before we can fully utilize 64-bit compare values.

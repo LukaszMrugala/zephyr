@@ -1,0 +1,18 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Whisper Simulator Timer
+
+compatible: "whisper,timer"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+    description: |
+      Address and size of the register to write timer comparison value into.
+
+  interrupts:
+    required: true
