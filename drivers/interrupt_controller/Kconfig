@@ -16,13 +16,6 @@ config ARCV2_INTERRUPT_UNIT
 	  building a processor, you can configure the processor to include an
 	  interrupt unit. The ARCv2 interrupt unit is highly programmable.
 
-config SWERV_PIC
-	bool "SweRV EH1 Programmable Interrupt Controller (PIC)"
-	default y
-	depends on DT_HAS_SWERV_PIC_ENABLED
-	help
-	  Programmable Interrupt Controller for the SweRV EH1 RISC-V CPU.
-
 config VEXRISCV_LITEX_IRQ
 	bool "VexRiscv LiteX Interrupt controller"
 	default y
@@ -107,5 +100,7 @@ source "drivers/interrupt_controller/Kconfig.renesas_ra"
 source "drivers/interrupt_controller/Kconfig.nxp_irqsteer"
 
 source "drivers/interrupt_controller/Kconfig.mtk_adsp"
+
+source "drivers/interrupt_controller/Kconfig.swerv"
 
 endmenu
