@@ -284,4 +284,11 @@ config WINSTREAM_CONSOLE
 
 	  See the WINSTREAM Kconfig help for more information.
 
+config WHISPER_CONSOLE
+	bool "Use Whisper console"
+	depends on WHISPER_TARGET
+	select CONSOLE_HAS_DRIVER
+	help
+	  Use the console provided by the RISC-V Whisper ISS.
+
 endif # CONSOLE
