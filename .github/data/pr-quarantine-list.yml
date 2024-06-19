@@ -8,12 +8,10 @@
 
 - scenarios:
   - boards.intel_adsp.ssp
-  - boards.intel_adsp.hda
   platforms:
   - intel_adsp/cavs25
   comment: >
     boards.intel_adsp.ssp: -> https://github.com/zephyrproject-rtos/zephyr/issues/61789
-    boards.intel_adsp.hda: -> https://github.com/zephyrproject-rtos/zephyr/issues/74250
 
 - scenarios:
   - kernel.memory_protection.stackprot
