@@ -32,7 +32,7 @@ jobs:
           - platform_group: 1
             toolchain: 'zephyr'
             hwtype: device
-            scope: logic_analyzer
+            scope: timer_behavior
             platform: 'frdm_k64f'
             variant: 'zephyr'
             runner: fmos-testhost-nuc-igk-08

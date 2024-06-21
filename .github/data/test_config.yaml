@@ -13,6 +13,11 @@ platforms:
     - qemu_x86_tiny
     - intel_ish_5_6_0
 levels:
+  - name: dummy
+    description: >
+      Dummy test plan placeholder.
+    adds:
+      - dummy.test.pattern.should.match.nothing
   - name: smoke
     description: >
       A plan to be used verifying basic zephyr features on hardware.
@@ -53,8 +58,9 @@ levels:
     adds:
       - benchmark.kernel.latency.*
       - benchmark.user.latency.*
-  - name: logic_analyzer
+  - name: timer_behavior
     description: >
-      Tests using logic analyzer
+      Kernel Timer tests on HW
     adds:
+      - kernel.timer.timer
       - kernel.timer.timer_behavior_external

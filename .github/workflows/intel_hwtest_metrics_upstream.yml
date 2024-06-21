@@ -1,0 +1,299 @@
+name: 'Collect KPI metrics on Hardware (Upstream)'
+on:
+  schedule:
+    - cron: '15 2 * * *' # daily @ 02:15 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run_twister:
+    name: '[HW] run ${{ matrix.platform }}'
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.13
+      options: "-v /srv/runner/workspace:/runner/workspace -v /tmp:/tmp ${{ matrix.container_options }}"
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+        SSH_KEY_FMOS_QA_SIMICS: ${{ secrets.ISH_SIMICS_FMOS_QA_SSH }}
+        IGK_PRIVATE_KEY: ${{ secrets.IGK_PRIVATE_KEY }}
+        HF_PRIVATE_KEY: ${{ secrets.HF_PRIVATE_KEY }}
+        LG_CROSSBAR: "ws://admin-fmos.igk.intel.com:80/lg"
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.8
+    strategy:
+      fail-fast: false
+      matrix:
+        platform_group: [1]
+        include:
+          - platform_group: 1
+            toolchain: 'zephyr'
+            hwtype: device
+            scope: timer_behavior
+            platform: 'frdm_k64f'
+            variant: 'zephyr'
+            runner: fmos-testhost-nuc-igk-08
+            hwmap: "map-logic-analyzer.yaml"
+            twister_extra_args: "-X gpio_timerout"
+            pytest_args: "--pytest-args='--tool=saleae_logic2'  --pytest-args='--tool-options=address=192.168.23.8,\
+              port=10430,\
+              channel=1,\
+              sample-rate=8_000_000,\
+              threshold-volts=0'"
+            container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
+            timeout: 15
+            pip_install: "-r tests/kernel/timer/timer_behavior/pytest/requirements-saleae.txt"
+
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: ${{ matrix.timeout || 120 }}
+    steps:
+      - name: Clean Workspace
+        run: |
+          # set dotglob so rm will remove dot files and dirs - (.west, etc.)
+          shopt -s dotglob
+          pwd
+          ls -la ./
+          rm -rf ./* || true
+          rm -rf ./.??* || true
+          ls -la ./
+
+      - name: Checkout main (upstream)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Checkout the triggering branch to main-intel
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          path: main-intel
+
+      - name: Environment Setup
+        shell: bash
+        run: |
+          touch $HOME/.git-credentials
+          touch $HOME/.gitconfig
+          git config --global user.email "sys_tmbuild@intel.com"
+          git config --global user.name "Github Builder CI"
+          git config --global credential.helper 'store --file=$HOME/.git-credentials'
+
+          mkdir -p /home/user/.ssh
+          echo -e "Host *\n    User zephyr\n    StrictHostKeyChecking no" >> /home/user/.ssh/config
+          if [ ! -f "/__w/os.rtos.zephyr.zephyr/.west/config" ]; then
+            west init -l . || true
+          fi
+          if [ ${{ matrix.west_project_filter }} ]; then
+            west config manifest.project-filter -- ${{ matrix.west_project_filter }}
+          fi
+          west config --global update.narrow true
+          #west config --global update.path-cache "/runner/workspace"
+          # we need this here because our local manifest does import this repo
+          echo -e "https://$TOKEN:$TOKEN@github.com/intel-innersource/drivers.audio.firmware.converged" > $HOME/.git-credentials
+          west update  2>&1 1> west.update.log || ( rm -rf ../intel ../modules ../bootloader ../tools && west update )
+          for r in `west  list -f {url} | grep intel-innersource | sed 's#https://##'`; do
+            echo -e "https://$TOKEN:$TOKEN@$r" >> $HOME/.git-credentials
+          done
+          # debug
+          cat $HOME/.git-credentials
+          git config --global --add safe.directory ${PWD}
+          west update
+          west forall -c 'git reset --hard HEAD'
+
+      - name: Update python modules
+        shell: bash
+        run: |
+          pip3 install -r scripts/requirements.txt
+          if [ ${{ matrix.pip_install }} ]; then
+            pip3 install ${{ matrix.pip_install }}
+          fi
+          pip show grpcio grpcio-tools logic2-automation
+
+      - name: Patching from main-intel
+        shell: bash
+        run: |
+          echo "head_ref=${{ github.head_ref }} base_ref=${{ github.base_ref }}"
+          echo "ref_name=${{ github.ref_name }} ref=${{ github.ref }}"
+          #
+          # Patch the main branch
+          # sed -i '/default in ace15_mtpm/{s/"otc_private_key_3k.pem"/${CMAKE_CURRENT_LIST_DIR}\/support\/mtl_private_key.pem/}' boards/intel/adsp/board.cmake
+          # sed -i '/default in ace20_lnl/{s/"otc_private_key_3k.pem"/${CMAKE_CURRENT_LIST_DIR}\/support\/lnl_private_key.pem/};/default in ace20_lnl/a\  board_set_flasher_ifnset\(intel_adsp\)\n  board_finalize_runner_args\(intel_adsp\)' boards/intel/adsp/board.cmake
+          #
+          # cp -vr main-intel/boards/intel/adsp/support boards/intel/adsp/
+          #
+          # cp -vr main-intel/boards/ite/it8xxx2_evb/support/loader.sh boards/ite/it8xxx2_evb/support/loader.sh
+          #
+          # mkdir -p boards/up-bridge-the-gap/up_squared/support && \
+          #  cp -v main-intel/boards/up-bridge-the-gap/up_squared/up_squared.yaml boards/up-bridge-the-gap/up_squared/ && \
+          #  cp -v main-intel/boards/up-bridge-the-gap/up_squared/support/up_squared_efi.sh boards/up-bridge-the-gap/up_squared/support/
+          #
+          # patch ISH:
+          # cp -rv main-intel/boards/intel/ish/board.cmake boards/intel/ish/
+          # mkdir -v boards/intel/ish/support && \
+          #   cp -rv main-intel/boards/intel/ish/support/tgl_board_flash.sh boards/intel/ish/support/
+          #
+          # Sanitize HWMV2 platform name
+          echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | tr '/@' '_')" >> "$GITHUB_ENV"
+
+      - name: Reset platform with pyocd
+        if: ${{ matrix.pyocd_board_id }}
+        shell: bash
+        run: |
+            echo "Resetting ${{ matrix.platform }} with pyocd"
+            python3 main-intel/scripts/support/prepare_platform.py --pyocd-board-id "${{ matrix.pyocd_board_id }}" --pyocd-timeout $PYOCD_TIMEOUT
+        env:
+          PYOCD_TIMEOUT: ${{ matrix.pyocd_timeout || 5 }}
+
+      - name: Reset platform with labgrid
+        if: ${{ matrix.labgrid_place }}
+        shell: bash
+        run: |
+          echo "Resetting ${{ matrix.platform }} with labgrid, labgrid-crossbar: $LG_CROSSBAR"
+          eval $(ssh-agent -s) && echo "$IGK_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+          python3 main-intel/scripts/support/prepare_platform.py --labgrid-place "${{ matrix.labgrid_place }}" --labgrid-crossbar "$LG_CROSSBAR" --labgrid-timeout $LG_TIMEOUT --dpcmd-erase $DPCMD_ERASE --dpcmd-place $DPCMD_PLACE
+        env:
+          LG_TIMEOUT: ${{ matrix.labgrid_timeout || 5 }}
+          DPCMD_ERASE: ${{ matrix.dpcmd_erase || 'False' }}
+          DPCMD_PLACE: ${{ matrix.dpcmd_place || 'None' }}
+
+      - name: Build RIMAGE
+        if: ${{ contains(matrix.platform, 'intel_adsp') }}
+        run: |
+          pushd ../modules/audio/sof/tools/rimage
+          cmake -B build/
+          make  -C build/
+          sudo cp build/rimage /usr/local/bin/
+          popd
+
+      - name: Execute Tests
+        run: |
+          export MEC172X_SPI_GEN=/opt/tools/bin/mec172x_spi_gen_lin_x86_64
+          export EVERGLADES_SPI_GEN=/opt/tools/bin/everglades_spi_gen_lin64
+          export PATH=/opt/tools/bin:$PATH
+          # device vs sim
+          HW_MAP="map.yaml"
+          if [ ${{ matrix.hwmap }} ]; then
+            HW_MAP=${{ matrix.hwmap }}
+          fi
+          if [ ${{ matrix.hwtype }} == 'device' ]; then
+            export DEV_TYPE="-x=CONFIG_BOOT_DELAY=500 --device-testing --hardware-map main-intel/.github/data/${HW_MAP}"
+          fi
+          # toolchain
+          if [ ${{ matrix.toolchain }} == 'xcc' ]; then
+            export ZEPHYR_TOOLCHAIN_VARIANT=${{ matrix.variant }}
+            export XTENSA_TOOLCHAIN_PATH=/opt/toolchains/xtensa/XtDevTools/install/tools
+            export XTENSA_CORE=${{ matrix.xtensa_core }}
+            export TOOLCHAIN_VER=${{ matrix.toolchain_ver }}
+            export XTENSA_BUILDS_DIR=/opt/toolchains/xtensa/XtDevTools/install/builds
+            export TWISTER_QUARANTINE_LIST=main-intel/.github/data/xcc-twister-quarantine-list.yml
+            export XTENSA_SYSTEM=/opt/toolchains/xtensa/XtDevTools/install/tools/${{ matrix.toolchain_ver }}/XtensaTools/config/
+          else
+            export TWISTER_QUARANTINE_LIST=main-intel/.github/data/twister-quarantine-list.yml
+          fi
+
+          TEST_COV="dummy"
+          if [ ${{ matrix.scope }} ]; then
+            TEST_COV=${{ matrix.scope }}
+          fi
+
+          # Ensure local network is not accessed via proxy
+          export no_proxy=$no_proxy,192.168.0.0/16
+
+          eval $(ssh-agent -s)
+          echo "$SSH_KEY_FMOS_QA_SIMICS" | tr -d '\r' | ssh-add -
+          # faceless key used to access platforms located in IGK
+          echo "$IGK_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+
+          ./scripts/twister -M -x=USE_CCACHE=0 --inline-logs \
+            --force-color -v \
+            --quarantine-list $TWISTER_QUARANTINE_LIST \
+            --retry-failed 2 \
+            --retry-interval 15 \
+            --test-config main-intel/.github/data/test_config.yaml \
+            --level $TEST_COV \
+            ${{ matrix.twister_extra_args }} \
+            ${{ matrix.pytest_args }} \
+            $DEV_TYPE \
+            -p ${{ matrix.platform }}
+
+      - name: Archive twister-out directory
+        id: tar-twister-out
+        if: (success() || failure() || cancelled())
+        run: |
+          # Give some time to Twister processes to close logs on cancel.
+          [ $(ps -ef | grep twister | wc -l) -ge 2 ] && sleep 60s
+          [ -d ./twister-out ] && sync ./twister-out && find ./twister-out -type f -name "*.log" -o -name "*.csv" | tar -czf subset-${{ matrix.platform_group }}-${{ env.PLATFORM_NAME }}-twister-out.tar.gz -T -
+
+      - name: Upload twister-out.tar.gz archive per subset
+        if: (steps.tar-twister-out.outcome == 'success') && (success() || failure() || cancelled())
+        uses: actions/upload-artifact@v4
+        with:
+          name: subset-${{ matrix.platform_group }}-${{ env.PLATFORM_NAME }}-twister-out archive in .tar.gz format
+          path: |
+            subset-${{ matrix.platform_group }}-${{ env.PLATFORM_NAME }}-twister-out.tar.gz
+          retention-days: 5
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unit Test Results (Subset ${{ matrix.platform_group }})
+          path: |
+            twister-out/twister.log
+            twister-out/twister.xml
+            twister-out/twister.json
+          retention-days: 14
+
+  publish-test-results:
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.13
+      env:
+        TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+    env:
+      ELASTICSEARCH_KEY: ${{ secrets.ELASTICSEARCH_KEY }}
+      ELASTICSEARCH_SERVER: 'https://reports-fmos.hf.intel.com:9200'
+    name: '[HW] Publish Test Results'
+    needs: [run_twister]
+    runs-on: fmos-guest-ubuntu-12c
+    continue-on-error: true
+    if: success() || failure()
+    steps:
+      - name: Clean and Pre Environment
+        run: |
+          rm -rf artifacts
+          pip3 install elasticsearch
+
+      - name: Checkout triggering branch
+        # Use triggering branch (main-intel) with our upload scripts.
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get current date
+        id: run_date
+        run: |
+          echo "run_date=$(date --iso-8601=minutes)" >> "$GITHUB_OUTPUT"
+          echo "run_date_short=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to ElasticSearch
+        if: github.event_name == 'schedule' || github.event_name == 'pull_request'
+        run: |
+          echo "${{ steps.run_date.outputs.run_date }} (${{ github.run_id }},${{ github.run_attempt }})"
+          echo "head_ref=${{ github.head_ref }} base_ref=${{ github.base_ref }}"
+          echo "ref_name=${{ github.ref_name }} ref=${{ github.ref }}"
+          python3 scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            --map-file scripts/ci/zephyr_twister_flat_recording_metrics_index.json \
+            --flatten recording --exclude path run_id \
+            --run-id "${{ github.run_id }}" --run-attempt "${{ github.run_attempt }}" \
+            --run-workflow "kpi_metrics:${{ github.event_name }}" --run-branch "${{ github.ref_name }}" \
+            -i zephyr-tests-recording-metrics artifacts/**/twister.json
+        #
