@@ -9,6 +9,14 @@
                     "type": "keyword",
                     "ignore_above": 256
                 },
+                "run_branch": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                },
+                "run_workflow": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                },
                 "run_id": {
                     "type": "keyword",
                     "ignore_above": 256
