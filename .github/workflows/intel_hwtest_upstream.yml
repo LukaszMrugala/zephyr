@@ -345,7 +345,7 @@ jobs:
       BRANCH_NAME: ${{ github.event_name == 'schedule' && 'upstream' || 'upstream_pr' }}
     name: '[HW] Publish Test Results'
     needs: [run_twister]
-    runs-on: guest-thor4-8
+    runs-on: fmos-guest-ubuntu-12c
     continue-on-error: true
     if: success() || failure()
     steps:
@@ -371,13 +371,6 @@ jobs:
           echo "run_date=$(date --iso-8601=minutes)" >> "$GITHUB_OUTPUT"
           echo "run_date_short=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
 
-      - name: Upload to ElasticSearch Instance
-        if: github.event_name == 'schedule'
-        run: |
-          echo ${{ steps.run_date.outputs.run_date }}
-          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
-            -i zephyr-tests-main-daily-1 artifacts/**/twister.json
-
       - name: Upload to Static Report Server - Clean and Pre Environment
         if: github.event_name == 'schedule' || github.event_name == 'push'
         id: srs-prep-data
@@ -402,3 +395,10 @@ jobs:
         if: ( github.event_name == 'schedule' || github.event_name == 'push') && steps.srs-prep-data.outcome == 'success'
         run: |
           rm -rf ${{ steps.run_date.outputs.run_date_short }}
+
+          - name: Upload to ElasticSearch Instance
+          if: github.event_name == 'schedule'
+          run: |
+            echo ${{ steps.run_date.outputs.run_date }}
+            python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+              -i zephyr-tests-main-daily-1 artifacts/**/twister.json

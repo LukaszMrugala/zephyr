@@ -103,7 +103,7 @@ jobs:
             twister-out/twister.log
             twister-out/twister.xml
             twister-out/twister.json
-          retention-days: 7
+          retention-days: 14
 
   publish-test-results:
     container:
@@ -116,7 +116,7 @@ jobs:
       BRANCH_NAME: ${{ github.event_name == 'schedule' && 'master' || 'test_branch' }}
     name: 'Publish Twister Results'
     needs: [run_twister]
-    runs-on: guest-thor4-8
+    runs-on: fmos-guest-ubuntu-12c
     continue-on-error: true
     if: success() || failure()
     steps:
@@ -140,22 +140,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      - name: Upload to ElasticSearch Instance scheduled
-        if: github.event_name == 'schedule'
-        run: |
-          echo ${{ steps.run_date.outputs.run_date }}
-          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
-            -i zephyr-tests-main-intel-daily-1 artifacts/**/twister.json
-          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
-            -i zephyr-tests-main-intel-daily-nested artifacts/**/twister.json
-
-      - name: Upload to ElasticSearch Instance on PR
-        if: github.event_name == 'pull_request'
-        run: |
-          echo ${{ steps.run_date.outputs.run_date }}
-          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
-            -i zephyr-tests-staging-1 artifacts/**/twister.json
 
       - name: Upload to Static Report Server - Clean and Pre Environment
         id: srs-prep-data
@@ -188,6 +172,22 @@ jobs:
           check_name: 'Test Results using twister'
           comment_mode: off
           compare_to_earlier_commit: false
+
+      - name: Upload to ElasticSearch Instance scheduled
+        if: github.event_name == 'schedule'
+        run: |
+          echo ${{ steps.run_date.outputs.run_date }}
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            -i zephyr-tests-main-intel-daily-1 artifacts/**/twister.json
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            -i zephyr-tests-main-intel-daily-nested artifacts/**/twister.json
+
+      - name: Upload to ElasticSearch Instance on PR
+        if: github.event_name == 'pull_request'
+        run: |
+          echo ${{ steps.run_date.outputs.run_date }}
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            -i zephyr-tests-staging-1 artifacts/**/twister.json
 
   # "Intel-CI-Passed" is our exit job that matches branch-protection status-check
   # settings for PR workflow. Make sure all required tests are prereqs to this job.

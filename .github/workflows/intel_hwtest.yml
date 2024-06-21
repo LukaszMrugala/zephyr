@@ -290,7 +290,7 @@ jobs:
           name: subset-${{ strategy.job-index }}-${{ matrix.target.identifier }}-twister-out archive in .tar.gz format
           path: |
             subset-${{ strategy.job-index }}-${{ matrix.target.identifier }}-twister-out.tar.gz
-          retention-days: 5
+          retention-days: 14
 
       - name: Upload Unit Test Results
         if: always()
@@ -314,7 +314,7 @@ jobs:
       BRANCH_NAME: ${{ github.event_name == 'schedule' && 'master' || 'test_branch' }}
     name: '[HW] Publish Test Results'
     needs: [run_twister]
-    runs-on: guest-thor4-8
+    runs-on: fmos-guest-ubuntu-12c
     continue-on-error: true
     if: success() || failure()
     steps:
@@ -339,30 +339,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      - name: Upload to ElasticSearch Instance (Daily)
-        if: github.event_name == 'schedule'
-        run: |
-          echo ${{ steps.run_date.outputs.run_date }}
-          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
-            -i zephyr-tests-main-intel-daily-1 artifacts/**/twister.json
-          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
-            -i zephyr-tests-main-intel-daily-nested artifacts/**/twister.json
-
-      - name: Upload to ElasticSearch Instance (Push)
-        if: github.event_name == 'push'
-        run: |
-          echo ${{ steps.run_date.outputs.run_date }}
-          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
-            -i zephyr-tests-main-intel-1 artifacts/**/twister.json
-
-      - name: Upload to ElasticSearch Instance (Pull Request)
-        if: github.event_name == 'pull_request'
-        # for testing purposes
-        run: |
-          echo ${{ steps.run_date.outputs.run_date }}
-          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
-            -i zephyr-tests-staging-1 artifacts/**/twister.json
 
       - name: Upload to Static Report Server - Clean and Pre Environment
         if: github.event_name == 'schedule' || github.event_name == 'push'
@@ -396,3 +372,27 @@ jobs:
           check_name: 'Hardware Test Results'
           comment_mode: off
           compare_to_earlier_commit: false
+
+      - name: Upload to ElasticSearch Instance (Daily)
+        if: github.event_name == 'schedule'
+        run: |
+          echo ${{ steps.run_date.outputs.run_date }}
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            -i zephyr-tests-main-intel-daily-1 artifacts/**/twister.json
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            -i zephyr-tests-main-intel-daily-nested artifacts/**/twister.json
+
+      - name: Upload to ElasticSearch Instance (Push)
+        if: github.event_name == 'push'
+        run: |
+          echo ${{ steps.run_date.outputs.run_date }}
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            -i zephyr-tests-main-intel-1 artifacts/**/twister.json
+
+      - name: Upload to ElasticSearch Instance (Pull Request)
+        if: github.event_name == 'pull_request'
+        # for testing purposes
+        run: |
+          echo ${{ steps.run_date.outputs.run_date }}
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            -i zephyr-tests-staging-1 artifacts/**/twister.json
