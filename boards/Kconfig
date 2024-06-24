@@ -52,6 +52,13 @@ config SIMICS_TARGET
 	  Mark all SIMICS targets with this variable for checking whether we are
 	  running in an emulated environment.
 
+config WHISPER_TARGET
+	bool
+	depends on RISCV
+	help
+	  Mark targets with this variable for checking whether we are running
+	  under the Whisper simulator.
+
 config NET_DRIVERS
 	bool
 	default y if QEMU_TARGET && NETWORKING
@@ -133,6 +140,8 @@ config QEMU_EXTRA_FLAGS
 	  This option is to pass onto QEMU an extra list of parameters
 	  to setup devices, for example to allocate interface for Zephyr
 	  GDBstub over serial with `-serial tcp:127.0.0.1:5678,server`
+
+rsource "Kconfig.whisper"
 
 # There might not be any board options, hence the optional source
 osource "$(BOARD_DIR)/Kconfig"
