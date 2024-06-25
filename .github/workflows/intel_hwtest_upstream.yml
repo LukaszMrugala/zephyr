@@ -396,9 +396,9 @@ jobs:
         run: |
           rm -rf ${{ steps.run_date.outputs.run_date_short }}
 
-          - name: Upload to ElasticSearch Instance
-          if: github.event_name == 'schedule'
-          run: |
-            echo ${{ steps.run_date.outputs.run_date }}
-            python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
-              -i zephyr-tests-main-daily-1 artifacts/**/twister.json
+      - name: Upload to ElasticSearch Instance
+        if: github.event_name == 'schedule'
+        run: |
+          echo ${{ steps.run_date.outputs.run_date }}
+          python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.run_date.outputs.run_date }} \
+            -i zephyr-tests-main-daily-1 artifacts/**/twister.json
