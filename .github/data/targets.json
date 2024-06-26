@@ -5,7 +5,7 @@
     "identifier": "intel_adsp_cavs25",
     "hwtype": "device",
     "hwmap": "map-igk.yaml",
-    "runner": "guest-odin1-2",
+    "runner": "fmos-cavs25-igk",
     "west_project_filter": "+sof"
   },
   {
@@ -16,7 +16,7 @@
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
-    "runner": "fmos-guest-ubuntu-12c",
+    "runner": "fmos-guest-ubuntu-24c",
     "west_project_filter": "+sof"
   },
   {
@@ -27,7 +27,7 @@
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace30_LX7HiFi4_PIF",
     "variant": "xt-clang",
-    "runner": "fmos-guest-ubuntu-12c",
+    "runner": "fmos-guest-ubuntu-24c",
     "west_project_filter": "+sof"
   },
   {
@@ -38,7 +38,7 @@
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
-    "runner": "fmos-guest-ubuntu-12c",
+    "runner": "fmos-guest-ubuntu-24c",
     "west_project_filter": "+sof"
   },
   {
@@ -172,7 +172,7 @@
     "toolchain_ver": "RI-2022.10-linux",
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
-    "runner": "guest-odin1-1",
+    "runner": "fmos-lnl-rvp-igk",
     "hwmap": "map-igk.yaml",
     "west_project_filter": "+sof"
   }
