@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT swerv_pic
+#define DT_DRV_COMPAT cdns_swerv_pic
 
 /**
- * @brief SweRV EH1 PIC driver
+ * @brief SweRV PIC driver
  */
 
 #include <zephyr/kernel.h>
