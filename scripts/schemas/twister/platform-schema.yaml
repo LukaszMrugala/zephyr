@@ -35,6 +35,7 @@ mapping:
         "tsim",
         "armfvp",
         "native",
+        "whisper",
         "custom",
       ]
   "simulation_exec":
