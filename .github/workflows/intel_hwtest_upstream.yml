@@ -86,7 +86,7 @@ jobs:
             scope: acceptance
             hwtype: device
             hwmap: "map-igk.yaml"
-            runner: guest-odin1-2
+            runner: fmos-cavs25-igk
             project-filter: '+sof'
           - platform_group: 4
             toolchain: 'zephyr'
@@ -136,7 +136,7 @@ jobs:
             toolchain_ver: 'RI-2022.10-linux'
             xtensa_core: 'ace10_LX7HiFi4_2022_10'
             variant: 'xt-clang'
-            runner: guest-odin1-1
+            runner: fmos-lnl-rvp-igk
             hwmap: "map-igk.yaml"
             project-filter: '+sof'
           - platform_group: 9
