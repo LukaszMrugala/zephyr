@@ -28,12 +28,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform_group: [1]
+        platform_group: [1, 5, 7, 9]
         include:
           - platform_group: 1
             toolchain: 'zephyr'
             hwtype: device
             scope: timer_behavior
+            timeout: 15
             platform: 'frdm_k64f'
             variant: 'zephyr'
             runner: fmos-testhost-nuc-igk-08
@@ -45,8 +46,37 @@ jobs:
               sample-rate=8_000_000,\
               threshold-volts=0'"
             container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
-            timeout: 15
             pip_install: "-r tests/kernel/timer/timer_behavior/pytest/requirements-saleae.txt"
+          - platform_group: 5
+            toolchain: 'zephyr'
+            scope: timer_behavior
+            timeout: 15
+            hwtype: device
+            platform: "it8xxx2_evb"
+            hwmap: "map-igk.yaml"
+            container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
+            variant: 'zephyr'
+            runner: fmos-testhost-nuc-igk-04
+            labgrid_place: "ite-board-ci_01,ite-board-dbg_01"
+            labgrid_timeout: 10
+          - platform_group: 7
+            toolchain: 'zephyr'
+            scope: timer_behavior
+            timeout: 15
+            hwtype: device
+            platform: 'up_squared'
+            variant: 'zephyr'
+            runner: fmos-up_squared-igk
+            hwmap: "map-igk.yaml"
+          - platform_group: 9
+            toolchain: 'zephyr'
+            scope: timer_behavior
+            timeout: 15
+            hwtype: device
+            platform: 'intel_ish_5_4_1'
+            variant: 'zephyr'
+            runner: fmos-ish-5-4-tgl-igk
+            hwmap: "map-igk.yaml"
 
     runs-on: ${{ matrix.runner }}
     timeout-minutes: ${{ matrix.timeout || 120 }}
@@ -125,16 +155,16 @@ jobs:
           #
           # cp -vr main-intel/boards/intel/adsp/support boards/intel/adsp/
           #
-          # cp -vr main-intel/boards/ite/it8xxx2_evb/support/loader.sh boards/ite/it8xxx2_evb/support/loader.sh
+          cp -vr main-intel/boards/ite/it8xxx2_evb/support/loader.sh boards/ite/it8xxx2_evb/support/loader.sh
           #
-          # mkdir -p boards/up-bridge-the-gap/up_squared/support && \
-          #  cp -v main-intel/boards/up-bridge-the-gap/up_squared/up_squared.yaml boards/up-bridge-the-gap/up_squared/ && \
-          #  cp -v main-intel/boards/up-bridge-the-gap/up_squared/support/up_squared_efi.sh boards/up-bridge-the-gap/up_squared/support/
+          mkdir -p boards/up-bridge-the-gap/up_squared/support && \
+            cp -v main-intel/boards/up-bridge-the-gap/up_squared/up_squared.yaml boards/up-bridge-the-gap/up_squared/ && \
+            cp -v main-intel/boards/up-bridge-the-gap/up_squared/support/up_squared_efi.sh boards/up-bridge-the-gap/up_squared/support/
           #
           # patch ISH:
-          # cp -rv main-intel/boards/intel/ish/board.cmake boards/intel/ish/
-          # mkdir -v boards/intel/ish/support && \
-          #   cp -rv main-intel/boards/intel/ish/support/tgl_board_flash.sh boards/intel/ish/support/
+          cp -rv main-intel/boards/intel/ish/board.cmake boards/intel/ish/
+          mkdir -v boards/intel/ish/support && \
+            cp -rv main-intel/boards/intel/ish/support/tgl_board_flash.sh boards/intel/ish/support/
           #
           # Sanitize HWMV2 platform name
           echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | tr '/@' '_')" >> "$GITHUB_ENV"
