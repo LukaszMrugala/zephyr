@@ -728,6 +728,7 @@ weact	WeAct Studio
 wemos	WEMOS Electronics
 wetek	WeTek Electronics, limited.
 wexler	Wexler
+whisper	Whisper, simulator for SweRV
 whwave	Shenzhen whwave Electronics, Inc.
 wi2wi	Wi2Wi, Inc.
 winbond	Winbond Electronics corp.
