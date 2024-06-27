@@ -165,6 +165,11 @@ class Handler:
             build_dir = self.build_dir
         return build_dir
 
+    @staticmethod
+    def info(txt):
+        sys.stdout.write("(pid=" + str(os.getpid()) + "): " + txt + "\n")
+        sys.stdout.flush()
+
 
 class BinaryHandler(Handler):
     def __init__(self, instance, type_str):
@@ -308,6 +313,7 @@ class BinaryHandler(Handler):
             self.instance.add_missing_case_status("blocked", "Timeout")
 
     def handle(self, harness):
+        self.info("HANDLE START FOR BINARYHANDLER")
         robot_test = getattr(harness, "is_robot_test", False)
 
         command = self._create_command(robot_test)
@@ -315,6 +321,7 @@ class BinaryHandler(Handler):
         logger.debug("Spawning process: " +
                      " ".join(shlex.quote(word) for word in command) + os.linesep +
                      "in directory: " + self.build_dir)
+        self.info(f"Command: {command}")
 
         start_time = time.time()
 
@@ -325,9 +332,11 @@ class BinaryHandler(Handler):
             return
 
         stderr_log = "{}/handler_stderr.log".format(self.instance.build_dir)
+        self.info("BinaryHandler Popen")
         with open(stderr_log, "w+") as stderr_log_fp, subprocess.Popen(command, stdout=subprocess.PIPE,
                               stderr=stderr_log_fp, cwd=self.build_dir, env=env) as proc:
             logger.debug("Spawning BinaryHandler Thread for %s" % self.name)
+            self.info(f"Spawning BinaryHandler Thread for {self.name} with proc {proc.pid}")
             t = threading.Thread(target=self._output_handler, args=(proc, harness,), daemon=True)
             t.start()
             t.join()
@@ -351,6 +360,7 @@ class BinaryHandler(Handler):
         self._update_instance_info(harness.state, handler_time)
 
         self._final_handle_actions(harness, handler_time)
+        self.info("HANDLE ENDED FOR BINARYHANDLER")
 
 
 class SimulationHandler(BinaryHandler):
@@ -650,6 +660,7 @@ class DeviceHandler(Handler):
         return serial_device, ser_pty_process
 
     def handle(self, harness):
+        self.info("HANDLE START FOR DEVICEHANDLER")
         runner = None
         hardware = self.get_hardware()
         if hardware:
@@ -779,6 +790,7 @@ class DeviceHandler(Handler):
             self.make_device_available(serial_pty)
         else:
             self.make_device_available(serial_device)
+        self.info("HANDLE ENDED FOR DEVICEHANDLER")
 
 
 class QEMUHandler(Handler):
@@ -1013,6 +1025,7 @@ class QEMUHandler(Handler):
             self.instance.add_missing_case_status("blocked")
 
     def handle(self, harness):
+        self.info("HANDLE START FOR QEMUHANDLER")
         self.run = True
 
         domain_build_dir = self.get_default_domain_build_dir()
@@ -1076,6 +1089,7 @@ class QEMUHandler(Handler):
         self._update_instance_info(harness.state, is_timeout)
 
         self._final_handle_actions(harness, 0)
+        self.info("HANDLE ENDED FOR QEMUHANDLER")
 
     def get_fifo(self):
         return self.fifo_fn
@@ -1295,6 +1309,7 @@ class QEMUWinHandler(Handler):
         self._stop_qemu_process(self.pid)
 
     def handle(self, harness):
+        self.info("HANDLE START FOR QEMUWINHANDLER")
         self.run = True
 
         domain_build_dir = self.get_default_domain_build_dir()
@@ -1342,6 +1357,7 @@ class QEMUWinHandler(Handler):
         self._update_instance_info(harness.state, is_timeout)
 
         self._final_handle_actions(harness, 0)
+        self.info("HANDLE ENDED FOR QEMUWINHANDLER")
 
     def get_fifo(self):
         return self.fifo_fn

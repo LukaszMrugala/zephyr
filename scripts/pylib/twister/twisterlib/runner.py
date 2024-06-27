@@ -599,14 +599,21 @@ class ProjectBuilder(FilterBuilder):
         else:
             self.log_info("{}".format(b_log), inline_logs)
 
+    @staticmethod
+    def info(txt):
+        sys.stdout.write("(pid=" + str(os.getpid()) + "): " + txt + "\n")
+        sys.stdout.flush()
 
     def process(self, pipeline, done, message, lock, results):
+        self.info("MGR START")
         op = message.get('op')
 
         self.instance.setup_handler(self.env)
 
         if op == "filter":
+            self.info(f"filter: {self.instance.name}")
             ret = self.cmake(filter_stages=self.instance.filter_stages)
+            self.info(f"I've filter: {self.instance.name}")
             if self.instance.status in ["failed", "error"]:
                 pipeline.put({"op": "report", "test": self.instance})
             else:
@@ -623,7 +630,9 @@ class ProjectBuilder(FilterBuilder):
 
         # The build process, call cmake and build with configured generator
         elif op == "cmake":
+            self.info(f"cmake: {self.instance.name}")
             ret = self.cmake()
+            self.info(f"I've cmake: {self.instance.name}")
             if self.instance.status in ["failed", "error"]:
                 pipeline.put({"op": "report", "test": self.instance})
             elif self.options.cmake_only:
@@ -643,8 +652,10 @@ class ProjectBuilder(FilterBuilder):
                     pipeline.put({"op": "build", "test": self.instance})
 
         elif op == "build":
+            self.info(f"build: {self.instance.name}")
             logger.debug("build test: %s" % self.instance.name)
             ret = self.build()
+            self.info(f"I've build: {self.instance.name}")
             if not ret:
                 self.instance.status = "error"
                 self.instance.reason = "Build Failure"
@@ -671,7 +682,9 @@ class ProjectBuilder(FilterBuilder):
                         pipeline.put({"op": "report", "test": self.instance})
 
         elif op == "gather_metrics":
+            self.info(f"gather_metrics: {self.instance.name}")
             ret = self.gather_metrics(self.instance)
+            self.info(f"I've gather_metrics: {self.instance.name}")
             if not ret or ret.get('returncode', 1) > 0:
                 self.instance.status = "error"
                 self.instance.reason = "Build Failure at gather_metrics."
@@ -683,8 +696,10 @@ class ProjectBuilder(FilterBuilder):
 
         # Run the generated binary using one of the supported handlers
         elif op == "run":
+            self.info(f"run: {self.instance.name}")
             logger.debug("run test: %s" % self.instance.name)
             self.run()
+            self.info(f"I've run: {self.instance.name}")
             logger.debug(f"run status: {self.instance.name} {self.instance.status}")
             try:
                 # to make it work with pickle
@@ -703,9 +718,11 @@ class ProjectBuilder(FilterBuilder):
 
         # Report results and output progress to screen
         elif op == "report":
+            self.info(f"report: {self.instance.name}")
             with lock:
                 done.put(self.instance)
                 self.report_out(results)
+                self.info(f"I've report: {self.instance.name}")
 
             if not self.options.coverage:
                 if self.options.prep_artifacts_for_testing:
@@ -716,11 +733,15 @@ class ProjectBuilder(FilterBuilder):
                     pipeline.put({"op": "cleanup", "mode": "all", "test": self.instance})
 
         elif op == "cleanup":
+            self.info(f"cleanup: {self.instance.name}")
             mode = message.get("mode")
             if mode == "device":
                 self.cleanup_device_testing_artifacts()
             elif mode == "passed" or (mode == "all" and self.instance.reason != "Cmake build failure"):
                 self.cleanup_artifacts()
+            self.info(f"I've cleanup: {self.instance.name}")
+
+        self.info("MGR END")
 
     def determine_testcases(self, results):
         yaml_testsuite_name = self.instance.testsuite.id
@@ -1113,6 +1134,7 @@ class ProjectBuilder(FilterBuilder):
         return build_result
 
     def run(self):
+        self.info("RUN START")
 
         instance = self.instance
 
@@ -1131,6 +1153,7 @@ class ProjectBuilder(FilterBuilder):
 
             if self.options.extra_test_args and instance.platform.arch == "posix":
                 instance.handler.extra_test_args = self.options.extra_test_args
+            self.info("RUN BEFORE GET HARNESS")
 
             harness = HarnessImporter.get_harness(instance.testsuite.harness.capitalize())
             try:
@@ -1140,13 +1163,18 @@ class ProjectBuilder(FilterBuilder):
                 instance.reason = str(error)
                 logger.error(instance.reason)
                 return
+            self.info(f"RUN HARNESS: {harness}")
+            self.info("RUN BEFORE RUN/HANDLE")
             #
             if isinstance(harness, Pytest):
+                self.info("RUN BEFORE PYTEST RUN")
                 harness.pytest_run(instance.handler.get_test_timeout())
             else:
+                self.info("RUN BEFORE HANDLE")
                 instance.handler.handle(harness)
 
         sys.stdout.flush()
+        self.info("RUN END")
 
     def gather_metrics(self, instance: TestInstance):
         build_result = {"returncode": 0}
@@ -1322,6 +1350,10 @@ class TwisterRunner:
                     else:
                         pipeline.put({"op": "cmake", "test": instance})
 
+    @staticmethod
+    def info(txt):
+        sys.stdout.write("(pid=" + str(os.getpid()) + "): " + txt + "\n")
+        sys.stdout.flush()
 
     def pipeline_mgr(self, pipeline, done_queue, lock, results):
         try:
@@ -1329,14 +1361,21 @@ class TwisterRunner:
                 with self.jobserver.get_job():
                     while True:
                         try:
+                            self.info("Trying to get from pipeline")
                             task = pipeline.get_nowait()
+                            self.info(f"Got {task} from pipeline")
                         except queue.Empty:
                             break
                         else:
+                            self.info(f"Starting else with {task['test']}")
                             instance = task['test']
+                            self.info(f"Instance {instance} created")
                             pb = ProjectBuilder(instance, self.env, self.jobserver)
+                            self.info(f"ProjectBuilder {pb} instantiated")
                             pb.duts = self.duts
+                            self.info(f"duts {pb.duts} assigned")
                             pb.process(pipeline, done_queue, task, lock, results)
+                            self.info("Ending else, processed")
 
                     return True
             else:
