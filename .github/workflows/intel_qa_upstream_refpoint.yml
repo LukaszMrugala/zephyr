@@ -1,0 +1,67 @@
+name: Retrieve Reference to the Last Tested SHA at upstream main
+on:
+  schedule:
+    - cron: '50 0 * * *' # daily @ 00:50 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  get_upstream_sha:
+    name: Get the last known good SHA
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.13
+    defaults:
+      run:
+        shell: bash
+    runs-on: fmos-guest-ubuntu-12c
+    env:
+      EXT_REPO: zephyrproject-rtos/zephyr
+      EXT_WORKFLOW: twister.yaml
+      EXT_BRANCH: main
+      ARTIFACT_DIR: ./_artifacts
+      ARTIFACT_NAME: refpoint-upstream
+    steps:
+
+      - name: Clean Workspace
+        run: |
+          # set dotglob so rm will remove dot files and dirs - (.west, etc.)
+          shopt -s dotglob
+          pwd
+          if [ -f $ARTIFACT_NAME ]; then
+            rm -v $ARTIFACT_NAME
+          fi
+          if [ -d $ARTIFACT_DIR ]; then
+            rm -rv $ARTIFACT_DIR
+          fi
+
+      - name: Update tools (TODO move to the docker container)
+        run: |
+          # Refresh gh CLI tool to the latest version, see https://github.com/cli/cli/blob/trunk/docs/install_linux.md
+          # Depends on: wget
+          sudo mkdir -p -m 755 /etc/apt/keyrings \
+            && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+            && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+            && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+            && sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o "Acquire::http::Proxy=${HTTP_PROXY}" update \
+            && sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o "Acquire::http::Proxy=${HTTP_PROXY}" install gh
+
+      - name: Get refpoint
+        id: get-reference-sha
+        env:
+          GH_TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+        run: |
+          REF_POINT=$(gh run list --repo $EXT_REPO --workflow $EXT_WORKFLOW --branch $EXT_BRANCH --event push --status success --limit 1 --json headSha --jq .[0].headSha)
+          echo $REF_POINT
+          echo $REF_POINT > ${{ env.ARTIFACT_NAME }}
+
+      - name: Store refpoint
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            ${{ env.ARTIFACT_NAME }}
+          retention-days: 1
