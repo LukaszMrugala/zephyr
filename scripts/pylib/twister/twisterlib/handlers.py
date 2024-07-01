@@ -190,6 +190,8 @@ class BinaryHandler(Handler):
             self.pid_fn = None  # clear so we don't try to kill the binary twice
             try:
                 p = psutil.Process(pid)
+                for child in p.children(recursive=True):
+                    child.kill()
                 p.kill()
                 p.wait(1)
             except (ProcessLookupError, psutil.NoSuchProcess):
