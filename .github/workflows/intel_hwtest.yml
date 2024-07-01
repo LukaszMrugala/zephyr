@@ -312,6 +312,8 @@ jobs:
       ELASTICSEARCH_KEY: ${{ secrets.ELASTICSEARCH_KEY }}
       ELASTICSEARCH_SERVER: 'https://reports-fmos.hf.intel.com:9200'
       BRANCH_NAME: ${{ github.event_name == 'schedule' && 'master' || 'test_branch' }}
+      STATIC_REPORTS_SERVER: 'static-reports-fmos.igk.intel.com'
+      STATIC_REPORTS_USER: 'zephyr'
     name: '[HW] Publish Test Results'
     needs: [run_twister]
     runs-on: fmos-guest-ubuntu-12c
@@ -351,8 +353,8 @@ jobs:
         if: ( github.event_name == 'schedule' || github.event_name == 'push') && steps.srs-prep-data.outcome == 'success'
         uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@fmos-scp-ssh-pipeline-v1
         with:
-          hostname: 'zep-fmos-static-reporting.igk.intel.com'
-          ssh-user: 'zephyr'
+          hostname: ${{ env.STATIC_REPORTS_SERVER }}
+          ssh-user: ${{ env.STATIC_REPORTS_USER }}
           ssh-key: ${{ secrets.IGK_PRIVATE_KEY }}
           ssh-pre: |
             'if [[ ! -d "/media/dskpool/ws-ztest/zephyrproject/daily_report/sumreport/${{ env.BRANCH_NAME }}/" ]]; then \
