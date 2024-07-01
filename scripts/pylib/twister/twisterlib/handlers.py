@@ -54,15 +54,59 @@ def terminate_process(proc):
     so we need to use try_kill_process_by_pid.
     """
 
-    for child in psutil.Process(proc.pid).children(recursive=True):
+
+
+    print_tree_stack = []
+    print_tree_data = []
+    print_tree_stack.append((0, proc.pid))
+    while print_tree_stack:
+        current_depth, current_proc = print_tree_stack.pop()
+        children = psutil.Process(current_proc).children(recursive=False)
+        children_data = [(current_depth+1, child.pid) for child in children]
+        print_tree_stack.extend(children_data)
+        print_tree_data.append((current_depth, current_proc))
+
+
+    parent = psutil.Process(proc.pid)
+    to_terminate = parent.children(recursive=True)
+    to_terminate.append(parent)
+
+    # If you do not terminate in the reverse PID order,
+    # you'll get zombie processes as you'd kill parents before their children
+    BinaryHandler.info(f'To terminate: {list(to_terminate)}')
+    to_terminate.sort(key=lambda x: x.pid, reverse=True)
+    BinaryHandler.info(f'To terminate sorted: {list(to_terminate)}')
+
+    for p in to_terminate:
         try:
-            os.kill(child.pid, signal.SIGTERM)
+            BinaryHandler.info(f'Terminate: {p.pid}')
+            p.terminate()
         except (ProcessLookupError, psutil.NoSuchProcess):
             pass
-    proc.terminate()
-    # sleep for a while before attempting to kill
-    time.sleep(0.5)
-    proc.kill()
+    BinaryHandler.info(f'After terminate: {list(to_terminate)}')
+    _, alive = psutil.wait_procs(to_terminate, timeout=1)
+    for p in alive:
+        try:
+            BinaryHandler.info(f'Kill: {p.pid}')
+            p.kill()
+        except (ProcessLookupError, psutil.NoSuchProcess):
+            pass
+    BinaryHandler.info(f'After kill: {list(to_terminate)}')
+    _, alive = psutil.wait_procs(to_terminate, timeout=1)
+    if alive:
+        BinaryHandler.info(f'Still alive?: {list(alive)}')
+        for d, p in print_tree_data:
+            BinaryHandler.info(f'{" " * d}{p}')
+
+    # for child in psutil.Process(proc.pid).children(recursive=True):
+    #     try:
+    #         os.kill(child.pid, signal.SIGTERM)
+    #     except (ProcessLookupError, psutil.NoSuchProcess):
+    #         pass
+    # proc.terminate()
+    # # sleep for a while before attempting to kill
+    # time.sleep(0.5)
+    # proc.kill()
 
 
 class Handler:
@@ -186,16 +230,31 @@ class BinaryHandler(Handler):
     def try_kill_process_by_pid(self):
         if self.pid_fn:
             pid = int(open(self.pid_fn).read())
+            self.info(f'Trying to kill process: {pid}')
             os.unlink(self.pid_fn)
             self.pid_fn = None  # clear so we don't try to kill the binary twice
-            try:
-                p = psutil.Process(pid)
-                for child in p.children(recursive=True):
-                    child.kill()
-                p.kill()
-                p.wait(1)
-            except (ProcessLookupError, psutil.NoSuchProcess):
-                pass
+
+            terminate_process(psutil.Process(pid))
+
+            # parent = psutil.Process(pid)
+            # to_terminate = parent.children(recursive=True)
+            # to_terminate.append(parent)
+            # self.info(f'To terminate: {list(to_terminate)}')
+            # for p in to_terminate:
+            #     try:
+            #         self.info(f'Terminate: {p.pid}')
+            #         p.terminate()
+            #     except (ProcessLookupError, psutil.NoSuchProcess):
+            #         pass
+            # _, alive = psutil.wait_procs(to_terminate, timeout=1)
+            # for p in alive:
+            #     try:
+            #         self.info(f'Kill: {p.pid}')
+            #         p.kill()
+            #     except (ProcessLookupError, psutil.NoSuchProcess):
+            #         pass
+
+            self.info(f'Succesfully try_killed: {pid}')
 
     def _output_reader(self, proc):
         self.line = proc.stdout.readline()
