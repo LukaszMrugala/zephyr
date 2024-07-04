@@ -24,16 +24,6 @@
     kernel.memory_protection.stackprot_tls: -> https://jira.devtools.intel.com/browse/RTOS-8596
 
 - scenarios:
-  - logging.immediate.log_immediate_preemption
-  - logging.immediate.clean_output
-  platforms:
-  - intel_adsp/ace15_mtpm
-  - intel_adsp/ace20_lnl
-  comment: >
-    logging.immediate.log_immediate_preemption: -> https://jira.devtools.intel.com/browse/RTOS-8594
-    logging.immediate.clean_output: -> https://jira.devtools.intel.com/browse/RTOS-8594
-
-- scenarios:
   - libraries.libc.common.minimal
   - logging.mipi_syst.log_syst_float_data
   platforms:
@@ -44,12 +34,6 @@
     libraries.libc.common.minimal: -> https://jira.devtools.intel.com/browse/RTOS-8595
     logging.mipi_syst.log_syst_float_data: -> https://jira.devtools.intel.com/browse/RTOS-8571
 
-- scenarios:
-  - drivers.usb.udc
-  platforms:
-  - frdm_k64f
-  comment: >
-    drivers.usb.udc: -> https://github.com/zephyrproject-rtos/zephyr/issues/74251
 
 - scenarios:
   - boards.mec172xevb_assy6906.i2c
@@ -57,3 +41,32 @@
   - boards.mec15xxevb_assy6853.qspi
   comment:
     HW does not have required sensors
+
+- scenarios:
+  - tests/subsys/logging/dictionary/logging.dictionary
+  platforms:
+  - intel_adsp/ace15_mtpm
+  - intel_adsp/ace20_lnl
+  - intel_adsp/cavs25
+  - mec172xevb_assy6906
+  - mec15xxevb_assy6853
+  - it8xxx2_evb
+  - npcx9m6f_evb
+  - frdm_k64f
+  - up_squared
+  - intel_ish_5_4_1/intel_ish_5_4_1/simics
+  - intel_ish_5_8_0/intel_ish_5_8_0/simics
+  comment: >
+    tests/subsys/logging/dictionary/logging.dictionary: -> https://github.com/zephyrproject-rtos/zephyr/issues/75253
+
+- scenarios:
+  - tests/subsys/logging/dictionary/logging.dictionary.fpu
+  platforms:
+  - mec15xxevb_assy6853
+  - npcx9m6f_evb
+  - frdm_k64f
+  - up_squared
+  - intel_ish_5_4_1/intel_ish_5_4_1/simics
+  - intel_ish_5_8_0/intel_ish_5_8_0/simics
+  comment: >
+    tests/subsys/logging/dictionary/logging.dictionary.fpu: -> https://github.com/zephyrproject-rtos/zephyr/issues/75253
