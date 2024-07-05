@@ -32,13 +32,45 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform_group: [1, 5, 7, 9]
+        platform_group: [1, 2, 3, 4, 5, 6, 7, 8, 9]
         include:
           - platform_group: 1
             toolchain: 'zephyr'
+            scope: timer_behavior
+            hwtype: device
+            platform: 'mec172xevb_assy6906'
+            variant: 'zephyr'
+            runner: fmos-testhost-nuc-igk-mec17
+            hwmap: "map-igk.yaml"
+            prepare: true
+            labgrid_place: "mec17-igk,mec17-igk-dediprog"
+            dpcmd_erase: "False"
+            dpcmd_place: "mec17-igk-dediprog"
+            labgrid_timeout: 3
+            container_options: '--privileged --device /dev/ttyUSB0:/dev/ttyUSB0 -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
+          - platform_group: 2
+            toolchain: 'zephyr'
+            scope: timer_behavior
+            hwtype: device
+            platform: 'intel_adsp/ace15_mtpm'
+            toolchain_ver: 'RI-2022.10-linux'
+            xtensa_core: 'ace10_LX7HiFi4_2022_10'
+            variant: 'xt-clang'
+            runner: fmos-mtl-igk
+            hwmap: "map-igk.yaml"
+            project-filter: '+sof'
+          - platform_group: 3
+            toolchain: 'zephyr'
+            platform: "intel_adsp/cavs25"
+            scope: timer_behavior
+            hwtype: device
+            hwmap: "map-igk.yaml"
+            runner: fmos-cavs25-igk
+            project-filter: '+sof'
+          - platform_group: 4
+            toolchain: 'zephyr'
             hwtype: device
             scope: timer_behavior
-            timeout: 15
             platform: 'frdm_k64f'
             variant: 'zephyr'
             runner: fmos-testhost-nuc-igk-08
@@ -54,7 +86,6 @@ jobs:
           - platform_group: 5
             toolchain: 'zephyr'
             scope: timer_behavior
-            timeout: 15
             hwtype: device
             platform: "it8xxx2_evb"
             hwmap: "map-igk.yaml"
@@ -63,19 +94,37 @@ jobs:
             runner: fmos-testhost-nuc-igk-04
             labgrid_place: "ite-board-ci_01,ite-board-dbg_01"
             labgrid_timeout: 10
+          - platform_group: 6
+            toolchain: 'zephyr'
+            scope: timer_behavior
+            hwtype: device
+            platform: 'npcx9m6f_evb'
+            variant: 'zephyr'
+            runner: fmos-testhost-nuc-igk-03
+            hwmap: "map-igk.yaml"
+            container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
           - platform_group: 7
             toolchain: 'zephyr'
             scope: timer_behavior
-            timeout: 15
             hwtype: device
             platform: 'up_squared'
             variant: 'zephyr'
             runner: fmos-up_squared-igk
             hwmap: "map-igk.yaml"
+          - platform_group: 8
+            toolchain: 'zephyr'
+            scope: timer_behavior
+            hwtype: device
+            platform: 'intel_adsp/ace20_lnl'
+            toolchain_ver: 'RI-2022.10-linux'
+            xtensa_core: 'ace10_LX7HiFi4_2022_10'
+            variant: 'xt-clang'
+            runner: fmos-lnl-rvp-igk
+            hwmap: "map-igk.yaml"
+            project-filter: '+sof'
           - platform_group: 9
             toolchain: 'zephyr'
             scope: timer_behavior
-            timeout: 15
             hwtype: device
             platform: 'intel_ish_5_4_1'
             variant: 'zephyr'
@@ -83,7 +132,7 @@ jobs:
             hwmap: "map-igk.yaml"
 
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: ${{ matrix.timeout || 120 }}
+    timeout-minutes: ${{ matrix.timeout || 30 }}
     steps:
       - name: Clean Workspace
         run: |
@@ -156,10 +205,10 @@ jobs:
           echo "ref_name=${{ github.ref_name }} ref=${{ github.ref }}"
           #
           # Patch the main branch
-          # sed -i '/default in ace15_mtpm/{s/"otc_private_key_3k.pem"/${CMAKE_CURRENT_LIST_DIR}\/support\/mtl_private_key.pem/}' boards/intel/adsp/board.cmake
-          # sed -i '/default in ace20_lnl/{s/"otc_private_key_3k.pem"/${CMAKE_CURRENT_LIST_DIR}\/support\/lnl_private_key.pem/};/default in ace20_lnl/a\  board_set_flasher_ifnset\(intel_adsp\)\n  board_finalize_runner_args\(intel_adsp\)' boards/intel/adsp/board.cmake
+          sed -i '/default in ace15_mtpm/{s/"otc_private_key_3k.pem"/${CMAKE_CURRENT_LIST_DIR}\/support\/mtl_private_key.pem/}' boards/intel/adsp/board.cmake
+          sed -i '/default in ace20_lnl/{s/"otc_private_key_3k.pem"/${CMAKE_CURRENT_LIST_DIR}\/support\/lnl_private_key.pem/};/default in ace20_lnl/a\  board_set_flasher_ifnset\(intel_adsp\)\n  board_finalize_runner_args\(intel_adsp\)' boards/intel/adsp/board.cmake
           #
-          # cp -vr main-intel/boards/intel/adsp/support boards/intel/adsp/
+          cp -vr main-intel/boards/intel/adsp/support boards/intel/adsp/
           #
           cp -vr main-intel/boards/ite/it8xxx2_evb/support/loader.sh boards/ite/it8xxx2_evb/support/loader.sh
           #
