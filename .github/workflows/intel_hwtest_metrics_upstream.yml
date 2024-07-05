@@ -8,6 +8,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  KPI_TARGET_BRANCH_NAME: main
+  KPI_TARGET_BRANCH_PATCH: main-intel
+
 jobs:
   run_twister:
     name: '[HW] run ${{ matrix.platform }}'
@@ -91,10 +95,11 @@ jobs:
           rm -rf ./.??* || true
           ls -la ./
 
-      - name: Checkout main (upstream)
+      - name: Checkout ${{ env.KPI_TARGET_BRANCH_NAME }} branch
+        if: ${{ env.KPI_TARGET_BRANCH_NAME }}
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ env.KPI_TARGET_BRANCH_NAME }}
           fetch-depth: 0
 
       - name: Checkout the triggering branch to main-intel
@@ -144,6 +149,7 @@ jobs:
           pip show grpcio grpcio-tools logic2-automation
 
       - name: Patching from main-intel
+        if: ${{ env.KPI_TARGET_BRANCH_PATCH }}
         shell: bash
         run: |
           echo "head_ref=${{ github.head_ref }} base_ref=${{ github.base_ref }}"
@@ -324,6 +330,6 @@ jobs:
             --map-file scripts/ci/zephyr_twister_flat_recording_metrics_index.json \
             --flatten recording --exclude path run_id \
             --run-id "${{ github.run_id }}" --run-attempt "${{ github.run_attempt }}" \
-            --run-workflow "kpi_metrics:${{ github.event_name }}" --run-branch "${{ github.ref_name }}" \
+            --run-workflow "kpi_metrics:${{ github.event_name }}" --run-branch "${{ env.KPI_TARGET_BRANCH_NAME }}" \
             -i zephyr-tests-recording-metrics artifacts/**/twister.json
         #
