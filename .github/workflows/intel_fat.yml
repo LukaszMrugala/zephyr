@@ -112,6 +112,8 @@ jobs:
           cp ${GITHUB_WORKSPACE}/../build-mtl/zephyr/zephyr.ri ${GITHUB_WORKSPACE}/../intel/std_sim
 
       - name: Run FAT testcases
+        env:
+          TIMEOUT_PYTEST: '3m'
         shell: bash
         run: |
           cd ${GITHUB_WORKSPACE}/../intel/frameworks.validation.firmware-automated-testing.fat
@@ -133,7 +135,7 @@ jobs:
             test=${mtl_test_list[$i]}
             echo "Running test $((i + 1)) of ${#mtl_test_list[@]}"
 
-            output=$(python3.12 -m pytest -p no:labgrid --iterations=1 -sv --platform=mtl \
+            output=$(timeout --foreground ${TIMEOUT_PYTEST} python3.12 -m pytest -p no:labgrid --iterations=1 -sv --platform=mtl \
                 --pnp-sim --pnp-sim-path=${GITHUB_WORKSPACE}/../intel/std_sim/ \
                 --pnp-sim-params="config=${GITHUB_WORKSPACE}/../intel/std_sim/config.ini" \
                 --rom=${GITHUB_WORKSPACE}/../intel/std_sim/dsp_rom_mtl_release.bin \
@@ -147,7 +149,8 @@ jobs:
             else
               echo "$test: FAILED" | tee -a "${results_file}"
               echo "Output from failed test $test:"
-              echo "$output"
+              # Print the first 200 lines of the output
+              echo "$output" | head -n 200
               any_test_failed=true
             fi
           done
