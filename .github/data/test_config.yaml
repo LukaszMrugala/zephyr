@@ -64,3 +64,8 @@ levels:
     adds:
       - kernel.timer.timer
       - kernel.timer.timer_behavior_external
+  - name: memory_footprint
+    description: >
+      Memory footprint estimation targets (build only).
+    adds:
+      - benchmark.kernel.footprints.*
