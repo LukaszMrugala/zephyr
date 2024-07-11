@@ -34,7 +34,7 @@ on:
           - intel_adsp/ace15_mtpm
           - intel_adsp/ace20_lnl
           - intel_ish_5_8_0/intel_ish_5_8_0/simics
-          - intel_ish_5_4_1/intel_ish_5_8_0/simics
+          - intel_ish_5_4_1/intel_ish_5_4_1/simics
           - intel_ish_5_4_1
           - npcx9m6f_evb
           - up_squared
