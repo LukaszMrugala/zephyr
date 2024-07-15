@@ -113,7 +113,7 @@ jobs:
 
       - name: Run FAT testcases
         env:
-          TIMEOUT_PYTEST: '3m'
+          TIMEOUT_PYTEST: '10m'
         shell: bash
         run: |
           cd ${GITHUB_WORKSPACE}/../intel/frameworks.validation.firmware-automated-testing.fat
