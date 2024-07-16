@@ -235,12 +235,10 @@ jobs:
             export XTENSA_CORE=${{ matrix.target.xtensa_core }}
             export TOOLCHAIN_VER=${{ matrix.target.toolchain_ver }}
             export XTENSA_BUILDS_DIR=/opt/toolchains/xtensa/XtDevTools/install/builds
-            export TWISTER_QUARANTINE_LIST=.github/data/xcc-twister-quarantine-list.yml
             export XTENSA_SYSTEM=/opt/toolchains/xtensa/XtDevTools/install/tools/${{ matrix.target.toolchain_ver }}/XtensaTools/config/
-          else
-            export TWISTER_QUARANTINE_LIST=.github/data/twister-quarantine-list.yml
           fi
 
+          export TWISTER_QUARANTINE_LIST=.github/data/twister-quarantine-list.yml
           export PATH=$PATH:/opt/tools/bin
           EXTRA_TWISTER_OPTS=""
           if [ "${{github.event_name}}" = "pull_request" ]; then

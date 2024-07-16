@@ -274,12 +274,10 @@ jobs:
             export XTENSA_CORE=${{ matrix.xtensa_core }}
             export TOOLCHAIN_VER=${{ matrix.toolchain_ver }}
             export XTENSA_BUILDS_DIR=/opt/toolchains/xtensa/XtDevTools/install/builds
-            export TWISTER_QUARANTINE_LIST=main-intel/.github/data/xcc-twister-quarantine-list.yml
             export XTENSA_SYSTEM=/opt/toolchains/xtensa/XtDevTools/install/tools/${{ matrix.toolchain_ver }}/XtensaTools/config/
-          else
-            export TWISTER_QUARANTINE_LIST=main-intel/.github/data/twister-quarantine-list.yml
           fi
 
+          export TWISTER_QUARANTINE_LIST=main-intel/.github/data/twister-quarantine-list.yml
           TEST_COV="dummy"
           if [ ${{ matrix.scope }} ]; then
             TEST_COV=${{ matrix.scope }}
