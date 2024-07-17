@@ -59,3 +59,10 @@
   comment: >
     logging.mipi_syst -> https://jira.devtools.intel.com/browse/RTOS-8571
     xt-clang packs floating point numbers in va_args incorrectly.
+
+- scenarios:
+  - kernel.memory_protection.mem_map.soc_intel_adsp
+  platforms:
+  - intel_adsp/ace30_ptl/sim
+  comment: >
+    The exhaustion test take too long in simulator -> https://jira.devtools.intel.com/browse/RTOS-8610
