@@ -5,35 +5,12 @@
 #  - arch.interrupt
 #  - boards.*
 
-
 - scenarios:
   - boards.intel_adsp.ssp
   platforms:
   - intel_adsp/cavs25
   comment: >
     boards.intel_adsp.ssp: -> https://github.com/zephyrproject-rtos/zephyr/issues/61789
-
-- scenarios:
-  - kernel.memory_protection.stackprot
-  - kernel.memory_protection.stackprot_tls
-  platforms:
-  - intel_ish_5_4_1/intel_ish_5_4_1/simics
-  - intel_ish_5_8_0/intel_ish_5_8_0/simics
-  comment: >
-    kernel.memory_protection.stackprot: -> https://jira.devtools.intel.com/browse/RTOS-8596
-    kernel.memory_protection.stackprot_tls: -> https://jira.devtools.intel.com/browse/RTOS-8596
-
-- scenarios:
-  - libraries.libc.common.minimal
-  - logging.mipi_syst.log_syst_float_data
-  platforms:
-  - intel_adsp/ace15_mtpm/sim
-  - intel_adsp/ace20_lnl/sim
-  - intel_adsp/ace30_ptl/sim
-  comment: >
-    libraries.libc.common.minimal: -> https://jira.devtools.intel.com/browse/RTOS-8595
-    logging.mipi_syst.log_syst_float_data: -> https://jira.devtools.intel.com/browse/RTOS-8571
-
 
 - scenarios:
   - boards.mec172xevb_assy6906.i2c
@@ -44,29 +21,8 @@
 
 - scenarios:
   - tests/subsys/logging/dictionary/logging.dictionary
-  platforms:
-  - intel_adsp/ace15_mtpm
-  - intel_adsp/ace20_lnl
-  - intel_adsp/cavs25
-  - mec172xevb_assy6906
-  - mec15xxevb_assy6853
-  - it8xxx2_evb
-  - npcx9m6f_evb
-  - frdm_k64f
-  - up_squared
-  - intel_ish_5_4_1/intel_ish_5_4_1/simics
-  - intel_ish_5_8_0/intel_ish_5_8_0/simics
-  comment: >
-    tests/subsys/logging/dictionary/logging.dictionary: -> https://github.com/zephyrproject-rtos/zephyr/issues/75253
-
-- scenarios:
   - tests/subsys/logging/dictionary/logging.dictionary.fpu
   platforms:
-  - mec15xxevb_assy6853
-  - npcx9m6f_evb
-  - frdm_k64f
-  - up_squared
   - intel_ish_5_4_1/intel_ish_5_4_1/simics
-  - intel_ish_5_8_0/intel_ish_5_8_0/simics
   comment: >
-    tests/subsys/logging/dictionary/logging.dictionary.fpu: -> https://github.com/zephyrproject-rtos/zephyr/issues/75253
+    tests/subsys/logging/dictionary/logging.dictionary & logging.dictionary.fpu: -> https://jira.devtools.intel.com/browse/RTOS-8677
