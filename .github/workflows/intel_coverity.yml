@@ -139,7 +139,7 @@ jobs:
       # the coverity runs
       - name: Upload Coverity Build Logs
         if: failure() || success()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: build-log.txt
           path: cov-test-build/cov-int/build-log.txt
