@@ -34,6 +34,7 @@ on:
           - npcx9m6f_evb
           - up_squared
           - it8xxx2_evb
+          - cdns_swerv/s400/whisper
       scope:
         description: 'Test Scope'
         type: choice

@@ -175,5 +175,13 @@
     "runner": "fmos-lnl-rvp-igk",
     "hwmap": "map-igk.yaml",
     "west_project_filter": "+sof"
+  },
+  {
+    "toolchain": "zephyr",
+    "hwtype": "simulator",
+    "platform": "cdns_swerv/s400/whisper",
+    "identifier": "cdns_swerv_s400_whisper",
+    "variant": "zephyr",
+    "runner": "fmos-guest-ubuntu-24c"
   }
 ]
