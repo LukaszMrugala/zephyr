@@ -6,7 +6,8 @@
     "hwtype": "device",
     "hwmap": "map-igk.yaml",
     "runner": "fmos-cavs25-igk",
-    "west_project_filter": "+sof"
+    "west_project_filter": "+sof",
+    "groups": ["upstream"]
   },
   {
     "hwtype": "simulator",
@@ -61,7 +62,8 @@
     "labgrid_place": "mec17-igk",
     "labgrid_timeout": 3,
     "dpcmd_erase": "False",
-    "dpcmd_place": "mec17-igk-dediprog"
+    "dpcmd_place": "mec17-igk-dediprog",
+    "groups": ["upstream"]
   },
   {
     "toolchain": "zephyr",
@@ -73,7 +75,8 @@
     "hwmap": "map-igk.yaml",
     "container_options": "--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id",
     "pyocd_board_id": "02400b0177384e45002070016f01001ac401000197969900,02400b0177384e45000770016f01001ec401000197969900",
-    "pyocd_timeout": 10
+    "pyocd_timeout": 10,
+    "groups": ["upstream"]
   },
   {
     "toolchain": "zephyr",
@@ -118,7 +121,8 @@
     "variant": "zephyr",
     "runner": "fmos-ish-5-4-tgl-igk",
     "timeout": 240,
-    "container_options": "--cpus=\"8\""
+    "container_options": "--cpus=\"8\"",
+    "groups": ["upstream"]
   },
   {
     "toolchain": "zephyr",
@@ -128,7 +132,8 @@
     "variant": "zephyr",
     "runner": "fmos-testhost-nuc-igk-03",
     "hwmap": "map-igk.yaml",
-    "container_options": "--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id"
+    "container_options": "--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id",
+    "groups": ["upstream"]
   },
   {
     "toolchain": "zephyr",
@@ -138,7 +143,8 @@
     "variant": "zephyr",
     "timeout": 120,
     "runner": "fmos-up_squared-igk",
-    "hwmap": "map-igk.yaml"
+    "hwmap": "map-igk.yaml",
+    "groups": ["upstream"]
   },
   {
     "toolchain": "zephyr",
@@ -150,7 +156,8 @@
     "variant": "zephyr",
     "runner": "fmos-testhost-nuc-igk-04",
     "labgrid_place": "ite-board-ci_01,ite-board-dbg_01",
-    "labgrid_timeout": 10
+    "labgrid_timeout": 10,
+    "groups": ["upstream"]
   },
   {
     "toolchain": "zephyr",
@@ -162,7 +169,8 @@
     "variant": "xt-clang",
     "runner": "fmos-mtl-igk",
     "hwmap": "map-igk.yaml",
-    "west_project_filter": "+sof"
+    "west_project_filter": "+sof",
+    "groups": ["upstream"]
   },
   {
     "toolchain": "zephyr",
@@ -174,7 +182,8 @@
     "variant": "xt-clang",
     "runner": "fmos-lnl-rvp-igk",
     "hwmap": "map-igk.yaml",
-    "west_project_filter": "+sof"
+    "west_project_filter": "+sof",
+    "groups": ["upstream"]
   },
   {
     "toolchain": "zephyr",
