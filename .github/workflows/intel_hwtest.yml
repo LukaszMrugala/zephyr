@@ -75,46 +75,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Generate matrix
         id: generate-matrix
-        run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            # pull request
-            build_target_all="y"
-          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            # dispatch
-            target=${{ github.event.inputs.target }}
-            target=${target//\//_}
-            eval build_target_$target="y"
-          else
-            # push / schedule
-            build_target_all="y"
-          fi
-
-
-          if [ "${build_target_all}" == "y" ]; then
-            for target in `jq -r '.[].platform' .github/data/targets.json`; do
-              eval build_target_${target//\//_}="y"
-            done
-          fi
-
-          MATRIX_TARGETS='['
-          for target in `jq -r '.[].platform' .github/data/targets.json`; do
-            eval check='$'build_target_${target//\//_}
-            if [ "${check}" == "y" ]; then
-              MATRIX_TARGETS+=$(jq --arg target "$target" '.[] | select(.platform == $target)' .github/data/targets.json),
-            fi
-          done
-          MATRIX_TARGETS+=']'
-
-          # Escape control characters because GitHub Actions
-          MATRIX_TARGETS="${MATRIX_TARGETS//'%'/''}"
-          MATRIX_TARGETS="${MATRIX_TARGETS//$'\n'/''}"
-          MATRIX_TARGETS="${MATRIX_TARGETS//$'\r'/''}"
-
-          MATRIX_TARGETS=$(echo "${MATRIX_TARGETS}" | sed -zr 's/,([^,]*$)/\1/')
-
-          echo "targets=${MATRIX_TARGETS}" >> $GITHUB_OUTPUT
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-generate-matrix@fmos-generate-matrix-v1
+        with:
+          targets: ${{ inputs.target || 'all' }}
+          targets_path: .github/data/targets.json
 
   run_twister:
     name: '[HW] test ${{ matrix.target.platform }}'
