@@ -112,7 +112,7 @@
 - connected: true
   fixtures:
     - gpio_loopback
-  id: A50285BI
+  id: A10MWSNP
   platform: it8xxx2_evb
   product: FT232R USB UART
   runner: misc-flasher
