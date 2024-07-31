@@ -174,7 +174,7 @@ jobs:
             --quarantine-list $TWISTER_QUARANTINE_LIST \
             --build-only \
             --footprint-report \
-            --enable-size-report --footprint-from-buildlog \
+            --enable-size-report \
             --test-config main-intel/.github/data/test_config.yaml \
             --level $TEST_COV \
             ${{ matrix.twister_extra_args }} \
