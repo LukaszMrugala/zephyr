@@ -82,7 +82,7 @@ jobs:
             platform: 'intel_ish_5_4_1'
             variant: 'zephyr'
 
-    runs-on: fmos-guest-ubuntu-12c
+    runs-on: fmos-guest-ubuntu-24c
     timeout-minutes: ${{ matrix.timeout || 60 }}
     steps:
       - name: Clean Workspace
