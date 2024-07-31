@@ -140,24 +140,8 @@ jobs:
         if: ${{ env.KPI_TARGET_BRANCH_PATCH }}
         shell: bash
         run: |
-          echo "head_ref=${{ github.head_ref }} base_ref=${{ github.base_ref }}"
-          echo "ref_name=${{ github.ref_name }} ref=${{ github.ref }}"
-          #
-          cp -v main-intel/boards/up-bridge-the-gap/up_squared/up_squared.yaml boards/up-bridge-the-gap/up_squared/
-          #
-          cp -rv main-intel/boards/intel/ish/board.cmake boards/intel/ish/
-          #
           # Sanitize HWMV2 platform name
           echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | tr '/@' '_')" >> "$GITHUB_ENV"
-
-      - name: Build RIMAGE
-        if: ${{ contains(matrix.platform, 'intel_adsp') }}
-        run: |
-          pushd ../modules/audio/sof/tools/rimage
-          cmake -B build/
-          make  -C build/
-          sudo cp build/rimage /usr/local/bin/
-          popd
 
       - name: Execute Tests
         run: |
