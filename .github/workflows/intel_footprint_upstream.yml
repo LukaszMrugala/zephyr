@@ -13,8 +13,68 @@ env:
   KPI_TARGET_BRANCH_PATCH: main-intel
 
 jobs:
+
+  # TODO: make a custom action and run it as a step
+  get_rrr:
+    name: '[Footprint] Get RRR'
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.13
+    defaults:
+      run:
+        shell: bash
+    runs-on: fmos-guest-ubuntu-12c
+    outputs:
+      rrr-sha: ${{ steps.read-rrr.outputs.rrr-sha }}
+    env:
+      OUR_REPO: ${{ github.repository }}
+      REF_WORKFLOW: intel_qa_upstream_refpoint.yml
+      REF_BRANCH: main-intel
+      ARTIFACT_DIR: ./_artifacts
+      ARTIFACT_NAME: refpoint-upstream
+    steps:
+      - name: Clean Workspace
+        run: |
+          # set dotglob so rm will remove dot files and dirs - (.west, etc.)
+          shopt -s dotglob
+          pwd
+          if [ -d $ARTIFACT_DIR ]; then
+            rm -rv $ARTIFACT_DIR
+          fi
+      - name: Update tools (TODO move to the docker container)
+        run: |
+          # Refresh gh CLI tool to the latest version, see https://github.com/cli/cli/blob/trunk/docs/install_linux.md
+          # Depends on: wget
+          sudo mkdir -p -m 755 /etc/apt/keyrings \
+            && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+            && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+            && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+            && sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o "Acquire::http::Proxy=${HTTP_PROXY}" update \
+            && sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o "Acquire::http::Proxy=${HTTP_PROXY}" install gh
+      - name: Read the last refpoint
+        id: read-rrr
+        env:
+          GH_TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+        run: |
+          # --event schedule
+          REF_LAST_RUN=$(gh run list --repo $OUR_REPO --workflow $REF_WORKFLOW --branch $REF_BRANCH --status success --limit 1 --json databaseId --jq .[0].databaseId)
+          if [ ! -z "$REF_LAST_RUN" ]; then
+            echo "last_run=$REF_LAST_RUN"
+            LAST_RRR=$(gh run download --repo $OUR_REPO $REF_LAST_RUN --name $ARTIFACT_NAME --dir $ARTIFACT_DIR && head -n 1 $ARTIFACT_DIR/$ARTIFACT_NAME)
+          else
+            echo "ERROR: No refpoint found"
+            exit 1
+          fi
+          echo "last_rrr=$LAST_RRR"
+          SHA_RE='^[0-9a-fA-F]{40}$'
+          if [[ ! $LAST_RRR =~ $SHA_RE ]]; then
+             echo "ERROR: Invalid refpoint $LAST_RRR"
+             exit 1
+          fi
+          echo "rrr-sha=$LAST_RRR" >> $GITHUB_OUTPUT
+
   run_twister:
     name: '[Footprint] run ${{ matrix.platform }}'
+    needs: [get_rrr]
     defaults:
       run:
         shell: bash
@@ -95,10 +155,10 @@ jobs:
           rm -rf ./.??* || true
           ls -la ./
 
-      - name: Checkout ${{ env.KPI_TARGET_BRANCH_NAME }} (upstream)
+      - name: 'Checkout ${{ needs.get_rrr.outputs.rrr-sha }} as ${{ env.KPI_TARGET_BRANCH_NAME }}'
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.KPI_TARGET_BRANCH_NAME }}
+          ref: ${{ needs.get_rrr.outputs.rrr-sha }}
           fetch-depth: 0
 
       - name: Checkout the triggering branch to main-intel
