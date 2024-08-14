@@ -42,5 +42,5 @@ manifest:
     - name: whisper
       path: intel/whisper
       repo-path: os.rtos.zephyr.tools.whisper
-      revision: pull/1/head
+      revision: 9195b67113d7f3effb9fc626cbe7e5f075eb7840
       remote: intel
