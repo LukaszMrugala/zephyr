@@ -108,7 +108,7 @@ jobs:
         run: |
           export ZEPHYR_BASE=${GITHUB_WORKSPACE}
           cd ${GITHUB_WORKSPACE}/..
-          west build --build-dir build-mtl -p always -b intel_adsp_ace15_mtpm ./modules/audio/sof/app
+          west build --build-dir build-mtl -p always -b intel_adsp_ace15_mtpm ./modules/audio/sof/app -DEXTRA_CONF_FILE=llext_relocatable.conf
           cp ${GITHUB_WORKSPACE}/../build-mtl/zephyr/zephyr.ri ${GITHUB_WORKSPACE}/../intel/std_sim
 
       - name: Run FAT testcases
