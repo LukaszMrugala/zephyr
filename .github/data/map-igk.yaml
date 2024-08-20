@@ -63,7 +63,7 @@
   platform: up_squared
   product: none
   runner: misc-flasher
-  serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.214 stty raw 115200 -F /dev/ttyUP2 && cat /dev/ttyUP2"
+  serial_pty: "nc 192.168.24.101 5000"
   baud: 115200
   runner_params:
     - boards/up-bridge-the-gap/up_squared/support/up_squared_efi.sh
@@ -80,7 +80,7 @@
   platform: up_squared
   product: none
   runner: misc-flasher
-  serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.214 stty raw 115200 -F /dev/ttyUP2_2 && cat /dev/ttyUP2_2"
+  serial_pty: "nc 192.168.24.102 5000"
   baud: 115200
   runner_params:
     - boards/up-bridge-the-gap/up_squared/support/up_squared_efi.sh
