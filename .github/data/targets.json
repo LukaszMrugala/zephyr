@@ -138,6 +138,17 @@
   {
     "toolchain": "zephyr",
     "hwtype": "device",
+    "platform": "npcx4m8f_evb",
+    "identifier": "Ramon-EVB-029-EVB",
+    "variant": "zephyr",
+    "runner": "fmos-npcx4m8f-igk",
+    "hwmap": "map-igk.yaml",
+    "container_options": "--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id",
+    "groups": ["upstream"]
+  },
+  {
+    "toolchain": "zephyr",
+    "hwtype": "device",
     "platform": "up_squared",
     "identifier": "up_squared",
     "variant": "zephyr",

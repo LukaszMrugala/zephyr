@@ -57,7 +57,14 @@
   product: FT230X Basic UART
   runner: openocd
   serial: /dev/serial/by-id/usb-FTDI_FT230X_Basic_UART_D30CC4MH-if00-port0
-
+- baud: 115200
+  connected: true
+  flash_timeout: 60
+  id: Ramon-EVB-029-
+  platform: npcx4m8f_evb
+  product: NPCX4mnx_Evaluation_Board
+  runner: openocd
+  serial: /dev/serial/by-id/usb-Nuvoton_NPCX4mnx_Evaluation_Board_Ramon-EVB-029--if02-port0
 - connected: true
   id: "up2"
   platform: up_squared
