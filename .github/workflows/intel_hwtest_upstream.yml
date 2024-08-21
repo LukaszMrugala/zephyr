@@ -335,7 +335,7 @@ jobs:
 
       - name: Upload to Static Report Server - Upload
         if: ( github.event_name == 'schedule' || github.event_name == 'push') && steps.srs-prep-data.outcome == 'success'
-        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@fmos-scp-ssh-pipeline-v1
+        uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@fmos-scp-ssh-pipeline-v1.1
         with:
           hostname: ${{ env.STATIC_REPORTS_SERVER }}
           ssh-user: ${{ env.STATIC_REPORTS_USER }}
