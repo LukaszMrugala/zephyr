@@ -55,7 +55,7 @@ on:
 
 concurrency:
   group: ${{ github.event_name == 'workflow_dispatch' && github.run_id || github.head_ref || github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+  cancel-in-progress: ${{ ! contains(fromJSON('["push","workflow_dispatch"]'), github.event_name) }}
 
 jobs:
   setup:
