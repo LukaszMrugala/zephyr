@@ -1,0 +1,138 @@
+name: Download sim artifacts from upstream Zephyr action "Run tests with twister"
+on:
+  schedule:
+  - cron: '0 4 * * *' # daily @ 04:00 UTC
+  workflow_dispatch:
+env:
+  GH_TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+  ARTIFACT_DIR: _artifacts
+  UPSTREAM_REPO: zephyrproject-rtos/zephyr
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  get-the-last-run_id-of-run-tests-with-twister:
+    name: Get the last UPSTREAM run_id of action "Run tests with twister"
+    defaults:
+      run:
+        shell: bash
+    runs-on: fmos-guest-ubuntu-12c
+    outputs:
+      run_id: ${{ steps.get-rrr.outputs.run_id }}
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.14.1
+    env:
+      OUR_REPO: ${{ github.repository }}
+      REF_BRANCH: main-intel
+      REF_WORKFLOW: intel_qa_upstream_refpoint.yml
+      ARTIFACT_DIR: ./_artifacts
+      ARTIFACT_NAME: refpoint_v2-upstream
+      UPSTREAM_BRANCH: main
+    steps:
+    - name: Clean Workspace
+      run: |
+        # set dotglob so rm will remove dot files and dirs - (.west, etc.)
+        shopt -s dotglob
+
+        if [ -d ${{ env.ARTIFACT_DIR }} ]; then
+          rm -rv ${{ env.ARTIFACT_DIR }}
+        fi
+
+    - name: Get the last refpoint
+      id: get-rrr
+      run: |
+        REF_LAST_RUN=$(gh run list --repo $OUR_REPO --workflow $REF_WORKFLOW --branch $REF_BRANCH --status success --limit 1 --json databaseId --jq .[0].databaseId)
+
+        if [ ! -z "$REF_LAST_RUN" ]; then
+          echo "last_run=$REF_LAST_RUN"
+          RUN_ID=$(gh run download --repo $OUR_REPO $REF_LAST_RUN --name $ARTIFACT_NAME --dir $ARTIFACT_DIR && jq -r ".[0].databaseId" $ARTIFACT_DIR/$ARTIFACT_NAME)
+
+          if [ ! -z "$RUN_ID" ]; then
+            echo "run_id=$RUN_ID"
+          else
+            echo "ERROR: No run id found"
+            exit 1
+          fi
+        else
+          echo "ERROR: No refpoint found"
+          exit 1
+        fi
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+
+  publish-test-results:
+    runs-on: fmos-guest-ubuntu-12c
+    name: 'Publish Test Results from the UPSTREAM action [Run tests with twister (${{ needs.get-the-last-run_id-of-run-tests-with-twister.outputs.run_id }})]'
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.14.1
+    env:
+      ELASTICSEARCH_KEY: ${{ secrets.ELASTICSEARCH_KEY }}
+      ELASTICSEARCH_SERVER: 'https://reports-fmos.hf.intel.com:9200'
+      BRANCH_NAME: ${{ github.event_name == 'schedule' && 'upstream' || 'upstream_pr' }}
+      STATIC_REPORTS_SERVER: 'static-reports-fmos.igk.intel.com'
+      STATIC_REPORTS_USER: 'zephyr'
+      ARTIFACT_PREFIX: 'sim_'
+    needs: [get-the-last-run_id-of-run-tests-with-twister]
+    continue-on-error: false
+    steps:
+    - name: Prepare Environment
+      id: pre-env
+      run: |
+        run_date_short=$(date +'%Y-%m-%d')
+        echo "run_date=$(date --iso-8601=minutes)" >> "$GITHUB_OUTPUT"
+        echo "run_date_short=$run_date_short" >> "$GITHUB_OUTPUT"
+        echo "artifactory_dir=$run_date_short" >> "$GITHUB_OUTPUT"
+
+        rm -rf ${{ steps.pre-env.outputs.run_date_short }}
+        pip3 install elasticsearch
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        github-token: ${{ env.GH_TOKEN }}
+        repository: ${{ env.UPSTREAM_REPO }}
+        run-id: ${{ needs.get-the-last-run_id-of-run-tests-with-twister.outputs.run_id }}
+        path: ${{ steps.pre-env.outputs.run_date_short }}
+
+    - name: Upload to Static Report Server - Clean and Pre Environment
+      if: github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'pull_request'
+      id: srs-prep-data
+      run: |
+        for dir in "${{ steps.pre-env.outputs.artifactory_dir }}"/*/; do
+          base_name=$(basename "$dir")
+          new_name="${{ env.ARTIFACT_PREFIX }}$base_name"
+          mv "$dir" "${{ steps.pre-env.outputs.artifactory_dir }}/$new_name"
+        done
+
+    - name: Upload to Static Report Server - Upload
+      if: ( github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'pull_request') && steps.srs-prep-data.outcome == 'success'
+      uses: intel-innersource/os.rtos.zephyr.devops.ci/actions/fmos-scp-ssh-pipeline@fmos-scp-ssh-pipeline-v1.1
+      with:
+        hostname: ${{ env.STATIC_REPORTS_SERVER }}
+        ssh-user: ${{ env.STATIC_REPORTS_USER }}
+        ssh-key: ${{ secrets.IGK_PRIVATE_KEY }}
+        ssh-pre: |
+          'if [[ ! -d "/media/dskpool/ws-ztest/zephyrproject/daily_report/sumreport/${{ env.BRANCH_NAME }}" ]]; then \
+          mkdir -p "/media/dskpool/ws-ztest/zephyrproject/daily_report/sumreport/${{ env.BRANCH_NAME }}"; fi'
+        scp-src: '${{ steps.pre-env.outputs.artifactory_dir }}/'
+        scp-dst: '/media/dskpool/ws-ztest/zephyrproject/daily_report/sumreport/${{ env.BRANCH_NAME }}/'
+
+    - name: Upload to ElasticSearch Instance (Daily)
+      if: github.event_name == 'schedule'
+      run: |
+        python3 ./scripts/ci/upload_test_results_es.py -r ${{ steps.pre-env.outputs.run_date }} \
+          -i zephyr-tests-main-daily-twister ${{ steps.pre-env.outputs.artifactory_dir }}/**/*/twister.json
+
+    - name: Publish Test Results - Clean
+      if: always()
+      run: |
+        rm -rf ${{ steps.pre-env.outputs.artifactory_dir }}
