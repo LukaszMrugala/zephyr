@@ -22,7 +22,7 @@ jobs:
       EXT_WORKFLOW: twister.yaml
       EXT_BRANCH: main
       ARTIFACT_DIR: ./_artifacts
-      ARTIFACT_NAME: refpoint-upstream
+      ARTIFACT_NAME: refpoint_v2-upstream
     steps:
 
       - name: Clean Workspace
@@ -53,7 +53,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
         run: |
-          REF_POINT=$(gh run list --repo $EXT_REPO --workflow $EXT_WORKFLOW --branch $EXT_BRANCH --event push --status success --limit 1 --json headSha --jq .[0].headSha)
+          REF_POINT=$(gh run list --repo $EXT_REPO --workflow $EXT_WORKFLOW --branch $EXT_BRANCH --event push --status success --limit 1 --json headSha,databaseId,startedAt,updatedAt,status,event,headBranch,url,attempt,workflowDatabaseId)
           echo $REF_POINT
           echo $REF_POINT > ${{ env.ARTIFACT_NAME }}
 

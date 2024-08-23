@@ -30,7 +30,7 @@ jobs:
       REF_WORKFLOW: intel_qa_upstream_refpoint.yml
       REF_BRANCH: main-intel
       ARTIFACT_DIR: ./_artifacts
-      ARTIFACT_NAME: refpoint-upstream
+      ARTIFACT_NAME: refpoint_v2-upstream
     steps:
       - name: Clean Workspace
         run: |
@@ -59,7 +59,7 @@ jobs:
           REF_LAST_RUN=$(gh run list --repo $OUR_REPO --workflow $REF_WORKFLOW --branch $REF_BRANCH --status success --limit 1 --json databaseId --jq .[0].databaseId)
           if [ ! -z "$REF_LAST_RUN" ]; then
             echo "last_run=$REF_LAST_RUN"
-            LAST_RRR=$(gh run download --repo $OUR_REPO $REF_LAST_RUN --name $ARTIFACT_NAME --dir $ARTIFACT_DIR && head -n 1 $ARTIFACT_DIR/$ARTIFACT_NAME)
+            LAST_RRR=$(gh run download --repo $OUR_REPO $REF_LAST_RUN --name $ARTIFACT_NAME --dir $ARTIFACT_DIR && jq -r '.[0].headSha' $ARTIFACT_DIR/$ARTIFACT_NAME)
           else
             echo "ERROR: No refpoint found"
             exit 1
