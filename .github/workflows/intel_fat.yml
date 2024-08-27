@@ -10,10 +10,11 @@ concurrency:
 
 jobs:
   run_fat_testcases:
+    name: FAT on ${{ matrix.platform_name }}
     defaults:
       run:
         shell: bash
-    runs-on: fmos-guest-ubuntu-24c
+
     container:
       image: amr-registry.caas.intel.com/zephyrproject/fat-zephyr:v0.26.13
       env:
@@ -22,11 +23,31 @@ jobs:
         ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.8
         ZEPHYR_TOOLCHAIN_VARIANT: xt-clang
         XTENSA_TOOLCHAIN_PATH: /opt/toolchains/xtensa/XtDevTools/install/tools
-        XTENSA_CORE: ace10_LX7HiFi4_2022_10
         TOOLCHAIN_VER: RI-2022.10-linux
         XTENSA_BUILDS_DIR: /opt/toolchains/xtensa/XtDevTools/install/builds
         XTENSAD_LICENSE_FILE: 84300@xtensa01p.elic.intel.com
         XTENSA_SYSTEM: /opt/toolchains/xtensa/XtDevTools/install/tools/RI-2022.10-linux/XtensaTools/config/
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform_group: [1, 2]
+        include:
+          - platform_group: 1
+            platform: 'mtl'
+            platform_name: 'intel_adsp/ace15_mtpm'
+            runner: fmos-guest-ubuntu-24c
+            xtensa_core: ace10_LX7HiFi4_2022_10
+            simulator_build: daily_mtl_ww0524.tar.gz
+          - platform_group: 2
+            platform_name: 'intel_adsp/ace30_ptl'
+            platform: 'ptl'
+            runner: fmos-guest-ubuntu-24c
+            xtensa_core: ace30_LX7HiFi4_PIF
+            simulator_build: daily_ptl_ww0524.tar.gz
+
+    runs-on: ${{ matrix.runner }}
+
     steps:
       - name: Clean
         shell: bash
@@ -91,10 +112,10 @@ jobs:
       - name: Download sim
         shell: bash
         run: |
-          wget -q --show-progress --progress=bar:force:noscroll --no-check-certificate --header="X-JFrog-Art-Api:$ARTIFACTORY_API_KEY" https://ubit-artifactory-or.intel.com/artifactory/zephyr-generic-or-local/tools/fat/test_mtl_ww0524.tar.gz
-          mkdir -p ${GITHUB_WORKSPACE}/../intel/std_sim/
-          tar -xzf test_mtl_ww0524.tar.gz --strip-components=1 -C ${GITHUB_WORKSPACE}/../intel/std_sim/
-          rm test_mtl_ww0524.tar.gz
+          wget -q --show-progress --progress=bar:force:noscroll --no-check-certificate --header="X-JFrog-Art-Api:$ARTIFACTORY_API_KEY" https://ubit-artifactory-or.intel.com/artifactory/zephyr-generic-or-local/tools/fat/${{ matrix.simulator_build }} && \
+          mkdir -p "${GITHUB_WORKSPACE}/../intel/std_sim_artifactory/${{ matrix.platform }}" && \
+          tar -xzf "${{ matrix.simulator_build }}" -C "${GITHUB_WORKSPACE}/../intel/std_sim_artifactory/${{ matrix.platform }}" && \
+          rm "${{ matrix.simulator_build }}"
 
       - name: Build RIMAGE
         run: |
@@ -104,18 +125,20 @@ jobs:
           sudo cp build/rimage /usr/local/bin/
           popd
 
-      - name: Build SOF Image
+      - name: Build ${{ matrix.platform }} firmware
         run: |
+          export XTENSA_CORE=${{ matrix.xtensa_core }}
           export ZEPHYR_BASE=${GITHUB_WORKSPACE}
           cd ${GITHUB_WORKSPACE}/..
-          west build --build-dir build-mtl -p always -b intel_adsp_ace15_mtpm ./modules/audio/sof/app -DEXTRA_CONF_FILE=llext_relocatable.conf
-          cp ${GITHUB_WORKSPACE}/../build-mtl/zephyr/zephyr.ri ${GITHUB_WORKSPACE}/../intel/std_sim
+          west build --build-dir build-${{ matrix.platform }} -p always -b ${{ matrix.platform_name }} ./modules/audio/sof/app -DEXTRA_CONF_FILE=llext_relocatable.conf
+          cp ${GITHUB_WORKSPACE}/../build-${{ matrix.platform }}/zephyr/zephyr.ri ${GITHUB_WORKSPACE}/../intel/std_sim_artifactory/${{ matrix.platform }}
 
       - name: Run FAT testcases
         env:
           TIMEOUT_PYTEST: '10m'
         shell: bash
         run: |
+          export XTENSA_CORE=${{ matrix.xtensa_core }}
           cd ${GITHUB_WORKSPACE}/../intel/frameworks.validation.firmware-automated-testing.fat
           git submodule update --init --recursive --force
 
@@ -123,24 +146,34 @@ jobs:
           sed -n '208,301p' board_defs/README.md > board_defs/platform.py
 
           # Read test list from JSON file
-          readarray -t mtl_test_list < <(jq -r '.tests[]' ${GITHUB_WORKSPACE}/.github/data/fat_test_list.json)
+          platform="${{ matrix.platform }}"
+
+          if jq -e '.tests_${{ matrix.platform }} | type == "array"' ${GITHUB_WORKSPACE}/.github/data/fat_test_list.json > /dev/null; then
+            readarray -t ${{ matrix.platform }}_test_list < <(jq -r '.tests_${{ matrix.platform }}[]' ${GITHUB_WORKSPACE}/.github/data/fat_test_list.json)
+          else
+            echo "The key ${{ matrix.platform }}_test_list is missing or is not an array."
+            exit 1
+          fi
+
 
           # Initialize test results file for Summarize test results step
           results_file="${GITHUB_WORKSPACE}/test_results.txt"
           : > "${results_file}"
 
+          STD_SIM_PATH="${GITHUB_WORKSPACE}/../intel/std_sim_artifactory/${{ matrix.platform }}"
+
           set +e
           any_test_failed=false
-          for i in "${!mtl_test_list[@]}"; do
-            test=${mtl_test_list[$i]}
-            echo "Running test $((i + 1)) of ${#mtl_test_list[@]}"
+          for i in "${!${{ matrix.platform }}_test_list[@]}"; do
+            test=${${{ matrix.platform }}_test_list[$i]}
+            echo "Running test $((i + 1)) of ${#${{ matrix.platform }}_test_list[@]}"
 
-            output=$(timeout --foreground ${TIMEOUT_PYTEST} python3.12 -m pytest -p no:labgrid --iterations=1 -sv --platform=mtl \
-                --pnp-sim --pnp-sim-path=${GITHUB_WORKSPACE}/../intel/std_sim/ \
-                --pnp-sim-params="config=${GITHUB_WORKSPACE}/../intel/std_sim/config.ini" \
-                --rom=${GITHUB_WORKSPACE}/../intel/std_sim/dsp_rom_mtl_release.bin \
-                --romext=${GITHUB_WORKSPACE}/../intel/std_sim/dsp_lib_rom_ext_mtl_release.bin  \
-                --fw=${GITHUB_WORKSPACE}/../intel/std_sim/zephyr.ri \
+            output=$(timeout --foreground ${TIMEOUT_PYTEST} python3.12 -m pytest -p no:labgrid --iterations=1 -sv --platform=${{ matrix.platform }} \
+                --pnp-sim --pnp-sim-path=${STD_SIM_PATH} \
+                --pnp-sim-params="config=${STD_SIM_PATH}/config.ini" \
+                --rom=${STD_SIM_PATH}/dsp_rom_${{ matrix.platform }}_release.bin \
+                --romext=${STD_SIM_PATH}/dsp_lib_rom_ext_${{ matrix.platform }}_release.bin  \
+                --fw=${STD_SIM_PATH}/zephyr.ri \
                 "$test" 2>&1)
             exit_code=$?
 
@@ -177,6 +210,7 @@ jobs:
           else
             echo "No tests failed."
           fi
+          cp "$results_file" /tmp/history/cAVS/
 
       - name: Upload FAT Test Results
         if: success() || failure()
