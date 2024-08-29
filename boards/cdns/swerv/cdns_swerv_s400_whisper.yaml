@@ -2,6 +2,10 @@ identifier: cdns_swerv/s400/whisper
 name: Cadence SweRV S400 (Whisper)
 type: sim
 simulation: whisper
+# Workaround twister not seeing whisper executable
+# in module directory. In a sense, force twister to
+# run whisper.
+simulation_exec: ls
 arch: riscv
 toolchain:
   - zephyr
