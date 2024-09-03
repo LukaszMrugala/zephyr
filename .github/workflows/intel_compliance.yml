@@ -82,13 +82,14 @@ jobs:
           git rebase origin/${BASE_REF}
           # debug
           git log  --pretty=oneline | head -n 10
+
       - name: Run Compliance Tests
         id: compliance
         continue-on-error: true
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          pip3 install yamllint
+          pip3 install yamllint unidiff
           export ZEPHYR_BASE=$PWD
           git log  --pretty=oneline | head -n 10
           ./scripts/ci/check_compliance.py --annotate -e ModulesMaintainers -e KconfigBasic -c origin/${BASE_REF}..
