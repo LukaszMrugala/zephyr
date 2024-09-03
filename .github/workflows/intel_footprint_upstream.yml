@@ -94,19 +94,37 @@ jobs:
             toolchain: 'zephyr'
             variant: 'zephyr'
             scope: memory_footprint
-            platforms: 'frdm_k64f, it8xxx2_evb, mec172xevb_assy6906, npcx9m6f_evb, up_squared'
+            platforms: 'acrn, frdm_k64f, it8xxx2_evb, mec172xevb_assy6906, npcx9m6f_evb, up_squared, up_squared_pro_7000'
 
           - platform_group: intel
             toolchain: 'zephyr'
             variant: 'zephyr'
             scope: memory_footprint
-            platforms: 'intel_ish_5_4_1'
+            platforms: 'intel_ehl_crb, intel_ehl_crb/elkhart_lake/sbl, intel_adl_crb, intel_adl_rvp, intel_rpl_p_crb, intel_rpl_s_crb'
+
+          - platform_group: intel_ish
+            toolchain: 'zephyr'
+            variant: 'zephyr'
+            scope: memory_footprint
+            platforms: 'intel_ish_5_4_1, intel_ish_5_6_0, intel_ish_5_8_0'
+
+          - platform_group: intel_riscv
+            toolchain: 'zephyr'
+            variant: 'zephyr'
+            scope: memory_footprint
+            platforms: 'niosv_m, niosv_g'
+
+          - platform_group: intel_fpga
+            toolchain: 'zephyr'
+            variant: 'zephyr'
+            scope: memory_footprint
+            platforms: 'cyclonev_socdk, intel_socfpga_agilex5_socdk, intel_socfpga_agilex_socdk'
 
           - platform_group: intel_sof
             toolchain: 'zephyr'
             project-filter: '+sof'
             scope: memory_footprint
-            platforms: 'intel_adsp/cavs25'
+            platforms: 'intel_adsp/cavs25, intel_adsp/cavs25/tgph'
 
           - platform_group: intel_sof_xt
             toolchain: 'zephyr'
