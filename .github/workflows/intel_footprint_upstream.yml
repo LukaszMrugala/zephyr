@@ -73,7 +73,7 @@ jobs:
           echo "rrr-sha=$LAST_RRR" >> $GITHUB_OUTPUT
 
   run_twister:
-    name: '[Footprint] run ${{ matrix.platform }}'
+    name: "[Footprint] run for '${{ matrix.platform_group }}'"
     needs: [get_rrr]
     defaults:
       run:
@@ -88,59 +88,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform_group: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        platform_group: [ga, intel, intel_sof, intel_sof_xt]
         include:
-          - platform_group: 1
+          - platform_group: ga
             toolchain: 'zephyr'
-            scope: memory_footprint
-            platform: 'mec172xevb_assy6906'
             variant: 'zephyr'
-          - platform_group: 2
-            toolchain: 'zephyr'
             scope: memory_footprint
-            platform: 'intel_adsp/ace15_mtpm'
-            toolchain_ver: 'RI-2022.10-linux'
-            xtensa_core: 'ace10_LX7HiFi4_2022_10'
+            platforms: 'frdm_k64f, it8xxx2_evb, mec172xevb_assy6906, npcx9m6f_evb, up_squared'
+
+          - platform_group: intel
+            toolchain: 'zephyr'
+            variant: 'zephyr'
+            scope: memory_footprint
+            platforms: 'intel_ish_5_4_1'
+
+          - platform_group: intel_sof
+            toolchain: 'zephyr'
+            project-filter: '+sof'
+            scope: memory_footprint
+            platforms: 'intel_adsp/cavs25'
+
+          - platform_group: intel_sof_xt
+            toolchain: 'zephyr'
             variant: 'xt-clang'
             project-filter: '+sof'
-          - platform_group: 3
-            toolchain: 'zephyr'
-            platform: "intel_adsp/cavs25"
-            scope: memory_footprint
-            project-filter: '+sof'
-          - platform_group: 4
-            toolchain: 'zephyr'
-            scope: memory_footprint
-            platform: 'frdm_k64f'
-            variant: 'zephyr'
-          - platform_group: 5
-            toolchain: 'zephyr'
-            scope: memory_footprint
-            platform: "it8xxx2_evb"
-            variant: 'zephyr'
-          - platform_group: 6
-            toolchain: 'zephyr'
-            scope: memory_footprint
-            platform: 'npcx9m6f_evb'
-            variant: 'zephyr'
-          - platform_group: 7
-            toolchain: 'zephyr'
-            scope: memory_footprint
-            platform: 'up_squared'
-            variant: 'zephyr'
-          - platform_group: 8
-            toolchain: 'zephyr'
-            scope: memory_footprint
-            platform: 'intel_adsp/ace20_lnl'
             toolchain_ver: 'RI-2022.10-linux'
             xtensa_core: 'ace10_LX7HiFi4_2022_10'
-            variant: 'xt-clang'
-            project-filter: '+sof'
-          - platform_group: 9
-            toolchain: 'zephyr'
             scope: memory_footprint
-            platform: 'intel_ish_5_4_1'
-            variant: 'zephyr'
+            platforms: 'intel_adsp/ace15_mtpm, intel_adsp/ace20_lnl'
+
 
     runs-on: fmos-guest-ubuntu-24c
     timeout-minutes: ${{ matrix.timeout || 60 }}
@@ -200,8 +176,7 @@ jobs:
         if: ${{ env.KPI_TARGET_BRANCH_PATCH }}
         shell: bash
         run: |
-          # Sanitize HWMV2 platform name
-          echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | tr '/@' '_')" >> "$GITHUB_ENV"
+          echo "Nothing to patch at the moment."
 
       - name: Execute Tests
         run: |
@@ -229,16 +204,20 @@ jobs:
           # Ensure local network is not accessed via proxy
           export no_proxy=$no_proxy,192.168.0.0/16
 
-          ./scripts/twister -M -x=USE_CCACHE=0 --inline-logs \
-            --force-color -v \
-            --quarantine-list $TWISTER_QUARANTINE_LIST \
-            --build-only \
-            --footprint-report \
-            --enable-size-report \
-            --test-config main-intel/.github/data/test_config.yaml \
-            --level $TEST_COV \
-            ${{ matrix.twister_extra_args }} \
-            -p ${{ matrix.platform }}
+          TEST_PLATFORMS=$(echo "${{ matrix.platforms }}" | sed -e "s/^/,/" -e "s/,/ -p /g")
+
+          if [ -n "$TEST_PLATFORMS" ]; then
+            ./scripts/twister -M -x=USE_CCACHE=0 --inline-logs \
+              --force-color -v \
+              --quarantine-list $TWISTER_QUARANTINE_LIST \
+              $TEST_PLATFORMS \
+              --test-config main-intel/.github/data/test_config.yaml \
+              --level $TEST_COV \
+              ${{ matrix.twister_extra_args }} \
+              --build-only \
+              --footprint-report \
+              --enable-size-report
+          fi
 
       - name: Archive twister-out directory
         id: tar-twister-out
@@ -248,15 +227,15 @@ jobs:
           [ $(ps -ef | grep twister | wc -l) -ge 2 ] && sleep 60s
           [ -d ./twister-out ] && sync ./twister-out && \
               find ./twister-out -type f -name "*.log" -o -name "*.csv" -o -name "rom.json" -o -name "ram.json" | \
-              tar -czf subset-${{ matrix.platform_group }}-${{ env.PLATFORM_NAME }}-twister-out.tar.gz -T -
+              tar -czf subset-${{ matrix.platform_group }}-twister-out.tar.gz -T -
 
       - name: Upload twister-out.tar.gz archive per subset
         if: (steps.tar-twister-out.outcome == 'success') && (success() || failure() || cancelled())
         uses: actions/upload-artifact@v3.1.3
         with:
-          name: subset-${{ matrix.platform_group }}-${{ env.PLATFORM_NAME }}-twister-out archive in .tar.gz format
+          name: subset-${{ matrix.platform_group }}-twister-out archive in .tar.gz format
           path: |
-            subset-${{ matrix.platform_group }}-${{ env.PLATFORM_NAME }}-twister-out.tar.gz
+            subset-${{ matrix.platform_group }}-twister-out.tar.gz
           retention-days: 5
 
       - name: Upload Unit Test Results
