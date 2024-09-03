@@ -28,7 +28,7 @@ pdu_outlet=$7
 pdu_user=$8
 
 # copy image
-echo "DEBUG	- Transfer $(pxe_image_name) to PXE: ${pxe_ip}."
+echo "DEBUG	- Transfer ${pxe_image_name} to PXE: ${pxe_ip}"
 while [ ${transfer_retry} -gt 0 ]
 do
     scp -o StrictHostKeyChecking=no ${build_dir}zephyr.efi \
