@@ -1,0 +1,79 @@
+name: Windows Twister Unit Tests
+
+on:
+  push:
+    branches:
+      - main
+      - v*-branch
+      - collab-*
+  pull_request:
+    branches:
+      - main
+      - main-intel
+      - v*-branch
+      - collab-*
+    paths:
+      - 'scripts/pylib/**'
+      - 'scripts/requirements*.txt'
+      - 'scripts/tests/**'
+      - '.github/workflows/fmos-windows-twister-unit-tests.yml'
+      - 'SDK_VERSION'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  twister-windows-tests:
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+        os: [fmos-guest-windows-8c-igk, fmos-guest-windows11-8c-igk]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout upstream
+        uses: actions/checkout@v4
+        with:
+          repository: LukaszMrugala/zephyr
+          ref: lmrugalx_twister_ut_windows
+          path: zephyr
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Python Packages
+        run: |
+          cd .\zephyr
+          python3 -m pip install -U -r ./scripts/requirements-base.txt -r ./scripts/requirements-build-test.txt -r ./scripts/requirements-run-test.txt
+
+      - name: Run Pytest For Twister Unit Tests
+        env:
+          ZEPHYR_BASE: .
+          ZEPHYR_TOOLCHAIN_VARIANT: zephyr
+          PYTHONPATH: .\scripts\tests
+        run: |
+          echo "Run twister tests"
+          cd .\zephyr
+          & .\zephyr-env.cmd
+          pytest .\scripts\tests\twister\
+
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: ignore
+          path:
+            zephyr/twister-out/*/samples/hello_world/sample.basic.helloworld/build.log
+
+      - name: Clean pytest_twister_harness
+        if: failure()
+        run: |
+          pip uninstall -y pytest-twister-harness

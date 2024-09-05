@@ -25,7 +25,6 @@ from twisterlib.coverage import supported_coverage_formats
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
 
-from twisterlib.coverage import supported_coverage_formats
 from twisterlib.error import TwisterRuntimeError
 from twisterlib.log_helper import log_command
 
