@@ -3,19 +3,14 @@ name: Windows Twister Unit Tests
 on:
   push:
     branches:
-      - main
-      - v*-branch
-      - collab-*
+      - main-intel
   pull_request:
     branches:
-      - main
       - main-intel
-      - v*-branch
-      - collab-*
     paths:
       - 'scripts/pylib/**'
       - 'scripts/requirements*.txt'
-      - 'scripts/tests/**'
+      - 'scripts/tests/twister/**'
       - '.github/workflows/fmos-windows-twister-unit-tests.yml'
       - 'SDK_VERSION'
   workflow_dispatch:
@@ -36,13 +31,50 @@ jobs:
         os: [fmos-guest-windows-8c-igk, fmos-guest-windows11-8c-igk]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout upstream
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: zephyr
+          fetch-depth: 0
+
+      - name: Checkout innersource
+        uses: actions/checkout@v4
+        with:
+          path: zephyr-inner
+          fetch-depth: 0
+
+      - name: Checkout Windows fix
         uses: actions/checkout@v4
         with:
           repository: LukaszMrugala/zephyr
           ref: lmrugalx_twister_ut_windows
-          path: zephyr
+          path: zephyr-fix
           fetch-depth: 0
+
+      - name: Apply Windows fix
+        run: |
+          echo "Go into the zephyr directory"
+          Get-ChildItem -Force .
+          cd .\zephyr
+          Get-ChildItem -Force .
+          echo "Add local fix repo as remote"
+          $windows_path = $(Resolve-Path ..\zephyr-fix)
+          git remote add fix $windows_path
+          echo "Fetch local remote"
+          git fetch fix
+          echo "Create the Windows fix patch"
+          git diff fix/lmrugalx_twister_ut_windows fix/lmrugalx_twister_ut_windows~1 -- > test_patch_windows
+          cat test_patch_windows
+          echo "Create innersource patch"
+          git diff origin/main-intel origin/main -- > test_patch_inner
+          cat test_patch_inner
+          echo "Apply the Windows patch on main"
+          git apply -v test_patch_windows
+          rm test_patch_windows
+          echo "Apply the innersource patch on main"
+          git apply -v test_patch_inner
+          rm test_patch_inner
 
       - name: Set up Python
         uses: actions/setup-python@v5

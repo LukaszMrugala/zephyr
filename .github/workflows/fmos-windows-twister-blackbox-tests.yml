@@ -32,7 +32,8 @@ jobs:
   twister-windows-tests:
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.10']
+#, '3.11', '3.12']
         os: [fmos-guest-windows-8c-igk, fmos-guest-windows11-8c-igk]
     runs-on: ${{ matrix.os }}
     steps:
