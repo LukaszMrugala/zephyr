@@ -18,7 +18,7 @@ jobs:
   get_rrr:
     name: '[KPI] Get RRR'
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.13
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.14
     defaults:
       run:
         shell: bash
@@ -79,7 +79,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.13
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.14
       options: "-v /srv/runner/workspace:/runner/workspace -v /tmp:/tmp ${{ matrix.container_options }}"
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
@@ -392,7 +392,7 @@ jobs:
 
   publish-test-results:
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.13
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.14
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
     env:

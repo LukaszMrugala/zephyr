@@ -12,7 +12,7 @@ jobs:
   get_upstream_sha:
     name: Get the last known good SHA
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.13
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.14
     defaults:
       run:
         shell: bash

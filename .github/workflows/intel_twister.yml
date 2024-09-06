@@ -20,7 +20,7 @@ jobs:
         shell: bash
     runs-on: fmos-guest-ubuntu-24c
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.13
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.14
       options: "-v /srv/runner/workspace:/runner/workspace"
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
@@ -107,7 +107,7 @@ jobs:
 
   publish-test-results:
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.13
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.14
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
     env:
