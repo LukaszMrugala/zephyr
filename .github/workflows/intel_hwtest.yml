@@ -1,14 +1,7 @@
 name: Run tests on Hardware (Intel)
 on:
-  push:
-    branches:
-      - main-intel
-      - ci/hwtest/*
   schedule:
     - cron: '15 5 * * *' # once daily @ 05:15 UTC, for now, to avoid conflicts.
-  pull_request:
-    branches:
-      - main-intel
   workflow_dispatch:
     inputs:
       target:

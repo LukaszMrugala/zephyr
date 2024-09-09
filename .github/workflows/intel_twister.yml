@@ -2,10 +2,6 @@ name: 'Run Twister - Intel'
 on:
   schedule:
     - cron: '55 5 * * *' # once daily @ 05:55 UTC.
-  pull_request:
-    branches:
-      - main-intel
-      - sensor_framework
   workflow_dispatch:
 
 concurrency:

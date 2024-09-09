@@ -64,7 +64,7 @@ jobs:
           echo "Fetch local remote"
           git fetch fix
           echo "Create the Windows fix patch"
-          git diff fix/lmrugalx_twister_ut_windows fix/lmrugalx_twister_ut_windows~1 -- > test_patch_windows
+          git diff --no-prefix fix/lmrugalx_twister_ut_windows fix/lmrugalx_twister_ut_windows~1 -- > test_patch_windows
           cat test_patch_windows
           echo "Create innersource patch"
           git diff origin/main-intel origin/main -- > test_patch_inner
