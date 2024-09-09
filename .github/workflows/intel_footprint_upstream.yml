@@ -11,6 +11,9 @@ concurrency:
 env:
   KPI_TARGET_BRANCH_NAME: main
   KPI_TARGET_BRANCH_PATCH: main-intel
+  RRR_CHECK_NEW: ${{ true }}
+  RRR_SAVE_DONE: ${{ true }}
+  RRR_NAME_DONE: refpoint_v2-upstream-footprint
 
 jobs:
 
@@ -25,6 +28,8 @@ jobs:
     runs-on: fmos-guest-ubuntu-12c
     outputs:
       rrr-sha: ${{ steps.read-rrr.outputs.rrr-sha }}
+      rrr-raw: ${{ steps.read-rrr.outputs.rrr-raw }}
+      done-sha: ${{ steps.read-rrr-done.outputs.rrr-sha }}
     env:
       OUR_REPO: ${{ github.repository }}
       REF_WORKFLOW: intel_qa_upstream_refpoint.yml
@@ -40,6 +45,7 @@ jobs:
           if [ -d $ARTIFACT_DIR ]; then
             rm -rv $ARTIFACT_DIR
           fi
+
       - name: Update tools (TODO move to the docker container)
         run: |
           # Refresh gh CLI tool to the latest version, see https://github.com/cli/cli/blob/trunk/docs/install_linux.md
@@ -50,6 +56,7 @@ jobs:
             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
             && sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o "Acquire::http::Proxy=${HTTP_PROXY}" update \
             && sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o "Acquire::http::Proxy=${HTTP_PROXY}" install gh
+
       - name: Read the last refpoint
         id: read-rrr
         env:
@@ -71,10 +78,44 @@ jobs:
              exit 1
           fi
           echo "rrr-sha=$LAST_RRR" >> $GITHUB_OUTPUT
+          echo "rrr-raw=$(cat $ARTIFACT_DIR/$ARTIFACT_NAME)" >> $GITHUB_OUTPUT
+
+      - name: Read last RRR done for footprints
+        id: read-rrr-done
+        if: env.RRR_CHECK_NEW && steps.read-rrr.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
+        run: |
+          set +e
+          THIS_WORKFLOW=$(echo "${{ github.workflow_ref }}" | sed -Ee "s|${OUR_REPO}/.github/workflows/(.+)@.*|\1|")
+          echo $THIS_WORKFLOW
+          # --event schedule
+          THIS_LAST_RUN=$(gh run list --repo $OUR_REPO --workflow $THIS_WORKFLOW --branch $REF_BRANCH --status success --limit 1 --json databaseId --jq .[0].databaseId)
+          if [ -n "$THIS_LAST_RUN" ]; then
+            echo "this_last_run=$THIS_LAST_RUN"
+            DONE_RRR=$(gh run download --repo $OUR_REPO $THIS_LAST_RUN --name $RRR_NAME_DONE --dir $ARTIFACT_DIR && jq -r '.[0].headSha' $ARTIFACT_DIR/$RRR_NAME_DONE)
+          else
+            echo "INFO: No ${THIS_WORKFLOW} executions yet."
+            exit 0
+          fi
+          if [ -z "$DONE_RRR" ]; then
+            echo "INFO: No ${THIS_WORKFLOW} completed executions yet."
+            exit 0
+          fi
+          echo "done_rrr=$DONE_RRR"
+          SHA_RE='^[0-9a-fA-F]{40}$'
+          if [[ ! $DONE_RRR =~ $SHA_RE ]]; then
+             echo "ERROR: Invalid done RRR SHA=$DONE_RRR"
+             exit 1
+          fi
+          echo "rrr-sha=$DONE_RRR" >> $GITHUB_OUTPUT
+          echo "last_done=$(cat $ARTIFACT_DIR/$RRR_NAME_DONE)"
+
 
   run_twister:
     name: "[Footprint] run for '${{ matrix.platform_group }}'"
     needs: [get_rrr]
+    if: needs.get_rrr.outputs.rrr-sha != needs.get_rrr.outputs.done-sha
     defaults:
       run:
         shell: bash
@@ -277,10 +318,10 @@ jobs:
       ELASTICSEARCH_KEY: ${{ secrets.ELASTICSEARCH_KEY }}
       ELASTICSEARCH_SERVER: 'https://reports-fmos.hf.intel.com:9200'
     name: '[Footprint] Publish Test Results'
-    needs: [run_twister]
+    needs: [get_rrr, run_twister]
     runs-on: fmos-guest-ubuntu-12c
     continue-on-error: true
-    if: success() || failure()
+    if: success()
     steps:
       - name: Clean and Pre Environment
         run: |
@@ -305,6 +346,7 @@ jobs:
           echo "run_date_short=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
 
       - name: Upload to ElasticSearch
+        id: elk_upload_footprint
         run: |
           echo "${{ steps.run_date.outputs.run_date }} (${{ github.run_id }},${{ github.run_attempt }})"
           echo "head_ref=${{ github.head_ref }} base_ref=${{ github.base_ref }}"
@@ -319,3 +361,19 @@ jobs:
             --run-workflow "footprint_metrics:${{ github.event_name }}" --run-branch "${{ env.KPI_TARGET_BRANCH_NAME }}" \
             -i zephyr-tests-footprint-metrics artifacts/**/twister_footprint.json
         #
+
+      - name: Prepare RRR done for save
+        if: steps.elk_upload_footprint.outcome == 'success' && env.RRR_SAVE_DONE
+        id: save_rrr
+        env:
+          RRR_RAW: ${{ needs.get_rrr.outputs.rrr-raw }}
+        run: |
+          echo "$RRR_RAW" > ${{ env.RRR_NAME_DONE }}
+
+      - name: Save RRR done as an artifact
+        if: steps.save_rrr.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.RRR_NAME_DONE }}
+          path: ${{ env.RRR_NAME_DONE }}
+          retention-days: 7
