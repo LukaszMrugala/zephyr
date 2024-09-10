@@ -25,7 +25,8 @@
   runner: misc-flasher
   flash_timeout: 60
   flash_with_test: false
-  serial_pty: "nc 192.168.24.103 5000"
+  # SSH keyless auth have to be setup on the forwarding NUC
+  serial_pty: "ssh -o StrictHostKeyChecking=no -tt zephyr@10.123.239.212 stty raw 115200 -F /dev/ttyISH1 && cat /dev/ttyISH1"
   baud: 115200
   runner_params:
     - boards/intel/ish/support/tgl_board_flash.sh
