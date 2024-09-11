@@ -223,7 +223,7 @@ jobs:
 
   publish-test-results:
     container:
-      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.14
+      image: amr-registry.caas.intel.com/zephyrproject/ci-sdk:v0.26.14.1
       env:
         TOKEN: ${{ secrets.ZEPHYR_TOKEN }}
     env:
