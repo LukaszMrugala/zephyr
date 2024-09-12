@@ -100,6 +100,13 @@ jobs:
           echo "rrr-sha=$DONE_RRR" >> $GITHUB_OUTPUT
           echo "last_done=$(cat $ARTIFACT_DIR/$RRR_NAME_DONE)"
 
+      - name: Keep the latest RRR done as the most recent artifact
+        if: steps.read-rrr-done.outcome == 'success' && steps.read-rrr-done.outputs.rrr-sha
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.RRR_NAME_DONE }}
+          path: "${{ env.ARTIFACT_DIR }}/${{ env.RRR_NAME_DONE }}"
+          retention-days: 7
 
   run_twister:
     name: "[Footprint] run for '${{ matrix.platform_group }}'"
