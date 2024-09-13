@@ -18,7 +18,7 @@
     - "1"
     - "6"
     - sys_fmos_qa_simics
-- connected: false
+- connected: true
   id: igk-tgl-1
   platform: intel_ish_5_4_1
   product: EIG TGL U RVP DDR4 Alpha/ES Fab1 BRD
