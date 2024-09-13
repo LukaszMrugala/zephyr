@@ -3,6 +3,17 @@ on:
   schedule:
     - cron: '30 2 * * *' # daily @ 02:30 UTC
   workflow_dispatch:
+    inputs:
+      rrr_check_new:
+        description: "Check against the 'done' RRR for new changes."
+        required: false
+        type: boolean
+        default: true
+      rrr_save_done:
+        description: "Update the 'done' RRR on success."
+        required: false
+        type: boolean
+        default: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -11,8 +22,8 @@ concurrency:
 env:
   KPI_TARGET_BRANCH_NAME: main
   KPI_TARGET_BRANCH_PATCH: main-intel
-  RRR_CHECK_NEW: ${{ true }}
-  RRR_SAVE_DONE: ${{ true }}
+  RRR_CHECK_NEW: ${{ true }} && ${{ inputs.rrr_check_new }}
+  RRR_SAVE_DONE: ${{ true }} && ${{ inputs.rrr_save_done }}
   RRR_NAME_DONE: refpoint_v2-upstream-footprint
 
 jobs:
