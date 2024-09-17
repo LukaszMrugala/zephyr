@@ -132,7 +132,7 @@ jobs:
               sample-rate=8_000_000,\
               threshold-volts=0'"
             container_options: '--privileged -v /dev/bus/usb/:/dev/bus/usb -v /dev/serial/by-id:/dev/serial/by-id'
-            pip_install: "-r tests/kernel/timer/timer_behavior/pytest/requirements-saleae.txt"
+            pip_install: "pip3 install -r tests/kernel/timer/timer_behavior/pytest/requirements-saleae.txt && pip3 install logic2-automation --force-reinstall"
           - platform_group: 5
             toolchain: 'zephyr'
             scope: timer_behavior
@@ -241,10 +241,10 @@ jobs:
         shell: bash
         run: |
           pip3 install -r scripts/requirements.txt
-          if [ ${{ matrix.pip_install }} ]; then
-            pip3 install ${{ matrix.pip_install }}
+          if [ -n "${{ matrix.pip_install }}" ]; then
+            eval "${{ matrix.pip_install }}"
           fi
-          pip show grpcio grpcio-tools logic2-automation
+          pip show protobuf grpcio grpcio-tools logic2-automation
 
       - name: Patching from main-intel
         if: ${{ env.KPI_TARGET_BRANCH_PATCH }}
