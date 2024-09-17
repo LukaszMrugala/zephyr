@@ -1,7 +1,7 @@
 name: Run tests on Hardware (Upstream)
 on:
   schedule:
-    - cron: '30 3 * * *' # once daily @ 03:30 UTC, to avoid conflicts.
+    - cron: '45 2 * * *' # once daily @ 02:45 UTC, to avoid conflicts.
   workflow_dispatch:
     inputs:
       target:
@@ -103,7 +103,7 @@ jobs:
         target: ${{ fromJSON(needs.setup.outputs.targets) }}
 
     runs-on: ${{ matrix.target.runner }}
-    timeout-minutes: ${{ matrix.target.timeout || 120 }}
+    timeout-minutes: ${{ matrix.target.timeout || 180 }}
     steps:
       - name: Clean Workspace
         run: |
@@ -161,6 +161,7 @@ jobs:
           #
           sed -i '/default in ace15_mtpm/{s/"otc_private_key_3k.pem"/${CMAKE_CURRENT_LIST_DIR}\/support\/mtl_private_key.pem/}' boards/intel/adsp/board.cmake
           sed -i '/default in ace20_lnl/{s/"otc_private_key_3k.pem"/${CMAKE_CURRENT_LIST_DIR}\/support\/lnl_private_key.pem/};/default in ace20_lnl/a\  board_set_flasher_ifnset\(intel_adsp\)\n  board_finalize_runner_args\(intel_adsp\)' boards/intel/adsp/board.cmake
+          #
           #
           cp -vr main-intel/boards/intel/adsp/support boards/intel/adsp/
           #
@@ -242,7 +243,7 @@ jobs:
           export PATH=$PATH:/opt/tools/bin
           if [ "${{github.event_name}}" = "pull_request" ]; then
             TEST_COV=smoke
-            export TWISTER_QUARANTINE_LIST=.github/data/pr-quarantine-list.yml
+            export TWISTER_QUARANTINE_LIST=main-intel/.github/data/pr-quarantine-list.yml
           elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             TEST_COV=${{ github.event.inputs.scope }}
             if [ "${{ github.event.inputs.debug }}" == "twister-debug" ]; then

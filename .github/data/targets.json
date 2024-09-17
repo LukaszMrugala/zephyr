@@ -18,7 +18,8 @@
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
     "runner": "fmos-guest-ubuntu-24c",
-    "west_project_filter": "+sof"
+    "west_project_filter": "+sof",
+    "groups": ["upstream"]
   },
   {
     "hwtype": "simulator",
@@ -29,7 +30,8 @@
     "xtensa_core": "ace30_LX7HiFi4_PIF",
     "variant": "xt-clang",
     "runner": "fmos-guest-ubuntu-24c",
-    "west_project_filter": "+sof"
+    "west_project_filter": "+sof",
+    "groups": ["upstream"]
   },
   {
     "hwtype": "simulator",
@@ -40,7 +42,8 @@
     "xtensa_core": "ace10_LX7HiFi4_2022_10",
     "variant": "xt-clang",
     "runner": "fmos-guest-ubuntu-24c",
-    "west_project_filter": "+sof"
+    "west_project_filter": "+sof",
+    "groups": ["upstream"]
   },
   {
     "toolchain": "zephyr",
