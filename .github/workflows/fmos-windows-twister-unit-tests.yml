@@ -52,7 +52,7 @@ jobs:
           path: zephyr-fix
           fetch-depth: 0
 
-      - name: Apply Windows fix
+      - name: Apply Windows fix - git cherry-pick method
         run: |
           echo "Go into the zephyr directory"
           Get-ChildItem -Force .
@@ -63,18 +63,32 @@ jobs:
           git remote add fix $windows_path
           echo "Fetch local remote"
           git fetch fix
-          echo "Create the Windows fix patch"
-          git diff --no-prefix fix/lmrugalx_twister_ut_windows fix/lmrugalx_twister_ut_windows~1 -- > test_patch_windows
-          cat test_patch_windows
-          echo "Create innersource patch"
-          git diff origin/main-intel origin/main -- > test_patch_inner
-          cat test_patch_inner
           echo "Apply the Windows patch on main"
-          git apply -v test_patch_windows
-          rm test_patch_windows
-          echo "Apply the innersource patch on main"
-          git apply -v test_patch_inner
-          rm test_patch_inner
+          git cherry-pick fix/lmrugalx_twister_ut_windows
+
+      # - name: Apply Windows fix - git diff/apply method
+      #   run: |
+      #     echo "Go into the zephyr directory"
+      #     Get-ChildItem -Force .
+      #     cd .\zephyr
+      #     Get-ChildItem -Force .
+      #     echo "Add local fix repo as remote"
+      #     $windows_path = $(Resolve-Path ..\zephyr-fix)
+      #     git remote add fix $windows_path
+      #     echo "Fetch local remote"
+      #     git fetch fix
+      #     echo "Create the Windows fix patch"
+      #     git diff fix/lmrugalx_twister_ut_windows fix/lmrugalx_twister_ut_windows~1 -- > test_patch_windows
+      #     cat test_patch_windows
+      #     echo "Create innersource patch"
+      #     git diff origin/main-intel origin/main -- > test_patch_inner
+      #     cat test_patch_inner
+      #     echo "Apply the Windows patch on main"
+      #     git apply -v test_patch_windows
+      #     rm test_patch_windows
+      #     echo "Apply the innersource patch on main"
+      #     git apply -v test_patch_inner
+      #     rm test_patch_inner
 
       - name: Set up Python
         uses: actions/setup-python@v5
