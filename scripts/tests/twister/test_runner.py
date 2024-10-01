@@ -2635,7 +2635,7 @@ TESTDATA_19 = [
     'platform',
     TESTDATA_19,
 )
-def test_twisterrunner_pipeline_mgr(mocked_jobserver, platform):
+def test_twisterrunner_pipeline_mgr(platform):
     counter = 0
     def mock_get_nowait():
         nonlocal counter
@@ -2647,24 +2647,27 @@ def test_twisterrunner_pipeline_mgr(mocked_jobserver, platform):
     instances = {}
     suites = []
     env_mock = mock.Mock()
-
-    tr = TwisterRunner(instances, suites, env=env_mock)
-    tr.jobserver = mock.Mock(
+    mocked_jobserver = mock.Mock(
         get_job=mock.Mock(
             return_value=nullcontext()
         )
     )
+
+    tr = TwisterRunner(instances, suites, env=env_mock)
+    tr.jobserver = mocked_jobserver
 
     pipeline_mock = mock.Mock()
     pipeline_mock.get_nowait = mock.Mock(side_effect=mock_get_nowait)
     done_queue_mock = mock.Mock()
     lock_mock = mock.Mock()
     results_mock = mock.Mock()
+    duts_mock = mock.Mock()
 
     with mock.patch('sys.platform', platform), \
          mock.patch('twisterlib.runner.ProjectBuilder',\
                     return_value=mock.Mock()) as pb:
-        tr.pipeline_mgr(pipeline_mock, done_queue_mock, lock_mock, results_mock)
+        tr.pipeline_mgr(pipeline_mock, done_queue_mock, lock_mock, results_mock,
+                        mocked_jobserver, env_mock, duts_mock)
 
     assert len(pb().process.call_args_list) == 5
 
