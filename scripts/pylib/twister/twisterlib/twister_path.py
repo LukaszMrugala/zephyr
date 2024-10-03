@@ -98,7 +98,10 @@ class TPath(os.PathLike):
 
 def prepare_path_for_windows(path):
     if os.name == 'nt':
-        return '\\\\?\\' + os.fspath(Path(path).resolve())
+        normalised = os.fspath(Path(path).resolve())
+        if not normalised.startswith('\\\\?\\'):
+            normalised = '\\\\?\\' + normalised
+        return normalised
     return path
 
 def open(filename, *args, **kwargs):
@@ -111,3 +114,22 @@ def makedirs(filename, *args, **kwargs):
 
 def mkdir(filename, *args, **kwargs):
     return os.mkdir(prepare_path_for_windows(filename), *args, **kwargs)
+
+def rmtree(path, *args, **kwargs):
+    # Do not follow and resolve symlinks
+    print(f'Path: {path}')
+    print(f'Rslv: {TPath(path)}')
+    if os.path.islink(path):
+        os.unlink(path)
+        return
+
+    obj = TPath(path)
+
+    if not obj.is_dir():
+        os.remove(str(obj))
+        return
+
+    for item in obj.path.iterdir():
+        rmtree(item)
+
+    os.rmdir(str(obj))
