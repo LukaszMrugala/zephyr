@@ -4,6 +4,8 @@
 # Copyright 2022 NXP
 # SPDX-License-Identifier: Apache-2.0
 
+import copy
+import io
 import logging
 import multiprocessing
 import os
@@ -1478,7 +1480,13 @@ class TwisterRunner:
         processes = []
 
         for _ in range(self.jobs):
-            p = Process(target=TwisterRunner.pipeline_mgr, args=(pipeline, done, lock, self.results, self.jobserver, self.env, self.duts))
+            e = copy.deepcopy(self.env)
+            p = Process(target=TwisterRunner.pipeline_mgr, args=(pipeline, done, lock, self.results, self.jobserver, e, self.duts))
+            # try:
+            #     f = io.BytesIO()
+            #     rp = multiprocessing.reduction.dump(p, f)
+            # except Exception as e:
+            #     pass
             processes.append(p)
             p.start()
         logger.debug(f"Launched {self.jobs} jobs")
