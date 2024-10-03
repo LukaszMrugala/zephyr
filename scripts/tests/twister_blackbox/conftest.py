@@ -20,7 +20,7 @@ TEST_DATA = os.path.join(ZEPHYR_BASE, 'scripts', 'tests',
 sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts/pylib/twister"))
 sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts"))
 
-from twisterlib.twister_path import TPath, mkdir
+from twisterlib.twister_path import TPath, mkdir, rmtree
 
 
 sample_filename_mock = mock.PropertyMock(return_value='test_sample.yaml')
@@ -88,4 +88,4 @@ def provide_out(tmp_path, request):
     # We're operating in temp, so it is not strictly necessary
     # but the files can get large quickly
     # and we do not need them after the test.
-    shutil.rmtree(out_container_path)
+    #rmtree(out_container_path)
