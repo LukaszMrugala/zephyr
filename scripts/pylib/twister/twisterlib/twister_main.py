@@ -25,11 +25,49 @@ from twisterlib.testplan import TestPlan
 logger = logging.getLogger("twister")
 logger.setLevel(logging.DEBUG)
 
+
+def setup_logging(outdir, log_file, log_level, timestamps):
+    # create file handler which logs even debug messages
+    if log_file:
+        fh = logging.FileHandler(log_file)
+    else:
+        fh = logging.FileHandler(os.path.join(outdir, "twister.log"))
+
+    fh.setLevel(logging.DEBUG)
+
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(getattr(logging, log_level))
+
+    # create formatter and add it to the handlers
+    if timestamps:
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    else:
+        formatter = logging.Formatter("%(levelname)-7s - %(message)s")
+
+    formatter_file = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    ch.setFormatter(formatter)
+    fh.setFormatter(formatter_file)
+
+    # add the handlers to logger
+    logger.addHandler(ch)
+    logger.addHandler(fh)
+
+
+def close_logging():
+    handlers = logger.handlers[:]
+    for handler in handlers:
+        logger.removeHandler(handler)
+        handler.close()
+
+
 def init_color(colorama_strip):
     colorama.init(strip=colorama_strip)
 
 
-def main(options: argparse.Namespace, default_options: argparse.Namespace):
+def twister(options: argparse.Namespace, default_options: argparse.Namespace):
     start_time = time.time()
 
     # Configure color output
@@ -222,3 +260,11 @@ def main(options: argparse.Namespace, default_options: argparse.Namespace):
 
     logger.info("Run completed")
     return 0
+
+
+def main(options: argparse.Namespace, default_options: argparse.Namespace):
+    try:
+        return_code = twister(options, default_options)
+    finally:
+        close_logging()
+    return return_code
