@@ -7,9 +7,11 @@
 
 import logging
 import shutil
+import tempfile
 import mock
 import os
 import pytest
+import subprocess
 import sys
 
 ZEPHYR_BASE = os.getenv('ZEPHYR_BASE')
@@ -66,22 +68,38 @@ def clear_log_in_test():
 # APPRECIATED: method of using this out_path wholly outside of test code
 @pytest.fixture(name='out_path', autouse=True)
 def provide_out(tmp_path, request):
-    # As this fixture is autouse, one can use the pytest.mark.noclearout decorator
-    # in order to be sure that this fixture's code will not fire.
-    # Most of the time, just omitting the `out_path` parameter is sufficient.
-    if 'noclearout' in request.keywords:
-        yield
-        return
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # As this fixture is autouse, one can use the pytest.mark.noclearout decorator
+        # in order to be sure that this fixture's code will not fire.
+        # Most of the time, just omitting the `out_path` parameter is sufficient.
+        if 'noclearout' in request.keywords:
+            yield
+            return
 
-    # Before
-    out_container_path = tmp_path / 'blackbox-out-container'
-    out_container_path.mkdir()
-    out_path = os.path.join(out_container_path, "blackbox-out")
+        # Before
 
-    # Test
-    yield out_path
+        # Shorten
+        out_container_path = tmp_path / 'blackbox-out-container'
+        out_container_path.mkdir()
 
-    # After
-    # We're operating in temp, so it is not strictly necessary
-    # but the files can get large quickly as we do not need them after the test.
-    shutil.rmtree(out_container_path)
+        where_linky_points = out_container_path
+        where_linky_is = os.path.join(tmpdir, 's')
+        try:
+            os.remove(where_linky_is)
+        except OSError:
+            pass
+        if os.name == "nt":  # if OS is Windows
+            command = ["mklink", "/J", f"{where_linky_is}", os.path.normpath(where_linky_points)]
+            subprocess.call(command, shell=True)
+        else:  # for Linux and MAC OS
+            os.symlink(where_linky_points, where_linky_is)
+
+        out_path = os.path.join(where_linky_is, "blackbox-out")
+
+        # Test
+        yield out_path
+
+        # After
+        # We're operating in temp, so it is not strictly necessary
+        # but the files can get large quickly as we do not need them after the test.
+        shutil.rmtree(out_container_path)
