@@ -15,8 +15,8 @@ import sys
 import json
 
 from conftest import ZEPHYR_BASE, TEST_DATA, sample_filename_mock, testsuite_filename_mock
-from twisterlib.statuses import TwisterStatus
-from twisterlib.testplan import TestPlan
+from pylib.twister.twisterlib.statuses import TwisterStatus
+from pylib.twister.twisterlib.testplan import TestPlan
 
 
 class TestTooling:

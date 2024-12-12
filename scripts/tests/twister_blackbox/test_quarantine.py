@@ -16,7 +16,7 @@ import json
 
 # pylint: disable=duplicate-code
 from conftest import ZEPHYR_BASE, TEST_DATA, testsuite_filename_mock
-from twisterlib.testplan import TestPlan
+from pylib.twister.twisterlib.testplan import TestPlan
 
 
 class TestQuarantine:

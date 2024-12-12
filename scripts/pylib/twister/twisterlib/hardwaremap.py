@@ -14,7 +14,7 @@ from pathlib import Path
 import scl
 import yaml
 from natsort import natsorted
-from twisterlib.environment import ZEPHYR_BASE
+from pylib.twister.twisterlib.environment import ZEPHYR_BASE
 
 try:
     # Use the C LibYAML parser if available, rather than the Python parser.

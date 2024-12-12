@@ -28,13 +28,13 @@ except ImportError:
     print("Install the anytree module to use the --test-tree option")
 
 import scl
-from twisterlib.config_parser import TwisterConfigParser
-from twisterlib.error import TwisterRuntimeError
-from twisterlib.twister_platform import Platform, generate_platforms
-from twisterlib.quarantine import Quarantine
-from twisterlib.statuses import TwisterStatus
-from twisterlib.testinstance import TestInstance
-from twisterlib.testsuite import TestSuite, scan_testsuite_path
+from pylib.twister.twisterlib.config_parser import TwisterConfigParser
+from pylib.twister.twisterlib.error import TwisterRuntimeError
+from pylib.twister.twisterlib.twister_platform import Platform, generate_platforms
+from pylib.twister.twisterlib.quarantine import Quarantine
+from pylib.twister.twisterlib.statuses import TwisterStatus
+from pylib.twister.twisterlib.testinstance import TestInstance
+from pylib.twister.twisterlib.testsuite import TestSuite, scan_testsuite_path
 from zephyr_module import parse_modules
 
 logger = logging.getLogger('twister')

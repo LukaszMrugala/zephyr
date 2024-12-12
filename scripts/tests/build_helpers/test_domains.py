@@ -14,7 +14,7 @@ import sys
 ZEPHYR_BASE = os.getenv("ZEPHYR_BASE")
 sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts/pylib/build_helpers"))
 
-import domains
+import pylib.build_helpers.domains
 
 from contextlib import nullcontext
 
@@ -44,10 +44,10 @@ def test_from_file(caplog, f_contents, f_exists, exit_code, expected_logs):
 
     init_mock = mock.Mock(return_value=None)
 
-    with mock.patch('domains.Domains.__init__', init_mock), \
+    with mock.patch('pylib.build_helpers.domains.Domains.__init__', init_mock), \
          mock.patch('builtins.open', mock_open), \
          pytest.raises(SystemExit) if exit_code else nullcontext() as s_exit:
-        result = domains.Domains.from_file('domains.yaml')
+        result = pylib.build_helpers.domains.Domains.from_file('domains.yaml')
 
     if exit_code:
         assert str(s_exit.value) == str(exit_code)
@@ -114,7 +114,7 @@ def test_from_yaml(
 
     with mock.patch('domains.Domain', side_effect=mock_domain), \
          pytest.raises(SystemExit) if exit_code else nullcontext() as exit_st:
-        doms = domains.Domains.from_yaml(data)
+        doms = pylib.build_helpers.domains.Domains.from_yaml(data)
 
     if exit_code:
         assert str(exit_st.value) == str(exit_code)
@@ -160,7 +160,7 @@ def test_get_domains(
     default_flash_order,
     expected_result
 ):
-    doms = domains.Domains(
+    doms = pylib.build_helpers.domains.Domains(
 """
 domains:
 - name: dummy
@@ -211,7 +211,7 @@ def test_get_domain(
     expected_logs,
     expected_result
 ):
-    doms = domains.Domains(
+    doms = pylib.build_helpers.domains.Domains(
 """
 domains:
 - name: dummy
@@ -244,7 +244,7 @@ def test_domain():
     name = 'Domain Name'
     build_dir = 'build/dir'
 
-    domain = domains.Domain(name, build_dir)
+    domain = pylib.build_helpers.domains.Domain(name, build_dir)
 
     assert domain.name == name
     assert domain.build_dir == build_dir

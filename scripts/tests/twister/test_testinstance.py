@@ -16,13 +16,13 @@ import mock
 ZEPHYR_BASE = os.getenv("ZEPHYR_BASE")
 sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts/pylib/twister"))
 
-from twisterlib.twister_platform import Simulator
-from twisterlib.statuses import TwisterStatus
-from twisterlib.testinstance import TestInstance
-from twisterlib.error import BuildError
-from twisterlib.runner import TwisterRunner
-from twisterlib.handlers import QEMUHandler
-from expr_parser import reserved
+from pylib.twister.twisterlib.twister_platform import Simulator
+from pylib.twister.twisterlib.statuses import TwisterStatus
+from pylib.twister.twisterlib.testinstance import TestInstance
+from pylib.twister.twisterlib.error import BuildError
+from pylib.twister.twisterlib.runner import TwisterRunner
+from pylib.twister.twisterlib.handlers import QEMUHandler
+from pylib.twister.expr_parser import reserved
 
 
 TESTDATA_PART_1 = [
@@ -586,7 +586,7 @@ def test_testinstance_calculate_sizes(testinstance, from_buildlog, expected_buil
     sc_mock = mock.Mock()
     mock_sc = mock.Mock(return_value=sc_mock)
 
-    with mock.patch('twisterlib.testinstance.SizeCalculator', mock_sc):
+    with mock.patch('pylib.twister.twisterlib.testinstance.SizeCalculator', mock_sc):
         res = testinstance.calculate_sizes(from_buildlog, expected_warning)
 
     assert res == sc_mock
