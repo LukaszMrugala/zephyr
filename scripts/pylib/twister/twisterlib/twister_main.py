@@ -22,11 +22,11 @@ from pylib.twister.twisterlib.runner import TwisterRunner
 from pylib.twister.twisterlib.statuses import TwisterStatus
 from pylib.twister.twisterlib.testplan import TestPlan
 
-logger = logging.getLogger("twister")
-logger.setLevel(logging.DEBUG)
-
 
 def setup_logging(outdir, log_file, log_level, timestamps):
+    logger = logging.getLogger("twister")
+    logger.setLevel(logging.DEBUG)
+
     # create file handler which logs even debug messages
     if log_file:
         fh = logging.FileHandler(log_file)
@@ -57,7 +57,9 @@ def setup_logging(outdir, log_file, log_level, timestamps):
 
 
 def close_logging():
+    logger = logging.getLogger("twister")
     handlers = logger.handlers[:]
+    print(handlers)
     for handler in handlers:
         logger.removeHandler(handler)
         handler.close()
@@ -116,6 +118,7 @@ def twister(options: argparse.Namespace, default_options: argparse.Namespace):
             fp.write(previous_results)
 
     setup_logging(options.outdir, options.log_file, options.log_level, options.timestamps)
+    logger = logging.getLogger("twister")
 
     env = TwisterEnv(options, default_options)
     env.discover()
