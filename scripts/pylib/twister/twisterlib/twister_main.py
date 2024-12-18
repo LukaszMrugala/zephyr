@@ -64,13 +64,6 @@ def close_logging():
         logger.removeHandler(handler)
         handler.close()
 
-    loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
-    for logg in loggers:
-        handls = logg.handlers[:]
-        for handl in handls:
-            logg.removeHandler(handl)
-            handl.close()
-
 
 def init_color(colorama_strip):
     colorama.init(strip=colorama_strip)
