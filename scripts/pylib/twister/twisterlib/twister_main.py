@@ -59,10 +59,17 @@ def setup_logging(outdir, log_file, log_level, timestamps):
 def close_logging():
     logger = logging.getLogger("twister")
     handlers = logger.handlers[:]
-    print(handlers)
+
     for handler in handlers:
         logger.removeHandler(handler)
         handler.close()
+
+    loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+    for logg in loggers:
+        handls = logg.handlers[:]
+        for handl in handls:
+            logg.removeHandler(handl)
+            handl.close()
 
 
 def init_color(colorama_strip):
