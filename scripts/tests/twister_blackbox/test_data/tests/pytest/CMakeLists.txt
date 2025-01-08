@@ -5,3 +5,5 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(pytest_sample)
 
 target_sources(app PRIVATE src/main.c)
+
+set(CMAKE_OBJECT_PATH_MAX 999)

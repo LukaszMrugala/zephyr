@@ -6,3 +6,5 @@ project(integration)
 
 FILE(GLOB app_sources src/*.c)
 target_sources(app PRIVATE ${app_sources})
+
+set(CMAKE_OBJECT_PATH_MAX 999)
