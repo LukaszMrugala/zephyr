@@ -28,7 +28,7 @@ class TestFootprint:
     # These warnings notify us that deltas were shown in log.
     # Coupled with the code under test.
     DELTA_WARNING_COMPARE = re.compile(
-        r'Found [1-9]+[0-9]* footprint deltas to .*blackbox-out\.[0-9]+/twister.json as a baseline'
+        r'Found [1-9]+[0-9]* footprint deltas to .*b\.[0-9]+/twister.json as a baseline'
     )
     DELTA_WARNING_RUN = re.compile(r'Found [1-9]+[0-9]* footprint deltas to the last twister run')
 

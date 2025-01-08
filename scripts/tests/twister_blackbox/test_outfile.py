@@ -53,7 +53,7 @@ class TestOutfile:
                    ['-p'] * len(test_platforms), test_platforms
                ) for val in pair]
 
-        # We create an empty 'blackbox-out' to trigger the clobbering
+        # We create an empty 'b' to trigger the clobbering
         os.mkdir(os.path.join(out_path))
         # We want to have a single straggler to check for
         straggler_name = 'atavi.sm'
@@ -66,9 +66,9 @@ class TestOutfile:
 
         assert str(sys_exit.value) == '0'
 
-        expected_dirs = ['blackbox-out']
+        expected_dirs = ['b']
         if clobber:
-            expected_dirs += ['blackbox-out.1']
+            expected_dirs += ['b.1']
         current_dirs = os.listdir(os.path.normpath(os.path.join(out_path, '..')))
         print(current_dirs)
         assert sorted(current_dirs) == sorted(expected_dirs)

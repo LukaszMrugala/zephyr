@@ -74,9 +74,9 @@ def provide_out(tmp_path, request):
         return
 
     # Before
-    out_container_path = tmp_path / 'blackbox-out-container'
+    out_container_path = tmp_path / 'a'
     out_container_path.mkdir()
-    out_path = os.path.join(out_container_path, "blackbox-out")
+    out_path = os.path.join(out_container_path, "b")
 
     # Test
     yield out_path
