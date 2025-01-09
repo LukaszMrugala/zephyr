@@ -1693,6 +1693,7 @@ class ProjectBuilder(FilterBuilder):
             args.append(f"OVERLAY_CONFIG=\"{' '.join(overlays)}\"")
 
         # Build the final argument list
+        args_expanded.extend(["-DCMAKE_OBJECT_PATH_MAX=999"])
         args_expanded.extend(["-D{}".format(a.replace('"', '\"')) for a in cmake_extra_args])
         args_expanded.extend(["-D{}".format(a.replace('"', '')) for a in args])
 
