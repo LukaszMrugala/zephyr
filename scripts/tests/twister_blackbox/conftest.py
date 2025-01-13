@@ -13,7 +13,7 @@ import pytest
 import sys
 
 ZEPHYR_BASE = os.getenv('ZEPHYR_BASE')
-TEST_DATA = os.path.join(ZEPHYR_BASE, 'scripts', 'tests',
+TEST_DATA =  os.path.join(ZEPHYR_BASE, 'scripts', 'tests',
                         'twister_blackbox', 'test_data')
 
 
@@ -26,8 +26,14 @@ testsuite_filename_mock = mock.PropertyMock(return_value='test_data.yaml')
 sample_filename_mock = mock.PropertyMock(return_value='test_sample.yaml')
 
 def pytest_configure(config):
+    print(config)
     config.addinivalue_line("markers", "noclearlog: disable the clear_log autouse fixture")
     config.addinivalue_line("markers", "noclearout: disable the provide_out autouse fixture")
+
+    global TEST_DATA
+    test_data_path = config.inicfg.get('testdata')
+    test_data_path_rel = config.inicfg.get('testdatarel')
+    TEST_DATA = os.path.join(ZEPHYR_BASE, test_data_path) if test_data_path_rel else test_data_path
 
 @pytest.fixture(name='zephyr_base')
 def zephyr_base_directory():
