@@ -593,7 +593,7 @@ class TestPlan:
         selected_platform = None
         for platform in self.platforms:
             if name in platform.aliases:
-                logger.debug(f"   Getting platform <{name}>. Got <{platform}> from aliases <{platform.aliases}>.")
+                logger.debug(f"      Getting platform <{name}>. Got <{platform}> from aliases <{platform.aliases}>.")
                 selected_platform = platform
                 break
         return selected_platform
@@ -926,6 +926,8 @@ class TestPlan:
                         and not (platform_filter and force_platform):
                     logger.debug(f"Platform <{plat.name}> possibly not in Platform Allow List <{ts.platform_allow}>")
                     instance.add_filter("Not in testsuite platform allow list", Filters.TESTSUITE)
+                else:
+                    logger.debug(f"Platform <{plat.name}> in Platform Allow List <{ts.platform_allow}>")
 
                 if ts.platform_type and plat.type not in ts.platform_type:
                     instance.add_filter("Not in testsuite platform type list", Filters.TESTSUITE)
@@ -1184,7 +1186,7 @@ class TestPlan:
         as platform_allow or integration_platforms options) is correct. If not -
         log and raise error.
         """
-        logger.debug(f"Verifying existence of platforms <{list(platform_names_to_verify)}>")
+        logger.debug(f"    Verifying existence of platforms <{list(platform_names_to_verify)}>")
         #logger.debug(f"  Platform set: <{self.platform_names}>")
         _platforms = []
         for platform in platform_names_to_verify:
@@ -1195,7 +1197,7 @@ class TestPlan:
             else:
                 logger.error(f"{log_info} - unrecognized platform - {platform}")
                 sys.exit(2)
-        logger.debug(f'Verified set: {_platforms}')
+        logger.debug(f'    Verified set: {_platforms}')
         return _platforms
 
     def create_build_dir_links(self):

@@ -1093,6 +1093,7 @@ class ProjectBuilder(FilterBuilder):
 
         elif op == "gather_metrics":
             try:
+                logger.debug(f" ♥ Starting step gather_metrics")
                 ret = self.gather_metrics(self.instance)
                 if not ret or ret.get('returncode', 1) > 0:
                     self.instance.status = TwisterStatus.ERROR
