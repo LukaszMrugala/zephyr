@@ -1706,6 +1706,7 @@ class ProjectBuilder(FilterBuilder):
         # Build the final argument list
         args_expanded.extend(["-D{}".format(a.replace('"', '\"')) for a in cmake_extra_args])
         args_expanded.extend(["-D{}".format(a.replace('"', '')) for a in args])
+        logger.warning(f" ♥ {args_expanded}")
 
         return args_expanded
 
@@ -1760,6 +1761,7 @@ class ProjectBuilder(FilterBuilder):
         instance = self.instance
 
         if instance.handler.ready:
+            logger.warning(f" ♥ Inside run on {self.instance}")
             logger.debug(f"Reset instance status from '{instance.status}' to None before run.")
             instance.status = TwisterStatus.NONE
 
@@ -1775,6 +1777,7 @@ class ProjectBuilder(FilterBuilder):
             if self.options.extra_test_args and instance.platform.arch == "posix":
                 instance.handler.extra_test_args = self.options.extra_test_args
 
+            logger.warning(f" ♥ Finding harness for {self.instance}")
             harness = HarnessImporter.get_harness(instance.testsuite.harness.capitalize())
             try:
                 harness.configure(instance)
@@ -1784,12 +1787,14 @@ class ProjectBuilder(FilterBuilder):
                 logger.error(instance.reason)
                 return
             #
+            logger.warning(f" ♥ Pass {self.instance} to handler")
             if isinstance(harness, Pytest):
                 harness.pytest_run(instance.handler.get_test_timeout())
             elif isinstance(harness, Ctest):
                 harness.ctest_run(instance.handler.get_test_timeout())
             else:
                 instance.handler.handle(harness)
+            logger.warning(f" ♥ Run on {self.instance} successful")
 
         sys.stdout.flush()
 

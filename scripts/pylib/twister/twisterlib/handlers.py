@@ -1255,11 +1255,29 @@ class QEMUWinHandler(Handler):
                     self.instance.reason = f"Exited with {self.returncode}"
             self.instance.add_missing_case_status(TwisterStatus.BLOCK)
 
-    def _enqueue_char(self, queue):
+    def _enqueue_char(self, queue, proc):
         while not self.stop_thread:
             if not self.pipe_handle:
                 try:
+                    #path_c = r'C:\\'
+                    #path_b = r'\\\\'
+                    #path_a = r'\\\\.pipe\\'
+                    logger.warning(f"    ♥ Opening pipe_handle on {self.name}")
+                    logger.warning(f"  ♥ Proc polled (None means is running): {proc.poll()}")
+                    logger.warning(f"pid_fn: {self.pid_fn}")
+                    logger.warning(f"fifo_fn: {self.fifo_fn}")
+                    logger.warning(f"pid_fn exists: {os.path.exists(self.pid_fn)}")
+                    logger.warning(f"fifo_fn exists: {os.path.exists(self.fifo_fn)}")
+                    logger.warning(f"pid_fn contents: {open(self.pid_fn).read()}")
+                    logger.warning(f"fifo_fn contents: {open(self.fifo_fn).read()}")
+                    #logger.warning(f"     ♥ Existing files in curdir: {os.listdir(os.curdir)}")
+                    #logger.warning(f"     ♥ Existing files in {path_c}: {os.listdir(path_c)}")
+                    #logger.warning("---")
+                    #logger.warning(f"     ♥ Existing files in double_backslash: {os.listdir(path_b)}")
+                    #logger.warning(f"     ♥ Existing files in double backslash with pipe: {os.listdir(path_a)}")
+                    #logger.warning("---")
                     self.pipe_handle = os.open(r"\\.\pipe\\" + self.fifo_fn, os.O_RDONLY)
+                    logger.warning(f"    ♥ Opened pipe_handle {self.pipe_handle} on {self.name}")
                 except FileNotFoundError as e:
                     if e.args[0] == 2:
                         # Pipe is not opened yet, try again after a delay.
@@ -1288,6 +1306,7 @@ class QEMUWinHandler(Handler):
         line = ""
         timeout_extended = False
         self.pid = 0
+        logger.warning(f"   ♥ Inside _monitor_output() on {self.name}")
 
         log_out_fp = self._open_log_file(logfile)
 
@@ -1321,7 +1340,9 @@ class QEMUWinHandler(Handler):
                     contextlib.suppress(ValueError),
                     open(pid_fn) as pid_file
                 ):
+                    logger.warning(f"   ♥ BEFORE Suspicious cast of {pid_file.read()} to int inside _monitor_output() on {self.name}")
                     self.pid = int(pid_file.read())
+                    logger.warning(f"   ♥ AFTER Suspicious cast of {pid_file.read()} to int inside _monitor_output() on {self.name}")
 
             try:
                 c = queue.get_nowait()
@@ -1345,13 +1366,16 @@ class QEMUWinHandler(Handler):
             if c != "\n":
                 continue
 
+            logger.warning(f"   ♥ Line \"{line}\" finished inside _monitor_output() on {self.name}")
             # line contains a full line of data output from QEMU
             log_out_fp.write(line)
             log_out_fp.flush()
             line = line.rstrip()
             logger.debug(f"QEMU ({self.pid}): {line}")
 
+            logger.warning(f"   ♥ BEFORE Handling above line inside _monitor_output() on {self.name}")
             harness.handle(line)
+            logger.warning(f"   ♥ AFTER Handling above line inside _monitor_output() on {self.name}")
             if harness.status != TwisterStatus.NONE:
                 # if we have registered a fail make sure the status is not
                 # overridden by a false success message coming from the
@@ -1372,6 +1396,7 @@ class QEMUWinHandler(Handler):
                     else:
                         timeout_time = time.time() + 2
             line = ""
+            logger.warning(f"   ♥ Line cleared inside _monitor_output() on {self.name}")
 
         self.stop_thread = True
 
@@ -1382,8 +1407,10 @@ class QEMUWinHandler(Handler):
         self._monitor_update_instance_info(self, handler_time, _status, _reason)
         self._close_log_file(log_out_fp)
         self._stop_qemu_process(self.pid)
+        logger.warning(f"   ♥ Finished _monitor_output() on {self.name}")
 
     def handle(self, harness):
+        logger.warning(f"  ♥ Inside QEMUWinHandler.handle() on {self.name}")
         self.run = True
 
         domain_build_dir = self.get_default_domain_build_dir()
@@ -1395,25 +1422,40 @@ class QEMUWinHandler(Handler):
         self.stop_thread = False
         queue = Queue()
 
+        logger.warning(f"  ♥ Starting subprocess on {self.name}")
+        logger.warning(f"    ♥ Command: {command}")
+        logger.warning(f"    ♥ cwd: {self.build_dir}")
         with subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT,
                               cwd=self.build_dir) as proc:
+            logger.warning(f"    ♥ proc: {proc}")
             logger.debug(f"Spawning QEMUHandler Thread for {self.name}")
+            out, err = proc.communicate(timeout=15)
+            logger.warning(f"  ♥ Communicate. OUT: {out}, ERR: {err}")
 
-            self.thread = threading.Thread(target=self._enqueue_char, args=(queue,))
+            self.thread = threading.Thread(target=self._enqueue_char, args=(queue, proc))
             self.thread.daemon = True
+            logger.warning(f"  ♥ Starting thread on {self.name}")
             self.thread.start()
 
+            out, err = proc.communicate(timeout=15)
+            logger.warning(f"  ♥ Communicate. OUT: {out}, ERR: {err}")
             thread_max_time = time.time() + self.get_test_timeout()
 
+            logger.warning(f"  ♥ Starting to monitor_output() on {self.name}")
+            logger.warning(f"  ♥ Proc polled (None means is running): {proc.poll()}")
             self._monitor_output(queue, self.get_test_timeout(), self.log_fn, self.pid_fn, harness,
                                  self.ignore_unexpected_eof)
+            logger.warning(f"  ♥ Finished monitor_output() on {self.name}")
 
             if (thread_max_time - time.time()) < 0:
                 logger.debug("Timed out while monitoring QEMU output")
+                logger.warning("  ♥ Timed out while monitoring QEMU output")
                 proc.terminate()
                 # sleep for a while before attempting to kill
                 time.sleep(0.5)
                 proc.kill()
+            out, err = proc.communicate(timeout=15)
+            logger.warning(f"  ♥ Communicate. OUT: {out}, ERR: {err}")
 
             if harness.status == TwisterStatus.PASS:
                 self.returncode = 0
@@ -1422,15 +1464,19 @@ class QEMUWinHandler(Handler):
 
             if os.path.exists(self.pid_fn):
                 os.unlink(self.pid_fn)
+            logger.warning(f"  ♥ Ended subprocess on {self.name}")
 
         logger.debug(f"return code from QEMU ({self.pid}): {self.returncode}")
 
+        logger.warning(f"  ♥ Closing pipe {self.pipe_handle} on {self.name}")
         os.close(self.pipe_handle)
         self.pipe_handle = None
 
+        logger.warning(f"  ♥ Before update QEMUWinHandler.handle() on {self.name}")
         self._update_instance_info(harness, is_timeout)
-
+        logger.warning(f"  ♥ Between update and final QEMUWinHandler.handle() on {self.name}")
         self._final_handle_actions(harness, 0)
+        logger.warning(f"  ♥ Proper end for QEMUWinHandler.handle() on {self.name}")
 
     def get_fifo(self):
         return self.fifo_fn

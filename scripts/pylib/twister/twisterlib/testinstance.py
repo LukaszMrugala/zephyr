@@ -290,23 +290,23 @@ class TestInstance:
         if os.name == 'nt' and simulator:
             # running on simulators is currently supported only for QEMU on Windows
             if simulator.name not in ('na', 'qemu'):
-                logger.warning(f"    ♥♥ check_runnable = False. simulator.name = {simulator.name} ")
+        #        logger.warning(f"    ♥♥ check_runnable = False. simulator.name = {simulator.name} ")
                 return False
 
             # check presence of QEMU on Windows
             if simulator.name == 'qemu' and 'QEMU_BIN_PATH' not in os.environ:
-                logger.warning(f"    ♥♥ check_runnable = False. simulator.name = {simulator.name}, QEMU_BIN_PATH not in environ ")
+        #        logger.warning(f"    ♥♥ check_runnable = False. simulator.name = {simulator.name}, QEMU_BIN_PATH not in environ ")
                 return False
 
         # we asked for build-only on the command line
         if self.testsuite.build_only:
-            logger.warning(f"    ♥♥ check_runnable = False. testsuite.build_only = {self.testsuite.build_only} ")
+        #    logger.warning(f"    ♥♥ check_runnable = False. testsuite.build_only = {self.testsuite.build_only} ")
             return False
 
         # Do not run slow tests:
         skip_slow = self.testsuite.slow and not enable_slow
         if skip_slow:
-            logger.warning(f"    ♥♥ check_runnable = False. testsuite.slow = {self.testsuite.slow}, enable_slow = {enable_slow} ")
+        #    logger.warning(f"    ♥♥ check_runnable = False. testsuite.slow = {self.testsuite.slow}, enable_slow = {enable_slow} ")
             return False
 
         target_ready = bool(self.testsuite.type == "unit" or \
@@ -321,7 +321,7 @@ class TestInstance:
             target_ready = bool(
                 filter == 'runnable' or simulator and simulator.name in SUPPORTED_SIMS_IN_PYTEST
             )
-            logger.warning(f"    ♥♥ target_ready first assignment = {target_ready} ")
+        #    logger.warning(f"    ♥♥ target_ready first assignment = {target_ready} ")
 
 
         if filter != 'runnable' and \
@@ -329,26 +329,26 @@ class TestInstance:
                 simulator.name in SUPPORTED_SIMS_WITH_EXEC and \
                 not simulator.is_runnable():
             target_ready = False
-            logger.warning(f"    ♥♥ target_ready second assignment = False ")
-            logger.warning(f"      ♥♥ filter = {filter} ")
-            logger.warning(f"      ♥♥ simulator = {simulator} ")
-            logger.warning(f"      ♥♥ simulator.name = {simulator.name} ")
-            logger.warning(f"      ♥♥ simulator.is_runnable -> {simulator.is_runnable()} ")
+        #    logger.warning(f"    ♥♥ target_ready second assignment = False ")
+        #    logger.warning(f"      ♥♥ filter = {filter} ")
+        #    logger.warning(f"      ♥♥ simulator = {simulator} ")
+        #    logger.warning(f"      ♥♥ simulator.name = {simulator.name} ")
+        #    logger.warning(f"      ♥♥ simulator.is_runnable -> {simulator.is_runnable()} ")
 
         testsuite_runnable = self.testsuite_runnable(self.testsuite, fixtures)
-        logger.warning(f"    ♥♥ testsuite_runnable first assignment = {testsuite_runnable} ")
+        #logger.warning(f"    ♥♥ testsuite_runnable first assignment = {testsuite_runnable} ")
 
         if hardware_map:
             for h in hardware_map.duts:
                 if (h.platform in self.platform.aliases and
                         self.testsuite_runnable(self.testsuite, h.fixtures)):
                     testsuite_runnable = True
-                    logger.warning(f"    ♥♥ testsuite_runnable second assignment = True ")
-                    logger.warning(f"      ♥♥ dut = {h} ")
-                    logger.warning(f"      ♥♥ platform = {h.platform} ")
+        #            logger.warning(f"    ♥♥ testsuite_runnable second assignment = True ")
+        #            logger.warning(f"      ♥♥ dut = {h} ")
+        #            logger.warning(f"      ♥♥ platform = {h.platform} ")
                     break
 
-        logger.warning(f"    ♥♥ check_runnable = {testsuite_runnable and target_ready}. testsuite_runnable = {testsuite_runnable}, target_ready = {target_ready} ")
+        #logger.warning(f"    ♥♥ check_runnable = {testsuite_runnable and target_ready}. testsuite_runnable = {testsuite_runnable}, target_ready = {target_ready} ")
         return testsuite_runnable and target_ready
 
     def create_overlay(
