@@ -14,8 +14,8 @@ from itertools import groupby
 
 import list_boards
 import scl
-from pylib.twister.twisterlib.constants import SUPPORTED_SIMS
-from pylib.twister.twisterlib.environment import ZEPHYR_BASE
+from twisterlib.constants import SUPPORTED_SIMS
+from twisterlib.environment import ZEPHYR_BASE
 
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)

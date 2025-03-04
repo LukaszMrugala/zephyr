@@ -18,7 +18,7 @@ from conftest import ZEPHYR_BASE
 
 sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts/pylib/twister"))
 
-from pylib.twister.twisterlib.harness import (
+from twisterlib.harness import (
     Bsim,
     Console,
     Gtest,
@@ -29,9 +29,9 @@ from pylib.twister.twisterlib.harness import (
     Robot,
     Test,
 )
-from pylib.twister.twisterlib.statuses import TwisterStatus
-from pylib.twister.twisterlib.testinstance import TestInstance
-from pylib.twister.twisterlib.testsuite import TestSuite
+from twisterlib.statuses import TwisterStatus
+from twisterlib.testsuite import TestSuite
+from twisterlib.testinstance import TestInstance
 
 GTEST_START_STATE = " RUN      "
 GTEST_PASS_STATE = "       OK "

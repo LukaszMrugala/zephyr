@@ -11,7 +11,7 @@ import pytest
 
 from contextlib import nullcontext
 
-from pylib.twister.twisterlib.cmakecache import CMakeCacheEntry, CMakeCache
+from twisterlib.cmakecache import CMakeCacheEntry, CMakeCache
 
 
 TESTDATA_1 = [

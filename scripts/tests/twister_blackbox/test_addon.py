@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 from conftest import ZEPHYR_BASE, TEST_DATA, sample_filename_mock, testsuite_filename_mock
-from pylib.twister.twisterlib.testplan import TestPlan
+from twisterlib.testplan import TestPlan
 
 
 class TestAddon:

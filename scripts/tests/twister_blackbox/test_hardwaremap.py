@@ -12,7 +12,7 @@ import pytest
 import sys
 
 from conftest import ZEPHYR_BASE, testsuite_filename_mock, clear_log_in_test
-from pylib.twister.twisterlib.testplan import TestPlan
+from twisterlib.testplan import TestPlan
 
 sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts/pylib/twister/twisterlib"))
 
