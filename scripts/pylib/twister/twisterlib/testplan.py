@@ -30,7 +30,7 @@ except ImportError:
 import scl
 from twisterlib.config_parser import TwisterConfigParser
 from twisterlib.error import TwisterRuntimeError
-from twisterlib.twister_platform import Platform, generate_platforms
+from twisterlib.platform import Platform, generate_platforms
 from twisterlib.quarantine import Quarantine
 from twisterlib.statuses import TwisterStatus
 from twisterlib.testinstance import TestInstance
