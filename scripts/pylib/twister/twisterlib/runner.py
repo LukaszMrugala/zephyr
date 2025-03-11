@@ -986,7 +986,6 @@ class ProjectBuilder(FilterBuilder):
 
         if op == "filter":
             try:
-                logger.warning(f" ♥ Starting step filter on {self.instance}")
                 ret = self.cmake(filter_stages=self.instance.filter_stages)
                 if self.instance.status in [TwisterStatus.FAIL, TwisterStatus.ERROR]:
                     next_op = 'report'
@@ -1014,7 +1013,6 @@ class ProjectBuilder(FilterBuilder):
         # The build process, call cmake and build with configured generator
         elif op == "cmake":
             try:
-                logger.warning(f" ♥ Starting step cmake on {self.instance}")
                 ret = self.cmake()
                 if self.instance.status in [TwisterStatus.FAIL, TwisterStatus.ERROR]:
                     next_op = 'report'
@@ -1047,8 +1045,7 @@ class ProjectBuilder(FilterBuilder):
 
         elif op == "build":
             try:
-                logger.warning(f" ♥ Starting step build on {self.instance}")
-                logger.warning(f"build test: {self.instance.name}")
+                logger.debug(f"build test: {self.instance.name}")
                 ret = self.build()
                 if not ret:
                     self.instance.status = TwisterStatus.ERROR
@@ -1097,12 +1094,8 @@ class ProjectBuilder(FilterBuilder):
 
         elif op == "gather_metrics":
             try:
-                logger.warning(f" ♥ Starting step gather_metrics on {self.instance}")
+                logger.debug(f" ♥ Starting step gather_metrics")
                 ret = self.gather_metrics(self.instance)
-                logger.warning(f"  --- INFO ---")
-                logger.warning(f"  |- ret: {ret}")
-                logger.warning(f"  |- run: {self.instance.run}")
-                logger.warning(f"  |- ready: {self.instance.handler.ready}")
                 if not ret or ret.get('returncode', 1) > 0:
                     self.instance.status = TwisterStatus.ERROR
                     self.instance.reason = "Build Failure at gather_metrics."
@@ -1134,10 +1127,9 @@ class ProjectBuilder(FilterBuilder):
         # Run the generated binary using one of the supported handlers
         elif op == "run":
             try:
-                logger.warning(f" ♥ Starting step run on {self.instance}")
-                logger.warning(f"run test: {self.instance.name}")
+                logger.debug(f"run test: {self.instance.name}")
                 self.run()
-                logger.warning(f"run status: {self.instance.name} {self.instance.status}")
+                logger.debug(f"run status: {self.instance.name} {self.instance.status}")
 
                 # to make it work with pickle
                 self.instance.handler.thread = None
@@ -1184,7 +1176,6 @@ class ProjectBuilder(FilterBuilder):
         # Report results and output progress to screen
         elif op == "report":
             try:
-                logger.warning(f" ♥ Starting step report on {self.instance}")
                 with lock:
                     done.put(self.instance)
                     self.report_out(results)
@@ -1213,7 +1204,6 @@ class ProjectBuilder(FilterBuilder):
 
         elif op == "cleanup":
             try:
-                logger.warning(f" ♥ Starting step cleanup on {self.instance}")
                 mode = message.get("mode")
                 if mode == "device":
                     self.cleanup_device_testing_artifacts()
